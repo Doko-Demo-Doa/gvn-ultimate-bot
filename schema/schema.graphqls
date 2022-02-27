@@ -1,0 +1,9 @@
+type User {
+  id: String!
+  roles: [Role]
+}
+
+type Role {
+  id: String!
+  label: String!
+}
