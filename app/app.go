@@ -16,6 +16,7 @@ const timeout time.Duration = time.Second * 10
 var games map[string]time.Time = make(map[string]time.Time)
 
 func Run(token string) {
+	// s = Discord session.
 	s, _ := discordgo.New("Bot " + token)
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		fmt.Println("Bot is ready")
