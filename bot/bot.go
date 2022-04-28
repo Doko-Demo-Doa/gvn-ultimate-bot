@@ -1,57 +1,22 @@
 package bot
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
-
-const timeout time.Duration = time.Second * 10
-
-var games map[string]time.Time = make(map[string]time.Time)
 
 func Bootstrap() {
 	token := os.Getenv("DISCORD_TOKEN")
 	// s = Discord session.
 	s, _ := discordgo.New("Bot " + token)
-	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		fmt.Println("Bot is ready")
-	})
-	s.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if strings.Contains(m.Content, "ping") {
-			if ch, err := s.State.Channel(m.ChannelID); err != nil || !ch.IsThread() {
-				thread, err := s.MessageThreadStartComplex(m.ChannelID, m.ID, &discordgo.ThreadStart{
-					Name:                "Pong game with " + m.Author.Username,
-					AutoArchiveDuration: 60,
-					Invitable:           false,
-					RateLimitPerUser:    10,
-				})
-				if err != nil {
-					panic(err)
-				}
-				_, _ = s.ChannelMessageSend(thread.ID, "pong")
-				m.ChannelID = thread.ID
-			} else {
-				_, _ = s.ChannelMessageSendReply(m.ChannelID, "pong", m.Reference())
-			}
-			games[m.ChannelID] = time.Now()
-			<-time.After(timeout)
-			if time.Since(games[m.ChannelID]) >= timeout {
-				_, err := s.ChannelEditComplex(m.ChannelID, &discordgo.ChannelEdit{
-					Archived: true,
-					Locked:   true,
-				})
-				if err != nil {
-					panic(err)
-				}
-			}
-		}
-	})
+
+	// Register individual modules
+	RegisterPinModule(s)
+
+	// Other configs
 	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAllWithoutPrivileged)
 
 	err := s.Open()
