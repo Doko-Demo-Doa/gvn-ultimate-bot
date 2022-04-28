@@ -2,6 +2,7 @@ package slack
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 
@@ -13,6 +14,10 @@ func Bootstrap() {
 
 	definition := slacker.CommandDefinition{
 		Description: "ping",
+		Handler: func(botCtx slacker.BotContext, request slacker.Request, response slacker.ResponseWriter) {
+			response.Reply("custom")
+			response.ReportError(errors.New("oops"))
+		},
 	}
 
 	slack_bot.Command("ping", &definition)
