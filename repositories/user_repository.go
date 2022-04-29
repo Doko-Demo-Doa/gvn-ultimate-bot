@@ -29,8 +29,13 @@ func (*userRepo) Create(user *models.User) error {
 }
 
 // GetByEmail implements Repo
-func (*userRepo) GetByEmail(email string) (*models.User, error) {
-	panic("unimplemented")
+func (u *userRepo) GetByEmail(email string) (*models.User, error) {
+	var user models.User
+	if err := u.db.Where("email = ?", email).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 // GetByID implements Repo

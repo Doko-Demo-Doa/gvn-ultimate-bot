@@ -2,6 +2,7 @@ package main
 
 import (
 	"doko/gin-sample/app"
+	"doko/gin-sample/configs"
 	"log"
 
 	"github.com/joho/godotenv"
@@ -12,5 +13,9 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
+	config := configs.GetConfig()
+	println(config)
+
 	app.Run()
 }

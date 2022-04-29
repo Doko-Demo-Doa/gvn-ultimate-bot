@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Field-level permissions: https://gorm.io/docs/models.html#Field-Level-Permission
 type User struct {
 	gorm.Model
 	ID       uint
