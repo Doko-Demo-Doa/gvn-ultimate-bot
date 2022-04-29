@@ -16,3 +16,33 @@ type Repo interface {
 type userRepo struct {
 	db *gorm.DB
 }
+
+func NewUserRepo(db *gorm.DB) Repo {
+	return &userRepo{
+		db: db,
+	}
+}
+
+// Create implements Repo
+func (*userRepo) Create(user *models.User) error {
+	panic("unimplemented")
+}
+
+// GetByEmail implements Repo
+func (*userRepo) GetByEmail(email string) (*models.User, error) {
+	panic("unimplemented")
+}
+
+// GetByID implements Repo
+func (u *userRepo) GetByID(id uint) (*models.User, error) {
+	var user models.User
+	if err := u.db.First(&user, id).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// Update implements Repo
+func (*userRepo) Update(user *models.User) error {
+	panic("unimplemented")
+}
