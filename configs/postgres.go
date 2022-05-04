@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type PostgresConfig struct {
@@ -19,18 +22,22 @@ func (c PostgresConfig) Dialect() string {
 	return "postgres"
 }
 
-func (c PostgresConfig) GetPostgresConfigInfo() string {
+func (c PostgresConfig) GetPostgresConfigInfo() gorm.Dialector {
+	strconn := ""
+
 	if c.Password == "" {
-		return fmt.Sprintf(
+		strconn = fmt.Sprintf(
 			"host=%s port=%d user=%s dbname=%s sslmode=disable",
 			c.Host, c.Port, c.User, c.Name,
 		)
-
+		return postgres.Open(strconn)
 	}
 
-	return fmt.Sprintf(
+	strconn = fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		c.Host, c.Port, c.User, c.Password, c.Name)
+
+	return postgres.Open(strconn)
 }
 
 func GetPostgresConfig() PostgresConfig {
