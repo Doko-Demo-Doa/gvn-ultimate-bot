@@ -7,3 +7,7 @@ type Role {
   id: String!
   label: String!
 }
+
+type UserRole {
+  id: Int!
+}
