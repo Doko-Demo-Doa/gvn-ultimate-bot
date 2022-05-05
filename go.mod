@@ -14,6 +14,7 @@ require (
 
 require (
 	github.com/andersfylling/snowflake/v5 v5.0.1 // indirect
+	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -23,6 +24,11 @@ require (
 	github.com/jackc/pgtype v1.11.0 // indirect
 	github.com/jackc/pgx/v4 v4.16.0 // indirect
 	github.com/klauspost/compress v1.15.2 // indirect
+	github.com/umbracle/ethgo v0.1.1 // indirect
+	github.com/umbracle/fastrlp v0.0.0-20211229195328-c1416904ae17 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.4.0 // indirect
+	github.com/valyala/fastjson v1.4.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
