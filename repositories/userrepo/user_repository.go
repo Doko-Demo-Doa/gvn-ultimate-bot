@@ -1,4 +1,4 @@
-package repositories
+package userrepo
 
 import (
 	"doko/gin-sample/models"

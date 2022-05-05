@@ -7,6 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 var (
@@ -14,7 +17,13 @@ var (
 )
 
 func Run() {
-	bot.Bootstrap()
+	/*
+		====== Swagger setup ============
+		(http://localhost:3000/swagger/index.html)
+	*/
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
+	router.Run()
 
 	config := configs.GetConfig()
 
@@ -25,4 +34,13 @@ func Run() {
 	}
 
 	db.AutoMigrate(&models.User{})
+
+	// Setup common
+	// rds := randomstring.NewRandomString()
+	// hm := hmachash.NewHMAC(config.HMACKey)
+
+	// userRepo := userrepo.NewUserRepo(db)
+
+	// Bot setup
+	bot.Bootstrap()
 }
