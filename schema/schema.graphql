@@ -1,0 +1,36 @@
+type MessageLog {
+  id: ID!
+  from_user: User!
+  content: String!
+  channel: Channel!
+}
+
+type DChannel {
+  id: Int!
+  channel_id: String!
+  type: Int!
+  name: Int!
+}
+
+type DUser {
+  id: String!
+  discriminator: String!
+  user_id: String!
+  avatar: String!
+  premium_type: Int!
+}
+
+type Role {
+  id: String!
+  name: String!
+  hoist: Boolean
+  mentionable: Boolean!
+  color: Int!
+}
+
+type UserRole {
+  id: Int!
+  granted_role: Role!
+  granted_date: Int!
+  expiration_date: Int!
+}

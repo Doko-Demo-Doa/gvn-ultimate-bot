@@ -16,3 +16,6 @@ NOTE.md
 
 # Coverage
 coverage.txt
+
+# Generated
+gql/gen
