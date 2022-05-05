@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/99designs/gqlgen v0.16.0
+	github.com/andersfylling/disgord v0.35.1
 	github.com/bwmarrin/discordgo v0.25.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/joho/godotenv v1.4.0
@@ -12,6 +13,7 @@ require (
 )
 
 require (
+	github.com/andersfylling/snowflake/v5 v5.0.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -20,6 +22,10 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	github.com/jackc/pgtype v1.11.0 // indirect
 	github.com/jackc/pgx/v4 v4.16.0 // indirect
+	github.com/klauspost/compress v1.15.2 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
+	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
+	nhooyr.io/websocket v1.8.7 // indirect
 )
 
 require (
