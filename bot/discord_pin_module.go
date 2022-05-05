@@ -9,13 +9,19 @@ func RegisterPinModule(s *discordgo.Session) {
 		msg, _ := s.ChannelMessage(mr.ChannelID, mr.MessageID)
 		ProcessMessage(s, msg)
 	})
+
+	s.AddHandler(func(s *discordgo.Session, mr *discordgo.MessageReactionRemove) {
+		msg, _ := s.ChannelMessage(mr.ChannelID, mr.MessageID)
+		ProcessMessage(s, msg)
+	})
 }
 
 func ProcessMessage(s *discordgo.Session, msg *discordgo.Message) {
 	pin_count := 0
+	pin_symbol := "📌"
 
 	for i := 0; i < len(msg.Reactions); i++ {
-		if msg.Reactions[i].Emoji.Name == "📌" {
+		if msg.Reactions[i].Emoji.Name == pin_symbol {
 			pin_count += 1
 		}
 	}
