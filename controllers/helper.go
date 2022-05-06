@@ -9,5 +9,10 @@ type Response struct {
 }
 
 func HTTPRes(c *gin.Context, httpCode int, msg string, data interface{}) {
-	// c.JSON()
+	c.JSON(httpCode, Response{
+		Code: httpCode,
+		Msg:  msg,
+		Data: data,
+	})
+	return
 }
