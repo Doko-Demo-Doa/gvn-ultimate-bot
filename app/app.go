@@ -2,8 +2,11 @@ package app
 
 import (
 	"doko/gin-sample/bot"
+	"doko/gin-sample/common/hmachash"
+	"doko/gin-sample/common/randomstring"
 	"doko/gin-sample/configs"
 	"doko/gin-sample/models"
+	"doko/gin-sample/repositories/userrepo"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -36,10 +39,13 @@ func Run() {
 	db.AutoMigrate(&models.User{})
 
 	// Setup common
-	// rds := randomstring.NewRandomString()
-	// hm := hmachash.NewHMAC(config.HMACKey)
+	rds := randomstring.NewRandomString()
+	hm := hmachash.NewHMAC(config.HMACKey)
 
-	// userRepo := userrepo.NewUserRepo(db)
+	userRepo := userrepo.NewUserRepo(db)
+
+	// Setup services
+	print(rds, hm, userRepo)
 
 	// Bot setup
 	bot.Bootstrap()
