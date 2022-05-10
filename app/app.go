@@ -67,6 +67,8 @@ func Run() {
 		c.String(http.StatusOK, "ping")
 	})
 
+	// router.GET("/graphql", gql.Pl)
+
 	api := router.Group("/api")
 
 	api.POST("/login", userCtrl.Login)
