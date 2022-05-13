@@ -11,6 +11,7 @@ import (
 	"doko/gin-sample/repositories/userrepo"
 	"doko/gin-sample/services/authservice"
 	"doko/gin-sample/services/userservice"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -52,7 +53,6 @@ func Run() {
 	pwdRepo := passwordreset.NewPasswordResetRepo(db)
 
 	// Setup services
-	print(rds, hm, userRepo)
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	authService := authservice.NewAuthService(config.JWTSecret)
 
@@ -71,7 +71,22 @@ func Run() {
 
 	api := router.Group("/api")
 
+	api.POST("/register", userCtrl.Register)
 	api.POST("/login", userCtrl.Login)
+	api.POST("/forgot-password", userCtrl.ForgotPassword)
+	api.POST("/reset-password", userCtrl.ResetPassword)
+
+	user := api.Group("/users")
+
+	user.GET("/:id", userCtrl.GetByID)
+
+	account := api.Group("/account")
+	// account.Use(middlewares)
+	account.GET("/profile", userCtrl.GetProfile)
+	account.PUT("/profile", userCtrl.Update)
+
+	port := fmt.Sprintf(":%s", config.Port)
+	router.Run(port)
 
 	// Bot setup
 	bot.Bootstrap()
