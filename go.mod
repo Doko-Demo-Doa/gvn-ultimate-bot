@@ -9,7 +9,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/stretchr/testify v1.7.1
 	github.com/vektah/gqlparser/v2 v2.4.2
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898
 	gorm.io/gorm v1.23.5
 )
 
@@ -37,10 +37,10 @@ require (
 	github.com/matryer/moq v0.2.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/swaggo/swag v1.8.1 // indirect
+	github.com/swaggo/swag v1.8.2 // indirect
 	github.com/urfave/cli/v2 v2.6.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
-	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
+	golang.org/x/net v0.0.0-20220517181318-183a9ca12b87 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/tools v0.1.10 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
@@ -70,7 +70,7 @@ require (
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2
 	github.com/swaggo/gin-swagger v1.4.3
 	github.com/ugorji/go/codec v1.2.7 // indirect
-	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 // indirect
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/dgrijalva/jwt-go.v3 v3.2.0
