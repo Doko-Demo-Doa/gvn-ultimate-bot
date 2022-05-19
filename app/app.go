@@ -32,8 +32,6 @@ func Run() {
 	*/
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	router.Run()
-
 	config := configs.GetConfig()
 
 	db, err := gorm.Open(config.Postgres.GetPostgresConfigInfo())
