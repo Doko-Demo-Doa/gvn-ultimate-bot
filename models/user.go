@@ -13,3 +13,11 @@ type User struct {
 	Password string `gorm:"NOT NULL"`
 	Role     string `gorm:"NOT NULL;size:255;DEFAULT:'standard'"`
 }
+
+type Tabler interface {
+	TableName() string
+}
+
+func (User) TableName() string {
+	return "user"
+}

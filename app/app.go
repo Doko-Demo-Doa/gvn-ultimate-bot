@@ -54,6 +54,9 @@ func Run() {
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	authService := authservice.NewAuthService(config.JWTSecret)
 
+	// Seeding
+	// seeds.SeedUsers(userService)
+
 	// Setup controllers
 	userCtrl := controllers.NewUserController(userService, authService)
 

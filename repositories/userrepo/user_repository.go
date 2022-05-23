@@ -23,12 +23,10 @@ func NewUserRepo(db *gorm.DB) Repo {
 	}
 }
 
-// Create implements Repo
-func (*userRepo) Create(user *models.User) error {
-	panic("unimplemented")
+func (u *userRepo) Create(user *models.User) error {
+	return u.db.Create(user).Error
 }
 
-// GetByEmail implements Repo
 func (u *userRepo) GetByEmail(email string) (*models.User, error) {
 	var user models.User
 	if err := u.db.Where("email = ?", email).Error; err != nil {
@@ -38,7 +36,6 @@ func (u *userRepo) GetByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
-// GetByID implements Repo
 func (u *userRepo) GetByID(id uint) (*models.User, error) {
 	var user models.User
 	if err := u.db.First(&user, id).Error; err != nil {
@@ -47,7 +44,6 @@ func (u *userRepo) GetByID(id uint) (*models.User, error) {
 	return &user, nil
 }
 
-// Update implements Repo
-func (*userRepo) Update(user *models.User) error {
-	panic("unimplemented")
+func (u *userRepo) Update(user *models.User) error {
+	return u.db.Save(user).Error
 }
