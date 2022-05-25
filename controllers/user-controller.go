@@ -113,21 +113,23 @@ func (ctrl *userController) Login(c *gin.Context) {
 	}
 
 	user, err := ctrl.us.GetByEmail(userInput.Email)
+
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 	}
 
 	err = ctrl.us.ComparePassword(userInput.Password, user.Password)
+
 	if err != nil {
 		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
 	err = ctrl.login(c, user)
+
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 		return
-
 	}
 }
 
@@ -139,6 +141,7 @@ func (ctl *userController) Register(c *gin.Context) {
 		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
+
 	u := ctl.inputToUser(userInput)
 
 	// Create user

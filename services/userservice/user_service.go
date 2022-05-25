@@ -84,12 +84,13 @@ func (us *userService) Create(user *models.User) error {
 	return us.Repo.Create(user)
 }
 
-// GetByEmail implements UserService
 func (us *userService) GetByEmail(email string) (*models.User, error) {
 	if email == "" {
 		return nil, errors.New("email(string) is required")
 	}
+
 	user, err := us.Repo.GetByEmail(email)
+
 	if err != nil {
 		return nil, err
 	}
