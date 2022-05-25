@@ -50,6 +50,8 @@ func Run() {
 	userRepo := userrepo.NewUserRepo(db)
 	pwdRepo := passwordreset.NewPasswordResetRepo(db)
 
+	println(config.Pepper)
+
 	// Setup services
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	authService := authservice.NewAuthService(config.JWTSecret)

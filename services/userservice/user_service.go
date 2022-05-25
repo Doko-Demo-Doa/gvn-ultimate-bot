@@ -32,7 +32,6 @@ type userService struct {
 	pepper  string
 }
 
-// ComparePassword implements UserService
 func (us *userService) ComparePassword(rawPassword string, passwordFromDB string) error {
 	return bcrypt.CompareHashAndPassword(
 		[]byte(passwordFromDB),
@@ -97,7 +96,6 @@ func (us *userService) GetByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
-// GetByID implements UserService
 func (us *userService) GetByID(id uint) (*models.User, error) {
 	if id == 0 {
 		return nil, errors.New("id param is required")
@@ -111,7 +109,6 @@ func (us *userService) GetByID(id uint) (*models.User, error) {
 	return user, nil
 }
 
-// HashPassword implements UserService
 func (us *userService) HashPassword(rawPassword string) (string, error) {
 	passAndPepper := rawPassword + us.pepper
 	hashed, err := bcrypt.GenerateFromPassword([]byte(passAndPepper), bcrypt.DefaultCost)
@@ -123,7 +120,6 @@ func (us *userService) HashPassword(rawPassword string) (string, error) {
 	return string(hashed), err
 }
 
-// InitiateResetPassowrd implements UserService
 func (us *userService) InitiateResetPassowrd(email string) (string, error) {
 	user, err := us.Repo.GetByEmail(email)
 	if err != nil {

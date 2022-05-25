@@ -8,7 +8,7 @@ import (
 )
 
 func SeedUsers(us userservice.UserService) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte("testpwd"), bcrypt.DefaultCost)
+	hashed, err := bcrypt.GenerateFromPassword([]byte("testpwd"+"secret"), bcrypt.DefaultCost)
 
 	if err != nil {
 		return

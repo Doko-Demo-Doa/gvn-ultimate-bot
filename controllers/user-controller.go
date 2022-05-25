@@ -62,6 +62,12 @@ func (ctl *userController) ForgotPassword(c *gin.Context) {
 		return
 	}
 
+	_, err := ctl.us.InitiateResetPassowrd(input.Email)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+	}
+
+	HTTPRes(c, http.StatusOK, "Email sent", nil)
 }
 
 // GetByID implements UserController
