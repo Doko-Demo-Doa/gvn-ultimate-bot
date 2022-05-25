@@ -27,14 +27,14 @@ func (c PostgresConfig) GetPostgresConfigInfo() gorm.Dialector {
 
 	if c.Password == "" {
 		strconn = fmt.Sprintf(
-			"host=%s port=%d user=%s dbname=%s sslmode=disable",
+			"host=%s port=%d user=%s dbname=%s",
 			c.Host, c.Port, c.User, c.Name,
 		)
 		return postgres.Open(strconn)
 	}
 
 	strconn = fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		"host=%s port=%d user=%s password=%s dbname=%s",
 		c.Host, c.Port, c.User, c.Password, c.Name)
 
 	return postgres.Open(strconn)
