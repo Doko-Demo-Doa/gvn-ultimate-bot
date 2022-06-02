@@ -15,6 +15,7 @@ func Bootstrap() {
 
 	// Register individual modules
 	RegisterPinModule(s)
+	RegisterGrantRoleModule(s)
 
 	// Other configs
 	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAllWithoutPrivileged)
@@ -29,5 +30,4 @@ func Bootstrap() {
 	signal.Notify(stop, os.Interrupt)
 	<-stop
 	log.Println("Graceful shutdown")
-
 }
