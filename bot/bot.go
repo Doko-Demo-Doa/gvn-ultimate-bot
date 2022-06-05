@@ -28,6 +28,9 @@ func Bootstrap() {
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
+
 	<-stop
 	log.Println("Graceful shutdown")
+
+	UnregisterGrantRoleModule(s)
 }

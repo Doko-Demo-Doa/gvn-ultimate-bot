@@ -21,3 +21,4 @@ coverage.txt
 gql/gen
 docs/
 out/
+temp.go
