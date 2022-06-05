@@ -19,20 +19,16 @@ var (
 )
 
 var (
-	integerOptionMinValue          = 1.0
-	dmPermission                   = false
-	defaultMemberPermissions int64 = discordgo.PermissionManageServer
-
 	commands = []*discordgo.ApplicationCommand{
 
 		{
-			Name:        "followups",
+			Name:        "birdup",
 			Description: "Followup messages",
 		},
 	}
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"followups": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"birdup": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
@@ -43,30 +39,33 @@ var (
 	}
 )
 
-var registeredCommands []*discordgo.ApplicationCommand
-
 func RegisterGrantRoleModule(s *discordgo.Session) {
-	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
+	log.Println("Adding commands...")
+	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
 
-	lst, err := s.ApplicationCommandBulkOverwrite(DiscordAppID, DiscordGuildID, commands)
-	if err != nil {
-		println(err.Error())
-		return
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+			h(s, i)
+		}
+	})
+
+	for i, v := range commands {
+		cmd, err := s.ApplicationCommandCreate(DiscordAppID, DiscordGuildID, v)
+		if err != nil {
+			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+		}
+		registeredCommands[i] = cmd
 	}
-
-	registeredCommands = lst
-
-	// for i, v := range commands {
-	// 	cmd, err := s.ApplicationCommandCreate(DiscordAppID, DiscordGuildID, v)
-	// 	if err != nil {
-	// 		log.Panicf("Cannot create '%v' command: %v", v.Name, err)
-	// 	}
-	// 	registeredCommands[i] = cmd
-	// }
 }
 
 func UnregisterGrantRoleModule(s *discordgo.Session) {
-	for _, v := range registeredCommands {
+	cmdList, er := s.ApplicationCommands(DiscordAppID, DiscordGuildID)
+	if er != nil {
+		log.Panicf("Cannot get command list")
+		return
+	}
+
+	for _, v := range cmdList {
 		err := s.ApplicationCommandDelete(DiscordAppID, DiscordGuildID, v.ID)
 		if err != nil {
 			log.Panicf("Cannot delete '%v' command: %v", v.Name, err)
