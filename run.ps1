@@ -1,4 +1,4 @@
-New-Item -Name "out" -ItemType "directory"
+New-Item -Name "out" -ItemType "directory" -Force
 $curr = Get-Location
 $tempdir = "out"
 $target = "$curr\$tempdir"
