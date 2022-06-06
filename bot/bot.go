@@ -1,40 +1,36 @@
 package bot
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/state"
 )
 
 func Bootstrap() {
 	token := os.Getenv("DISCORD_TOKEN")
-	// s = Discord session.
-	s, _ := discordgo.New("Bot " + token)
+	s := state.New("Bot " + token)
+	s.AddIntents(gateway.IntentGuilds)
+	s.AddIntents(gateway.IntentGuildMessages)
 
-	// Register individual modules
-	RegisterPinModule(s)
-	RegisterGrantRoleModule(s)
-
-	// Other configs
-	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAllWithoutPrivileged)
-
-	err := s.Open()
-	if err != nil {
-		log.Fatalf("Cannot open the session: %v", err)
-	}
-	defer s.Close()
-
-	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
+	s.AddHandler(func(m *gateway.MessageCreateEvent) {
+		log.Printf("%s: %s", m.Author.Username, m.Content)
 	})
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	_, err := s.CurrentApplication()
+	if err != nil {
+		log.Fatalln("Failed to get application ID: ", err)
+	}
 
-	<-stop
-	log.Println("Graceful shutdown")
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
-	UnregisterGrantRoleModule(s)
+	if err := s.Open(ctx); err != nil {
+		log.Println("Cannot close: ", err)
+	}
+
+	select {}
 }
