@@ -91,7 +91,7 @@ func Run() {
 
 	port := fmt.Sprintf(":%s", config.Port)
 	// Bot setup
-	bot.Bootstrap()
+	bot.Bootstrap(db)
 
 	time.Sleep(time.Second)
 

@@ -8,9 +8,10 @@ import (
 
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
+	"gorm.io/gorm"
 )
 
-func Bootstrap() {
+func Bootstrap(db *gorm.DB) {
 	token := os.Getenv("DISCORD_TOKEN")
 	s := state.New("Bot " + token)
 	s.AddIntents(gateway.IntentGuilds)
