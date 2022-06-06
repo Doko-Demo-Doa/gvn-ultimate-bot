@@ -1,15 +1,15 @@
 package bot
 
 import (
-	"flag"
 	"os"
 
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/state"
 )
 
 var (
-	GuildID  = flag.String("guild", "", "Test guild ID. If not passed - bot registers commands globally")
-	BotToken = flag.String("token", "", "Bot access token")
+	GuildID  = discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
+	BotToken = os.Getenv("DISCORD_TOKEN")
 )
 
 var (
