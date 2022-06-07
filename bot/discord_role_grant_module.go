@@ -3,13 +3,8 @@ package bot
 import (
 	"os"
 
-	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
-)
-
-var (
-	GuildID  = discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
-	BotToken = os.Getenv("DISCORD_TOKEN")
 )
 
 var (
@@ -18,5 +13,7 @@ var (
 )
 
 func RegisterGrantRoleModule(s *state.State) {
+	s.AddHandler(func(e *gateway.InteractionCreateEvent) {
 
+	})
 }

@@ -17,14 +17,23 @@ func Bootstrap(db *gorm.DB) {
 	s.AddIntents(gateway.IntentGuilds)
 	s.AddIntents(gateway.IntentGuildMessages)
 
-	s.AddHandler(func(m *gateway.MessageCreateEvent) {
-		log.Printf("%s: %s", m.Author.Username, m.Content)
-	})
+	// Reset all commands
+	commands, err := s.GuildCommands(AppID, GuildID)
+	if err != nil {
+		log.Fatalf("Cannot get guild commands")
+	}
 
-	_, err := s.CurrentApplication()
+	log.Println("Found these commands, unregistering...")
+	for _, c := range commands {
+		log.Println(c.Name)
+		s.DeleteGuildCommand(AppID, GuildID, c.ID)
+	}
+
+	app, err := s.CurrentApplication()
 	if err != nil {
 		log.Fatalln("Failed to get application ID: ", err)
 	}
+	log.Println("App ID", app.ID)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
