@@ -13,7 +13,7 @@ import (
 	"doko/gin-sample/services/userservice"
 	"fmt"
 	"net/http"
-	"time"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -90,10 +90,21 @@ func Run() {
 	account.PUT("/profile", userCtrl.Update)
 
 	port := fmt.Sprintf(":%s", config.Port)
-	// Bot setup
-	bot.Bootstrap(db)
 
-	time.Sleep(time.Second)
+	wg := new(sync.WaitGroup)
 
-	go router.Run(port)
+	wg.Add(2)
+
+	go func() {
+		router.Run(port)
+		wg.Done()
+	}()
+
+	go func() {
+		// Bot setup
+		bot.Bootstrap(db)
+		wg.Done()
+	}()
+
+	wg.Wait()
 }

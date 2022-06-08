@@ -6,14 +6,20 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
 	"gorm.io/gorm"
 )
 
 func Bootstrap(db *gorm.DB) {
-	token := os.Getenv("DISCORD_TOKEN")
-	s := state.New("Bot " + token)
+	var (
+		AppID    = discord.AppID(mustSnowflakeEnv("DISCORD_APP_ID"))
+		GuildID  = discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
+		BotToken = os.Getenv("DISCORD_TOKEN")
+	)
+
+	s := state.New("Bot " + BotToken)
 	s.AddIntents(gateway.IntentGuilds)
 	s.AddIntents(gateway.IntentGuildMessages)
 
@@ -43,4 +49,12 @@ func Bootstrap(db *gorm.DB) {
 	}
 
 	select {}
+}
+
+func mustSnowflakeEnv(env string) discord.Snowflake {
+	s, err := discord.ParseSnowflake(os.Getenv(env))
+	if err != nil {
+		log.Fatalf("Invalid snowflake for $%s: %v", env, err)
+	}
+	return s
 }
