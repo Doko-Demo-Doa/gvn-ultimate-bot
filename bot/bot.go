@@ -29,7 +29,7 @@ func Bootstrap(db *gorm.DB) {
 		log.Fatalf("Cannot get guild commands")
 	}
 
-	log.Println("Found these commands, unregistering...")
+	log.Println("Found these commands, unregistering if needed...")
 	for _, c := range commands {
 		log.Println(c.Name)
 		s.DeleteGuildCommand(AppID, GuildID, c.ID)
@@ -41,14 +41,13 @@ func Bootstrap(db *gorm.DB) {
 	}
 	log.Println("App ID", app.ID)
 
+	// Setup app context and interrupt channel
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	if err := s.Open(ctx); err != nil {
 		log.Println("Cannot close: ", err)
 	}
-
-	select {}
 }
 
 func mustSnowflakeEnv(env string) discord.Snowflake {
