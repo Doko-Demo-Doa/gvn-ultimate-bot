@@ -1,14 +1,9 @@
-GameVN Ultimate Bot
+# GameVN Ultimate Bot
 
-GVN multi-purpose bot. Inspired from: `https://github.com/yhagio/go_api_boilerplate`
+GVN multi-purpose bot. Inspired from: [go_api_boilerplate](https://github.com/yhagio/go_api_boilerplate)
 
-Draft schema: `https://drawsql.app/clip-sub/diagrams/gin-sample`
+Draft schema: [Link](https://drawsql.app/clip-sub/diagrams/gin-sample)
 
-Generate Graphql:
-
-```
-go run github.com/99designs/gqlgen
-```
 
 # Requirements
 
@@ -20,3 +15,8 @@ go run github.com/99designs/gqlgen
 ## Up and running
 
 * On Windows, if you are prompted by Windows Firewall, be sure to add `/out` folder into Firewall's whitelist.
+* To generate Graphql:
+
+```
+go run github.com/99designs/gqlgen
+```
