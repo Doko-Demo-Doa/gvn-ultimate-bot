@@ -29,9 +29,9 @@ func Bootstrap(db *gorm.DB) {
 		log.Fatalf("Cannot get guild commands")
 	}
 
-	log.Println("Found these commands, unregistering if needed...")
+	log.Printf("Found %d command(s), unregistering if needed...", len(commands))
 	for _, c := range commands {
-		log.Println(c.Name)
+		log.Println("Command: ", c.Name)
 		s.DeleteGuildCommand(AppID, GuildID, c.ID)
 	}
 
@@ -40,6 +40,9 @@ func Bootstrap(db *gorm.DB) {
 		log.Fatalln("Failed to get application ID: ", err)
 	}
 	log.Println("App ID", app.ID)
+
+	// Individual modules
+	RegisterGrantRoleModule(s)
 
 	// Setup app context and interrupt channel
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
