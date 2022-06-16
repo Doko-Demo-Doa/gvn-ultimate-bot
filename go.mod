@@ -37,6 +37,7 @@ require (
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	golang.org/x/tools v0.1.11 // indirect
+	gopkg.in/go-playground/colors.v1 v1.2.0 // indirect
 )
 
 require (

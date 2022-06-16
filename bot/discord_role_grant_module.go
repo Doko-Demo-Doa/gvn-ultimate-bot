@@ -1,13 +1,19 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
-	"github.com/diamondburned/arikawa/v3/utils/json/option"
+)
+
+var (
+	TARGET       = "target"
+	BAN_DURATION = "ban-duration"
+	REASON       = "reason"
 )
 
 func RegisterGrantRoleModule(s *state.State) {
@@ -18,20 +24,49 @@ func RegisterGrantRoleModule(s *state.State) {
 
 	s.AddHandler(func(e *gateway.InteractionCreateEvent) {
 		// e.InteractionEvent.Data.InteractionType() = 2 => Command interaction
-		log.Println("222", e.InteractionEvent.Message)
+		var targetOpt, reasonOpt discord.CommandInteractionOption
+		var user discord.User
 
 		switch data := e.InteractionEvent.Data.(type) {
 		case *discord.CommandInteraction:
-			log.Println("", data.Name)
+			parsedOptions := data.Options
+
+			targetOpt = parsedOptions.Find(TARGET)
+			reasonOpt = parsedOptions.Find(REASON)
+
+			snow, err := targetOpt.SnowflakeValue()
+			if err != nil {
+				return
+			}
+
+			if err != nil {
+				log.Fatalf("Cannot parse Snowflake")
+				return
+			}
+			usr, err := s.User(discord.UserID(snow))
+			if err != nil {
+				log.Fatalf("Cannot get user")
+				return
+			}
+			user = *usr
 
 		default:
-			log.Println("22")
+			log.Println("Not supported")
 		}
 
 		data := api.InteractionResponse{
 			Type: api.MessageInteractionWithSource,
 			Data: &api.InteractionResponseData{
-				Content: option.NewNullableString("Pong"),
+				Embeds: &[]discord.Embed{
+					{
+						Title:       "User Banned",
+						Color:       discord.Color(15418782), // Fuchsia
+						Description: fmt.Sprintf("Đã ban %s, lý do: %s", user.Username, reasonOpt.Value),
+						Footer: &discord.EmbedFooter{
+							Text: "Hạn ban: 7 ngày",
+						},
+					},
+				},
 			},
 		}
 
@@ -88,6 +123,7 @@ func RegisterGrantRoleModule(s *state.State) {
 				&discord.StringOption{
 					OptionName:  "reason",
 					Description: "Lý do covid",
+					Required:    true,
 				},
 			},
 		},
