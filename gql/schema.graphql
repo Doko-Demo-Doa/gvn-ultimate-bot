@@ -66,6 +66,7 @@ input UpdateUser {
 type Query {
   user(id: Int!): User!
   userProfile: User!
+  discordRole(id: String!): DiscordRole!
 }
 
 # ========== Mutation ==========
