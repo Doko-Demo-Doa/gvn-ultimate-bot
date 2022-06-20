@@ -63,7 +63,7 @@ func (r *mutationResolver) Register(ctx context.Context, input gen.RegisterLogin
 func (r *mutationResolver) UpdateUser(ctx context.Context, input gen.UpdateUser) (*gen.User, error) {
 	userID := ctx.Value("user_id")
 	if userID == nil {
-		return nil, errors.New("Unauthorized: Token is invlaid")
+		return nil, errors.New("unauthorized: Token is invlaid")
 	}
 
 	usr, err := r.UserService.GetByID(userID.(uint))
@@ -94,7 +94,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input gen.UpdateUser)
 
 func (r *mutationResolver) ForgotPassword(ctx context.Context, email string) (bool, error) {
 	if email == "" {
-		return false, errors.New("Email is required")
+		return false, errors.New("email is required")
 	}
 
 	// Issue token for user to update his/her password
@@ -108,11 +108,11 @@ func (r *mutationResolver) ForgotPassword(ctx context.Context, email string) (bo
 
 func (r *mutationResolver) ResetPassword(ctx context.Context, resetToken string, password string) (*gen.RegisterLoginOutput, error) {
 	if resetToken == "" {
-		return nil, errors.New("Token is required")
+		return nil, errors.New("token is required")
 	}
 
 	if password == "" {
-		return nil, errors.New("New password is required")
+		return nil, errors.New("new password is required")
 	}
 
 	user, err := r.UserService.CompleteUpdatePassword(resetToken, password)

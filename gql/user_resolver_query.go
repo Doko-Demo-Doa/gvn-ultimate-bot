@@ -23,7 +23,7 @@ func (r *queryResolver) User(ctx context.Context, id int) (*gen.User, error) {
 func (r *queryResolver) UserProfile(ctx context.Context) (*gen.User, error) {
 	userID := ctx.Value("user_id")
 	if userID == nil {
-		return nil, errors.New("Unauthorized: Token is invlaid")
+		return nil, errors.New("unauthorized: Token is invalid")
 	}
 
 	user, err := r.UserService.GetByID(userID.(uint))
