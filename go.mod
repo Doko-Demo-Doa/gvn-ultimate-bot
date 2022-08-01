@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/99designs/gqlgen v0.17.9
 	github.com/gin-gonic/gin v1.8.1
-	github.com/joho/godotenv v1.4.0
 	github.com/stretchr/testify v1.7.2
 	github.com/vektah/gqlparser/v2 v2.4.4
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
@@ -37,12 +36,11 @@ require (
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	golang.org/x/tools v0.1.11 // indirect
-	gopkg.in/go-playground/colors.v1 v1.2.0 // indirect
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/diamondburned/arikawa/v3 v3.0.0-rc.6
+	github.com/diamondburned/arikawa/v3 v3.0.0
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
