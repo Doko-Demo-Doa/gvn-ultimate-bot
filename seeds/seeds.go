@@ -3,6 +3,7 @@ package seeds
 import (
 	"doko/gin-sample/models"
 	"doko/gin-sample/services/userservice"
+	"doko/gin-sample/statics"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -19,7 +20,7 @@ func SeedUsers(us userservice.UserService) {
 			Name:     "Quan Pham",
 			Email:    "quan.pham@darenft.com",
 			Password: string(hashed[:]),
-			Role:     "admin",
+			Role:     statics.AdminRole,
 		},
 
 		{

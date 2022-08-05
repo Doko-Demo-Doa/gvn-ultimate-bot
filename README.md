@@ -20,3 +20,9 @@ Draft schema: [Link](https://drawsql.app/clip-sub/diagrams/gin-sample)
 ```
 go run github.com/99designs/gqlgen
 ```
+
+* To run the app
+
+```
+go run main.go
+```
