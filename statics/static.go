@@ -2,5 +2,5 @@ package statics
 
 const (
 	AdminRole string = "admin"
-	Regular   string = "regular"
+	Standard  string = "standard"
 )
