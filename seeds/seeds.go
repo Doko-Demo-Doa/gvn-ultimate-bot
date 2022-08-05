@@ -27,7 +27,7 @@ func SeedUsers(us userservice.UserService) {
 			Name:     "Giap Tran",
 			Email:    "giap.tran@darenft.com",
 			Password: string(hashed[:]),
-			Role:     "admin",
+			Role:     statics.Standard,
 		},
 	}
 
