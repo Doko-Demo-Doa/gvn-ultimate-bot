@@ -1,7 +1,7 @@
 package authservice
 
 import (
-	"doko/gin-sample/models"
+	"doko/gvn-ultimate-bot/models"
 	"time"
 
 	"gopkg.in/dgrijalva/jwt-go.v3"

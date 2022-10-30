@@ -1,6 +1,6 @@
 package drolerepo
 
-import "doko/gin-sample/models"
+import "doko/gvn-ultimate-bot/models"
 
 type Repo interface {
 	GetByID(id uint) (*models.DiscordRole, error)

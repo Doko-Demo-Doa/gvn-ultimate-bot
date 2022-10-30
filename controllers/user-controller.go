@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"doko/gin-sample/models"
-	"doko/gin-sample/services/authservice"
-	"doko/gin-sample/services/userservice"
+	"doko/gvn-ultimate-bot/models"
+	"doko/gvn-ultimate-bot/services/authservice"
+	"doko/gvn-ultimate-bot/services/userservice"
 	"errors"
 	"net/http"
 	"strconv"

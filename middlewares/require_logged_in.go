@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"doko/gin-sample/controllers"
+	"doko/gvn-ultimate-bot/controllers"
 	"net/http"
 	"strings"
 

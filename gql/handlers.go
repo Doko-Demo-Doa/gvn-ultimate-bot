@@ -1,9 +1,9 @@
 package gql
 
 import (
-	"doko/gin-sample/gql/gen"
-	"doko/gin-sample/services/authservice"
-	"doko/gin-sample/services/userservice"
+	"doko/gvn-ultimate-bot/gql/gen"
+	"doko/gvn-ultimate-bot/services/authservice"
+	"doko/gvn-ultimate-bot/services/userservice"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"

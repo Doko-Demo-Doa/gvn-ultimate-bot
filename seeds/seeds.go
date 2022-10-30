@@ -1,9 +1,9 @@
 package seeds
 
 import (
-	"doko/gin-sample/models"
-	"doko/gin-sample/services/userservice"
-	"doko/gin-sample/statics"
+	"doko/gvn-ultimate-bot/models"
+	"doko/gvn-ultimate-bot/services/userservice"
+	"doko/gvn-ultimate-bot/statics"
 
 	"golang.org/x/crypto/bcrypt"
 )

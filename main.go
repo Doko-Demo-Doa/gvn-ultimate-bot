@@ -1,7 +1,7 @@
 package main
 
 import (
-	"doko/gin-sample/app"
+	"doko/gvn-ultimate-bot/app"
 	"log"
 
 	"github.com/joho/godotenv"

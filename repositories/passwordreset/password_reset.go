@@ -1,7 +1,7 @@
 package passwordreset
 
 import (
-	pwd "doko/gin-sample/models"
+	pwd "doko/gvn-ultimate-bot/models"
 
 	"gorm.io/gorm"
 )

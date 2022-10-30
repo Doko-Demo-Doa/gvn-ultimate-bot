@@ -2,8 +2,8 @@ package gql
 
 import (
 	"context"
-	"doko/gin-sample/gql/gen"
-	"doko/gin-sample/models"
+	"doko/gvn-ultimate-bot/gql/gen"
+	"doko/gvn-ultimate-bot/models"
 	"errors"
 )
 

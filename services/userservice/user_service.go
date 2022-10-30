@@ -1,11 +1,11 @@
 package userservice
 
 import (
-	"doko/gin-sample/common/hmachash"
-	"doko/gin-sample/common/randomstring"
-	"doko/gin-sample/models"
-	pwdRepo "doko/gin-sample/repositories/passwordreset"
-	"doko/gin-sample/repositories/userrepo"
+	"doko/gvn-ultimate-bot/common/hmachash"
+	"doko/gvn-ultimate-bot/common/randomstring"
+	"doko/gvn-ultimate-bot/models"
+	pwdRepo "doko/gvn-ultimate-bot/repositories/passwordreset"
+	"doko/gvn-ultimate-bot/repositories/userrepo"
 	"errors"
 	"fmt"
 	"time"

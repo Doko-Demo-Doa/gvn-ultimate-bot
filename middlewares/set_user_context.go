@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"gopkg.in/dgrijalva/jwt-go.v3"
 )
@@ -19,6 +21,7 @@ func SetUserContext(jwtSecret string) gin.HandlerFunc {
 			if ok && tokenClaims.Valid {
 				// Set gin context values
 			}
+			fmt.Printf(claims.Subject)
 		}
 	}
 }

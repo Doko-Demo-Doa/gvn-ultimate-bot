@@ -1,7 +1,7 @@
 package userrepo
 
 import (
-	"doko/gin-sample/models"
+	"doko/gvn-ultimate-bot/models"
 
 	"gorm.io/gorm"
 )

@@ -2,7 +2,7 @@ package gql
 
 import (
 	"context"
-	"doko/gin-sample/gql/gen"
+	"doko/gvn-ultimate-bot/gql/gen"
 	"errors"
 )
 

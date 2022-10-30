@@ -23,3 +23,4 @@ docs/
 out/
 temp.go
 demo.go
+*.exe
