@@ -1,8 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type DiscordUserRole struct {
+	gorm.Model
 	DiscordUser    DiscordUser
 	GrantedRole    DiscordRole
 	GrantedDate    time.Time

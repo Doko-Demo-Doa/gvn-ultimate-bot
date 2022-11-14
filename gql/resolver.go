@@ -20,4 +20,5 @@ func (r *Resolver) Query() gen.QueryResolver {
 }
 
 type queryResolver struct{ *Resolver }
+
 type mutationResolver struct{ *Resolver }
