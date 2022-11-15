@@ -93,8 +93,20 @@ func (ctl *userController) GetByID(c *gin.Context) {
 }
 
 // GetProfile implements UserController
-func (*userController) GetProfile(*gin.Context) {
-	panic("unimplemented")
+func (ctl *userController) GetProfile(c *gin.Context) {
+	id, exists := c.Get("user_id")
+	if !exists {
+		HTTPRes(c, http.StatusBadRequest, "Invalid User ID", nil)
+		return
+	}
+
+	user, err := ctl.us.GetByID(id.(uint))
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	userOutput := ctl.mapToUserOutput(user)
+	HTTPRes(c, http.StatusOK, "ok", userOutput)
 }
 
 // @Summary Login
@@ -189,7 +201,7 @@ func (ctl *userController) ResetPassword(c *gin.Context) {
 func (ctl *userController) Update(c *gin.Context) {
 	// Get user id from context
 	id, exists := c.Get("user_id")
-	if exists == false {
+	if !exists {
 		HTTPRes(c, http.StatusBadRequest, "Invalid User ID", nil)
 		return
 	}
