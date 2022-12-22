@@ -89,6 +89,9 @@ func Run() {
 	account.GET("/profile", userCtrl.GetProfile)
 	account.PUT("/profile", userCtrl.Update)
 
+	// Discord-related APIs
+	// discord := api.Group(("/discord"))
+
 	port := fmt.Sprintf(":%s", config.Port)
 
 	wg := new(sync.WaitGroup)
