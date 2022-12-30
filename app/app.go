@@ -10,6 +10,7 @@ import (
 	"doko/gvn-ultimate-bot/repositories/passwordreset"
 	"doko/gvn-ultimate-bot/repositories/userrepo"
 	"doko/gvn-ultimate-bot/services/authservice"
+	"doko/gvn-ultimate-bot/services/discordservice"
 	"doko/gvn-ultimate-bot/services/userservice"
 	"fmt"
 	"net/http"
@@ -56,12 +57,14 @@ func Run() {
 	// Setup services
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	authService := authservice.NewAuthService(config.JWTSecret)
+	discordService := discordservice.NewDiscordService()
 
 	// Seeding
 	// seeds.SeedUsers(userService)
 
 	// Setup controllers
 	userCtrl := controllers.NewUserController(userService, authService)
+	discordCtl := controllers.NewDiscordController(discordService)
 
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
@@ -90,7 +93,8 @@ func Run() {
 	account.PUT("/profile", userCtrl.Update)
 
 	// Discord-related APIs
-	// discord := api.Group(("/discord"))
+	discord := api.Group("/discord")
+	discord.GET("/list-roles", discordCtl.ListDiscordRoles)
 
 	port := fmt.Sprintf(":%s", config.Port)
 
