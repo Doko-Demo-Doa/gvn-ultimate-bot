@@ -1,15 +1,21 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type DiscordRole struct {
-	NativeId     string `gorm:"NOT NULL;size:255"`
-	Name         string
-	Mentionable  uint // Boolean
-	Hoist        uint // Boolean
-	Color        uint // Color mapped from discord API
-	Expiry       time.Time
-	ImplicitType uint // Type that only Dautovn can understand
+	gorm.Model
+	ID           uint
+	NativeId     string    `gorm:"NOT NULL;size:255"`
+	Name         string    `gorm:"NOT NULL;size:255"`
+	Mentionable  uint      `gorm:"NOT NULL"`
+	Hoist        uint      `gorm:"NOT NULL"`
+	Color        uint      `gorm:"NOT NULL"`
+	Expiry       time.Time `gorm:"NOT NULL"`
+	ImplicitType uint      `gorm:"NOT NULL;DEFAULT:'standard'"`
 }
 
 func (DiscordRole) TableName() string {

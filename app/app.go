@@ -95,6 +95,7 @@ func Run() {
 	// Discord-related APIs
 	discord := api.Group("/discord")
 	discord.GET("/list-roles", discordCtl.ListDiscordRoles)
+	discord.POST("/create-role", discordCtl.CreateDiscordRole)
 
 	port := fmt.Sprintf(":%s", config.Port)
 
