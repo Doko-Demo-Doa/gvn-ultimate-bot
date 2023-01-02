@@ -4,14 +4,19 @@ import (
 	"doko/gvn-ultimate-bot/models"
 	"doko/gvn-ultimate-bot/services/discordservice"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type DiscordRoleInput struct {
-	Name        string `json:"name"`
-	NativeID    string `json:"native_id"`
-	Mentionable uint
+	Name         string    `json:"name"`
+	NativeID     string    `json:"native_id"`
+	Mentionable  uint      `json:"mentionable"`
+	Hoist        uint      `json:"hoist"`
+	Color        uint      `json:"color"`
+	Expiry       time.Time `json:"expiry"`
+	ImplicitType uint      `json:"implicit_type"`
 }
 
 type DiscordController interface {

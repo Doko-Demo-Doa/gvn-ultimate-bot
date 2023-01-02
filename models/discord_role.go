@@ -15,7 +15,7 @@ type DiscordRole struct {
 	Hoist        uint      `gorm:"NOT NULL"`
 	Color        uint      `gorm:"NOT NULL"`
 	Expiry       time.Time `gorm:"NOT NULL"`
-	ImplicitType uint      `gorm:"NOT NULL;DEFAULT:'standard'"`
+	ImplicitType uint      `gorm:"NOT NULL;DEFAULT:0"`
 }
 
 func (DiscordRole) TableName() string {

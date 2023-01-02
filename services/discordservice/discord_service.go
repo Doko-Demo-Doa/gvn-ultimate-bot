@@ -20,8 +20,10 @@ type discordService struct {
 	Repo discordrepos.DiscordRoleRepo
 }
 
-func NewDiscordService() DiscordService {
-	return &discordService{}
+func NewDiscordService(repo discordrepos.DiscordRoleRepo) DiscordService {
+	return &discordService{
+		Repo: repo,
+	}
 }
 
 func (dr *discordService) CreateRole(r *models.DiscordRole) (*models.DiscordRole, error) {

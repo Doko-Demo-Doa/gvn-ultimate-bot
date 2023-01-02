@@ -7,6 +7,7 @@ import (
 	"doko/gvn-ultimate-bot/configs"
 	"doko/gvn-ultimate-bot/controllers"
 	"doko/gvn-ultimate-bot/models"
+	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
 	"doko/gvn-ultimate-bot/repositories/passwordreset"
 	"doko/gvn-ultimate-bot/repositories/userrepo"
 	"doko/gvn-ultimate-bot/services/authservice"
@@ -51,13 +52,14 @@ func Run() {
 	// Setup repo
 	userRepo := userrepo.NewUserRepo(db)
 	pwdRepo := passwordreset.NewPasswordResetRepo(db)
+	discordRepo := discordrepos.NewDiscordRoleRepo(db)
 
 	println(config.Pepper)
 
 	// Setup services
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	authService := authservice.NewAuthService(config.JWTSecret)
-	discordService := discordservice.NewDiscordService()
+	discordService := discordservice.NewDiscordService(discordRepo)
 
 	// Seeding
 	// seeds.SeedUsers(userService)
