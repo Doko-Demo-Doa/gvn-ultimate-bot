@@ -37,7 +37,8 @@ func (*discordRoleRepo) UnassignRole(user models.DiscordUser, fromRole models.Di
 func (dr *discordRoleRepo) CreateRole(role *models.DiscordRole) (*models.DiscordRole, error) {
 	var r models.DiscordRole
 	if err := dr.db.Where(&models.DiscordRole{NativeId: role.NativeId}).First(&r).Error; err != nil {
-		return &r, dr.db.Create(r).Error
+		dr.db.Create(&role)
+		return role, nil
 	}
 
 	return &r, nil

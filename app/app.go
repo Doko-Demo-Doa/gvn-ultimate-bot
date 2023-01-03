@@ -37,13 +37,15 @@ func Run() {
 
 	config := configs.GetConfig()
 
-	db, err := gorm.Open(config.Postgres.GetPostgresConfigInfo())
+	db, err := gorm.Open(config.Postgres.GetPostgresConfigInfo(), &gorm.Config{
+		SkipDefaultTransaction: true,
+	})
 
 	if err != nil {
 		panic(err)
 	}
 
-	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.User{}, &models.DiscordRole{})
 
 	// Setup common
 	rds := randomstring.NewRandomString()

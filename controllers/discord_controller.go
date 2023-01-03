@@ -48,6 +48,11 @@ func (ctl *discordController) ListDiscordRoles(c *gin.Context) {
 func (ctl *discordController) CreateDiscordRole(c *gin.Context) {
 	var dRoleInput DiscordRoleInput
 
+	if err := c.ShouldBindJSON(&dRoleInput); err != nil {
+		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
 	dRole := ctl.inputToDiscordRole(dRoleInput)
 	data, err := ctl.ds.CreateRole(&dRole)
 	if err != nil {
@@ -59,7 +64,12 @@ func (ctl *discordController) CreateDiscordRole(c *gin.Context) {
 
 func (ctl *discordController) inputToDiscordRole(input DiscordRoleInput) models.DiscordRole {
 	return models.DiscordRole{
-		Name:     input.NativeID,
-		NativeId: input.NativeID,
+		Name:         input.NativeID,
+		NativeId:     input.Name,
+		Mentionable:  input.Mentionable,
+		Hoist:        input.Hoist,
+		Color:        input.Color,
+		Expiry:       input.Expiry,
+		ImplicitType: input.ImplicitType,
 	}
 }
