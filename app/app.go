@@ -56,8 +56,6 @@ func Run() {
 	pwdRepo := passwordreset.NewPasswordResetRepo(db)
 	discordRepo := discordrepos.NewDiscordRoleRepo(db)
 
-	println(config.Pepper)
-
 	// Setup services
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	authService := authservice.NewAuthService(config.JWTSecret)
@@ -114,7 +112,7 @@ func Run() {
 
 	go func() {
 		// Bot setup
-		bot.Bootstrap(db)
+		bot.Bootstrap(db, discordService)
 		wg.Done()
 	}()
 

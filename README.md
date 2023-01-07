@@ -26,3 +26,10 @@ go run github.com/99designs/gqlgen
 ```
 go run main.go
 ```
+
+## Role implicit types
+
+0 = Regular role
+1 = Nickname color role
+2 = "Mobile" role
+5 = "Covid" role

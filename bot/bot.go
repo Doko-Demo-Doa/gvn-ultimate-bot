@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"doko/gvn-ultimate-bot/services/discordservice"
 	"log"
 	"os"
 	"os/signal"
@@ -12,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func Bootstrap(db *gorm.DB) {
+func Bootstrap(db *gorm.DB, ds discordservice.DiscordService) {
 	var (
 		AppID    = discord.AppID(mustSnowflakeEnv("DISCORD_APP_ID"))
 		GuildID  = discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
@@ -43,6 +44,7 @@ func Bootstrap(db *gorm.DB) {
 
 	// Individual modules
 	RegisterGrantRoleModule(s)
+	StartRoleSync(s, ds)
 
 	// Setup app context and interrupt channel
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)

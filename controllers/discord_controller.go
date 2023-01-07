@@ -69,7 +69,7 @@ func (ctl *discordController) inputToDiscordRole(input DiscordRoleInput) models.
 		Mentionable:  input.Mentionable,
 		Hoist:        input.Hoist,
 		Color:        input.Color,
-		Expiry:       input.Expiry,
+		Expiry:       &input.Expiry,
 		ImplicitType: input.ImplicitType,
 	}
 }

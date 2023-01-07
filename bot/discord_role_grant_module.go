@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
+	"github.com/diamondburned/arikawa/v3/utils/json/option"
 )
 
 var (
@@ -87,7 +88,7 @@ func RegisterGrantRoleModule(s *state.State) {
 				},
 				&discord.NumberOption{
 					OptionName:  "ban-duration",
-					Description: "Number of days to covid",
+					Description: "Số ngày bị ban",
 					Required:    true,
 					Choices: []discord.NumberChoice{
 						{
@@ -124,6 +125,44 @@ func RegisterGrantRoleModule(s *state.State) {
 					OptionName:  "reason",
 					Description: "Lý do covid",
 					Required:    true,
+				},
+			},
+		},
+		{
+			Name:        "quick-generate-role",
+			Description: "Tạo role, có thể có thời hạn",
+			Options: discord.CommandOptions{
+				&discord.StringOption{
+					OptionName:  "Tên role",
+					Description: "Tên của role, dạng game-name",
+					Required:    true,
+					MinLength:   option.NewInt(2),
+				},
+				&discord.StringOption{
+					OptionName:  "Thời hạn",
+					Description: "Thời hạn của role, dạng YYYY-MM-DD, bỏ trống để không có thời hạn",
+					MinLength:   option.NewInt(10),
+				},
+			},
+		},
+		{
+			Name:        "grant-role",
+			Description: "Gán role cho ai đó",
+			Options: discord.CommandOptions{
+				&discord.UserOption{
+					OptionName:  "target",
+					Description: "Người được gán role",
+					Required:    true,
+				},
+				&discord.RoleOption{
+					OptionName:  "Role",
+					Description: "Role mà member sẽ được gán",
+					Required:    true,
+				},
+				&discord.StringOption{
+					OptionName:  "Thời hạn",
+					Description: "Thời hạn của role, dạng YYYY-MM-DD, bỏ trống để không có thời hạn",
+					MinLength:   option.NewInt(10),
 				},
 			},
 		},
