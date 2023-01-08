@@ -24,3 +24,7 @@ out/
 temp.go
 demo.go
 *.exe
+
+# Node
+node_modules/
+.next/
