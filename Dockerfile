@@ -9,6 +9,8 @@ WORKDIR /app
 COPY go.mod ./
 RUN go mod download
 
+RUN ls -l
+
 RUN go build -o gvn-ultimate-bot
 
 EXPOSE 3000
