@@ -133,13 +133,13 @@ func RegisterGrantRoleModule(s *state.State) {
 			Description: "Tạo role, có thể có thời hạn",
 			Options: discord.CommandOptions{
 				&discord.StringOption{
-					OptionName:  "Tên role",
+					OptionName:  "role-name",
 					Description: "Tên của role, dạng game-name",
 					Required:    true,
 					MinLength:   option.NewInt(2),
 				},
 				&discord.StringOption{
-					OptionName:  "Thời hạn",
+					OptionName:  "duration",
 					Description: "Thời hạn của role, dạng YYYY-MM-DD, bỏ trống để không có thời hạn",
 					MinLength:   option.NewInt(10),
 				},
@@ -155,12 +155,12 @@ func RegisterGrantRoleModule(s *state.State) {
 					Required:    true,
 				},
 				&discord.RoleOption{
-					OptionName:  "Role",
+					OptionName:  "role-name",
 					Description: "Role mà member sẽ được gán",
 					Required:    true,
 				},
 				&discord.StringOption{
-					OptionName:  "Thời hạn",
+					OptionName:  "duration",
 					Description: "Thời hạn của role, dạng YYYY-MM-DD, bỏ trống để không có thời hạn",
 					MinLength:   option.NewInt(10),
 				},

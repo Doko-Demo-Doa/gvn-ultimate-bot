@@ -41,16 +41,16 @@ func (c PostgresConfig) GetPostgresConfigInfo() gorm.Dialector {
 }
 
 func GetPostgresConfig() PostgresConfig {
-	port, err := strconv.Atoi(os.Getenv("DB_PORT"))
+	port, err := strconv.Atoi(os.Getenv("PGPORT"))
 	if err != nil {
 		panic(err)
 	}
 
 	return PostgresConfig{
-		Host:     os.Getenv("DB_HOST"),
+		Host:     os.Getenv("PGHOST"),
 		Port:     port,
-		User:     os.Getenv("DB_USER"),
-		Password: os.Getenv("DB_PASSWORD"),
-		Name:     os.Getenv("DB_NAME"),
+		User:     os.Getenv("PGUSER"),
+		Password: os.Getenv("PGPASSWORD"),
+		Name:     os.Getenv("PGDATABASE"),
 	}
 }

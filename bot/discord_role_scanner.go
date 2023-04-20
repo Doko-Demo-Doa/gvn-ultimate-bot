@@ -12,7 +12,7 @@ import (
 func StartRoleSync(state *state.State, ds discordservice.DiscordService) {
 	roles, err := state.Roles(discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID")))
 
-	log.Println(len(roles), err)
+	log.Println("[discord_role_scanner]", len(roles), err)
 	// Insert roles into DB
 	for _, elem := range roles {
 		var newRole = roleAdapter(elem)
