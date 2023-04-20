@@ -4,7 +4,7 @@ ENV LOG_LEVEL=info
 ENV ENV=production
 ENV GIN_MODE release
 
-WORKDIR /
+WORKDIR /app
 
 COPY go.mod ./
 RUN go mod download
