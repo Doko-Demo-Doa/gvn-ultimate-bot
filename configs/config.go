@@ -14,7 +14,7 @@ type Config struct {
 	Postgres  PostgresConfig `json:"postgres"`
 	JWTSecret string         `env:"JWT_SIGN_KEY"`
 	Host      string         `env:"APP_HOST"`
-	Port      string         `env:"APP_PORT"`
+	Port      string         `env:"PORT"`
 	FromEmail string         `env:"EMAIL_FROM"`
 }
 
@@ -32,7 +32,7 @@ func GetConfig() Config {
 		Postgres:  GetPostgresConfig(),
 		JWTSecret: os.Getenv("JWT_SIGN_KEY"),
 		Host:      os.Getenv("APP_HOST"),
-		Port:      os.Getenv("APP_PORT"),
+		Port:      os.Getenv("PORT"),
 		FromEmail: os.Getenv("EMAIL_FROM"),
 	}
 }
