@@ -26,7 +26,7 @@ func (c Config) IsProd() bool {
 // GetConfig gets all config for the application
 func GetConfig() Config {
 	return Config{
-		Env:       os.Getenv("ENV"),
+		Env:       os.Getenv("DEPLOYMENT_ENV"),
 		Pepper:    os.Getenv("PEPPER"),
 		HMACKey:   os.Getenv("HMAC_KEY"),
 		Postgres:  GetPostgresConfig(),

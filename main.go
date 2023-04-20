@@ -3,14 +3,18 @@ package main
 import (
 	"doko/gvn-ultimate-bot/app"
 	"log"
+	"os"
 
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	deploymentEnv := os.Getenv("DEPLOYMENT_ENV")
+	if deploymentEnv == "production" {
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
 	}
 
 	app.Run()
