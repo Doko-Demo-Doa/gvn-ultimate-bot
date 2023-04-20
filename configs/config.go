@@ -8,7 +8,7 @@ const (
 
 // Config object
 type Config struct {
-	Env       string         `env:"ENV"`
+	Env       string         `env:"DEPLOYMENT_ENV"`
 	Pepper    string         `env:"PEPPER"`
 	HMACKey   string         `env:"HMAC_KEY"`
 	Postgres  PostgresConfig `json:"postgres"`
