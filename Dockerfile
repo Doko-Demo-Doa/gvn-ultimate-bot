@@ -11,6 +11,8 @@ RUN go mod download
 
 RUN ls -l
 
+COPY . .
+
 RUN go build -o gvn-ultimate-bot
 
 EXPOSE 3000
