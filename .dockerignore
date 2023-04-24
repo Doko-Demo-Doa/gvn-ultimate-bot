@@ -2,3 +2,74 @@ node_modules/
 .vscode/
 out/
 .next/
+# flyctl launch added from .gitignore
+**/*.env
+**/.DS_Store
+
+# Log
+**/*.log
+**/.debug
+**/tmp
+
+# IDE
+**/.vscode
+**/.idea
+
+# Notes
+**/data
+**/NOTE.md
+
+# Coverage
+**/coverage.txt
+
+# Generated
+**/gql/gen
+**/docs
+**/out
+**/temp.go
+**/demo.go
+**/*.exe
+
+# Node
+**/node_modules
+**/.next
+**/gvn-ultimate-bot
+
+# flyctl launch added from _admin/.gitignore
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+_admin/node_modules
+_admin/.pnp
+_admin/**/.pnp.js
+
+# testing
+_admin/coverage
+
+# next.js
+_admin/.next
+_admin/out
+
+# production
+_admin/build
+
+# misc
+_admin/**/.DS_Store
+_admin/**/*.pem
+
+# debug
+_admin/**/npm-debug.log*
+_admin/**/yarn-debug.log*
+_admin/**/yarn-error.log*
+_admin/**/.pnpm-debug.log*
+
+# local env files
+_admin/**/.env*.local
+
+# vercel
+_admin/**/.vercel
+
+# typescript
+_admin/**/*.tsbuildinfo
+_admin/**/next-env.d.ts
+fly.toml

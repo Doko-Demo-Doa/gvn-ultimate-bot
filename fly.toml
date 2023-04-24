@@ -1,0 +1,15 @@
+# fly.toml file generated for gvn-ultimate-bot on 2023-04-17T09:54:23+07:00
+
+app = "gvn-ultimate-bot"
+primary_region = "nrt"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+
+[checks]
+  [checks.alive]
+    type = "tcp"
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "5s"
