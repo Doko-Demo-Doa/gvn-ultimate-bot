@@ -12,6 +12,7 @@ type DiscordRoleRepo interface {
 	AssignRole(user models.DiscordUser, toRole models.DiscordRole) (*models.DiscordUserRole, error)
 	UnassignRole(user models.DiscordUser, fromRole models.DiscordRole) (*models.DiscordUserRole, error) // For history
 	CreateRole(role *models.DiscordRole) (*models.DiscordRole, error)                                   // Actually upsert
+	EditRole(role *models.DiscordRole) (*models.DiscordRole, error)
 }
 
 type discordRoleRepo struct {
@@ -38,9 +39,21 @@ func (dr *discordRoleRepo) CreateRole(role *models.DiscordRole) (*models.Discord
 	var r models.DiscordRole
 	if err := dr.db.Where(&models.DiscordRole{NativeId: role.NativeId}).First(&r).Error; err != nil {
 		dr.db.Create(&role)
-		return role, nil
+		return role, err
 	}
 
+	return &r, nil
+}
+
+func (dr *discordRoleRepo) EditRole(role *models.DiscordRole) (*models.DiscordRole, error) {
+	var r models.DiscordRole
+
+	// Query it first
+	if err := dr.db.Where(&models.DiscordRole{NativeId: role.NativeId}).First(&r).Error; err != nil {
+		return role, err
+	}
+
+	dr.db.Save(&r)
 	return &r, nil
 }
 
