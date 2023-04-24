@@ -10,7 +10,7 @@ type DiscordService interface {
 	// Listing the roles as DiscordRole model array
 	ListRoles() ([]*models.DiscordRole, error)
 	CreateRole(*models.DiscordRole) (*models.DiscordRole, error)
-	EditRole() (*models.DiscordRole, error)
+	EditRole(*models.DiscordRole) (*models.DiscordRole, error)
 
 	// This is actually just mark the role as "deleted" (IsDeleted = 1), not actually delete it
 	RemoveRole(email uint) (*models.DiscordRole, error)
@@ -30,9 +30,8 @@ func (dr *discordService) CreateRole(r *models.DiscordRole) (*models.DiscordRole
 	return dr.Repo.CreateRole(r)
 }
 
-// EditRole implements DiscordService
-func (*discordService) EditRole() (*models.DiscordRole, error) {
-	panic("unimplemented")
+func (dr *discordService) EditRole(r *models.DiscordRole) (*models.DiscordRole, error) {
+	return dr.Repo.EditRole(r)
 }
 
 // ListRoles implements DiscordService
