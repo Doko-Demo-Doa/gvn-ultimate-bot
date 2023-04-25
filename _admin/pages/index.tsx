@@ -1,31 +1,25 @@
-import { AppShell, Navbar, Header } from "@mantine/core";
+import React from "react";
+import { Text } from "@mantine/core";
+import MasterLayout from "~/layouts/master-layout";
 
-function Demo() {
+type Props = React.FC<{}> & {
+  getLayout: (page: React.ReactNode) => JSX.Element;
+};
+
+const HomepageRoute: Props = () => {
   return (
-    <AppShell
-      padding="md"
-      navbar={
-        <Navbar width={{ base: 300 }} height={500} p="xs">
-          {/* Navbar content */}
-        </Navbar>
-      }
-      header={
-        <Header height={60} p="xs">
-          {/* Header content */}
-        </Header>
-      }
-      styles={(theme) => ({
-        main: {
-          backgroundColor:
-            theme.colorScheme === "dark"
-              ? theme.colors.dark[8]
-              : theme.colors.gray[0],
-        },
-      })}
-    >
-      {/* Your application here */}
-    </AppShell>
+    <>
+      <Text>xxxxx</Text>
+    </>
   );
-}
+};
 
-export default Demo;
+HomepageRoute.getLayout = function getLayout(page: React.ReactNode) {
+  return (
+    <MasterLayout title="DautoVN Control Panel" description="CP">
+      {page}
+    </MasterLayout>
+  );
+};
+
+export default HomepageRoute;

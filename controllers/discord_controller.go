@@ -10,13 +10,14 @@ import (
 )
 
 type DiscordRoleInput struct {
-	Name         string    `json:"name"`
-	NativeID     string    `json:"native_id"`
-	Mentionable  uint      `json:"mentionable"`
-	Hoist        uint      `json:"hoist"`
-	Color        uint      `json:"color"`
-	Expiry       time.Time `json:"expiry"`
-	ImplicitType uint      `json:"implicit_type"`
+	Name        string    `json:"name"`
+	NativeID    string    `json:"native_id"`
+	Mentionable uint      `json:"mentionable"`
+	Hoist       uint      `json:"hoist"`
+	Color       uint      `json:"color"`
+	Expiry      time.Time `json:"expiry"`
+	// Use this to indicate what it is in the Admin UI
+	ImplicitType uint `json:"implicit_type"`
 }
 
 type DiscordController interface {
