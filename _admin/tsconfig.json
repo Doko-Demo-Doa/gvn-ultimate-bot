@@ -21,7 +21,8 @@
       "~/layouts/*": ["layouts/*"],
       "~/hooks/*": ["hooks/*"],
       "~/utils/*": ["utils/*"],
-      "~/themes/*": ["themes/*"]
+      "~/themes/*": ["themes/*"],
+      "~/types/*": ["types/*"]
     },
     "typeRoots": ["./node_modules/@types", "./types"],
     "plugins": [

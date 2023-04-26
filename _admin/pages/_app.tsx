@@ -4,8 +4,15 @@ import { NextComponentType } from "next";
 
 import { MantineProvider } from "@mantine/core";
 import { SessionProvider } from "next-auth/react";
-import type { AppProps } from "next/app";
 import type { Session } from "next-auth";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+const queryClient = new QueryClient();
 
 const App: NextComponentType<AppContext, AppInitialProps, AppLayoutProps> = ({
   Component,
@@ -22,18 +29,19 @@ const App: NextComponentType<AppContext, AppInitialProps, AppLayoutProps> = ({
           content="minimum-scale=1, initial-scale=1, width=device-width"
         />
       </Head>
-
-      <SessionProvider session={session}>
-        <MantineProvider
-          withGlobalStyles
-          withNormalizeCSS
-          theme={{
-            colorScheme: "dark",
-          }}
-        >
-          {getLayout(<Component {...pageProps} />)}
-        </MantineProvider>
-      </SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <SessionProvider session={session}>
+          <MantineProvider
+            withGlobalStyles
+            withNormalizeCSS
+            theme={{
+              colorScheme: "dark",
+            }}
+          >
+            {getLayout(<Component {...pageProps} />)}
+          </MantineProvider>
+        </SessionProvider>
+      </QueryClientProvider>
     </>
   );
 };

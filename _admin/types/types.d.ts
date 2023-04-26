@@ -59,4 +59,21 @@ declare module "iron-session" {
   }
 }
 
+enum ModuleActivation {
+  DISABLED,
+  ENABLED,
+}
+
+export type BackendResponseType<D> = {
+  code: number;
+  message: string;
+  data: D;
+};
+
+export type BackendModuleType = {
+  ID: number;
+  ModuleName: string;
+  IsActivated: ModuleActivation;
+};
+
 export {};
