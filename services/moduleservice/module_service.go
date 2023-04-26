@@ -2,7 +2,7 @@ package moduleservice
 
 import (
 	"doko/gvn-ultimate-bot/models"
-	modulerepo "doko/gvn-ultimate-bot/repositories/modulerepo"
+	modulerepo "doko/gvn-ultimate-bot/repositories/module_repo"
 )
 
 type ModuleService interface {
@@ -23,7 +23,7 @@ func (ms *moduleService) ActivateOrDisableModule(id uint) (string, error) {
 }
 
 func (ms *moduleService) ListModules() ([]*models.AppModule, error) {
-	user, err := ms.Repo(id)
+	user, err := ms.Repo.ListModules()
 	if err != nil {
 		return nil, err
 	}

@@ -16,7 +16,6 @@ type pwdRepo struct {
 	db *gorm.DB
 }
 
-// NewPasswordResetRepo will instantiate User Repository
 func NewPasswordResetRepo(db *gorm.DB) Repo {
 	return &pwdRepo{
 		db: db,
