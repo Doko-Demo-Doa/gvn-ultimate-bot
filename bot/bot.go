@@ -42,9 +42,13 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService) {
 	}
 	log.Println("App ID", app.ID)
 
+	// Sync the roles into database
+	// Will be disabled when enough data is provided
+	StartRoleSync(s, ds)
+
 	// Individual modules
 	RegisterGrantRoleModule(s)
-	StartRoleSync(s, ds)
+	RegisterRoleReactModule(s)
 
 	// Setup app context and interrupt channel
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
