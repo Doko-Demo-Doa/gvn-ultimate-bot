@@ -8,10 +8,12 @@ import (
 	"doko/gvn-ultimate-bot/controllers"
 	"doko/gvn-ultimate-bot/models"
 	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
+	modulerepo "doko/gvn-ultimate-bot/repositories/module_repo"
 	"doko/gvn-ultimate-bot/repositories/passwordreset"
 	"doko/gvn-ultimate-bot/repositories/userrepo"
 	"doko/gvn-ultimate-bot/services/authservice"
 	"doko/gvn-ultimate-bot/services/discordservice"
+	"doko/gvn-ultimate-bot/services/moduleservice"
 	"doko/gvn-ultimate-bot/services/userservice"
 	"fmt"
 	"net/http"
@@ -45,7 +47,7 @@ func Run() {
 		panic(err)
 	}
 
-	db.AutoMigrate(&models.User{}, &models.DiscordRole{})
+	db.AutoMigrate(&models.User{}, &models.DiscordRole{}, &models.AppModule{})
 
 	// Setup common
 	rds := randomstring.NewRandomString()
@@ -53,19 +55,23 @@ func Run() {
 
 	// Setup repo
 	userRepo := userrepo.NewUserRepo(db)
+	moduleRepo := modulerepo.NewAppModuleRepo(db)
+
 	pwdRepo := passwordreset.NewPasswordResetRepo(db)
 	discordRepo := discordrepos.NewDiscordRoleRepo(db)
 
 	// Setup services
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
+	moduleService := moduleservice.NewModuleService(moduleRepo)
 	authService := authservice.NewAuthService(config.JWTSecret)
 	discordService := discordservice.NewDiscordService(discordRepo)
 
 	// Seeding
-	// seeds.SeedUsers(userService)
+	// seeds.SeedModules(moduleService)
 
 	// Setup controllers
 	userCtrl := controllers.NewUserController(userService, authService)
+	moduleCtl := controllers.NewModuleController(moduleService)
 	discordCtl := controllers.NewDiscordController(discordService)
 
 	router.Use(gin.Logger())
@@ -77,7 +83,6 @@ func Run() {
 	})
 
 	// router.GET("/graphql", gql.Pl)
-
 	api := router.Group("/api")
 
 	api.POST("/register", userCtrl.Register)
@@ -100,7 +105,8 @@ func Run() {
 	discord.POST("/role/create", discordCtl.CreateDiscordRole)
 
 	// Module-related
-	discord.POST("/module/pin", discordCtl.CreateDiscordRole)
+	module := api.Group("/module")
+	module.GET("/list", moduleCtl.ListModules)
 
 	port := fmt.Sprintf(":%s", config.Port)
 
