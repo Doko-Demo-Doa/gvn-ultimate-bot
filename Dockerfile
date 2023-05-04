@@ -2,6 +2,7 @@ FROM golang:1.20.3
 
 ENV LOG_LEVEL=info
 ENV GIN_MODE release
+ENV GO111MODULE on
 
 WORKDIR /app
 

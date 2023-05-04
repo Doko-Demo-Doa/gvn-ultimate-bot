@@ -122,7 +122,7 @@ func Run() {
 
 	go func() {
 		// Bot setup
-		bot.Bootstrap(db, discordService)
+		bot.Bootstrap(db, discordService, moduleService)
 		wg.Done()
 	}()
 

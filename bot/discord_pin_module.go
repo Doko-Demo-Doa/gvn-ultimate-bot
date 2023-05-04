@@ -6,7 +6,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/state"
 )
 
-const THRESHOLD = 1
+const THRESHOLD = 2
 
 func RegisterPinModule(s *state.State) {
 	s.AddHandler(func(m *gateway.MessageReactionAddEvent) {

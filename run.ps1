@@ -4,4 +4,5 @@ $tempdir = "out"
 $target = "$curr\$tempdir"
 
 $env:GOTMPDIR = $target
+$env:GO111MODULE = "on"
 go run main.go
