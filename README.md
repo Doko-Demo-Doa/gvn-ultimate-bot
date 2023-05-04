@@ -2,8 +2,7 @@
 
 GVN multi-purpose bot. Inspired from: [go_api_boilerplate](https://github.com/yhagio/go_api_boilerplate)
 
-Draft schema: [Link](https://drawsql.app/clip-sub/diagrams/gin-sample)
-
+Schema: [Link](https://drawsql.app/teams/clip-sub/diagrams/gvn-ultimate-bot)
 
 # Requirements
 
@@ -14,14 +13,14 @@ Draft schema: [Link](https://drawsql.app/clip-sub/diagrams/gin-sample)
 
 ## Up and running
 
-* On Windows, if you are prompted by Windows Firewall, be sure to add `/out` folder into Firewall's whitelist.
-* To generate Graphql:
+- On Windows, if you are prompted by Windows Firewall, be sure to add `/out` folder into Firewall's whitelist.
+- To generate Graphql:
 
 ```
 go run github.com/99designs/gqlgen
 ```
 
-* To run the app
+- To run the app
 
 ```
 go run main.go
