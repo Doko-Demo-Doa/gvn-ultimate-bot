@@ -25,6 +25,7 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 	s := state.New("Bot " + BotToken)
 	s.AddIntents(gateway.IntentGuilds)
 	s.AddIntents(gateway.IntentGuildMessages)
+	s.AddIntents(gateway.IntentGuildMessageReactions)
 
 	// Reset all commands
 	commands, err := s.GuildCommands(AppID, GuildID)
@@ -51,9 +52,9 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 	// Individual modules
 	availableModules, err := ms.ListModules()
 	if err == nil {
-		for index, module := range availableModules {
-			fmt.Println(index, module)
-			if module.ModuleName == "pin_module" {
+		for _, module := range availableModules {
+			if module.ModuleName == "pin_module" && module.IsActivated == 1 {
+				fmt.Println("Registering pin module...")
 				RegisterPinModule(s)
 			}
 			if module.ModuleName == "super_reaction" {
