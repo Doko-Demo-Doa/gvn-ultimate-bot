@@ -3,7 +3,7 @@ import { Container, Loader, Stack, Switch, Title } from "@mantine/core";
 import axios from "axios";
 
 import MasterLayout from "~/layouts/master-layout";
-import useAppModules from "~/hooks/use-app-modules";
+import { useAppModuleEnabler, useAppModules } from "~/hooks/use-app-modules";
 
 type Props = React.FC<{}> & {
   getLayout: (page: React.ReactNode) => JSX.Element;
@@ -11,6 +11,7 @@ type Props = React.FC<{}> & {
 
 const HomepageRoute: Props = () => {
   const { data, isLoading } = useAppModules();
+  const {mutate} = useAppModuleEnabler()
 
   if (!data || isLoading) {
     return <Loader />;
@@ -31,7 +32,9 @@ const HomepageRoute: Props = () => {
         </Title>
 
         {data.data.map((n) => (
-          <Switch key={n.ID} label={n.ModuleName} />
+          <Switch key={n.ID} label={n.ModuleName} value={n.IsActivated} onChange={newVal => {
+            mutate(newVal.currentTarget.checked ? 1 : 0)
+          }} />
         ))}
       </Stack>
     </Container>
