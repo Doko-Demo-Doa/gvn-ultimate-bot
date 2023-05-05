@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"log"
+
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
@@ -31,14 +33,9 @@ func ProcessMessage(s *state.State, msg *discord.Message, isAdded bool) {
 	pin_symbol := "📌"
 
 	for i := 0; i < len(msg.Reactions); i++ {
+		log.Println("Found:", msg.Reactions[i].Emoji.Name)
 		if msg.Reactions[i].Emoji.Name == pin_symbol {
-			pin_count += 1
-
-			if isAdded {
-				pin_count += 1
-			} else {
-				pin_count -= 1
-			}
+			pin_count = msg.Reactions[i].Count
 		}
 	}
 
