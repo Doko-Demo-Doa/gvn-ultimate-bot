@@ -57,7 +57,7 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 				fmt.Println("Registering pin module...")
 				RegisterPinModule(s)
 			}
-			if module.ModuleName == "super_reaction" {
+			if module.ModuleName == "grant_role_module" {
 				RegisterRoleReactModule(s)
 			}
 			// TODO: Wip

@@ -44,7 +44,7 @@ func SeedModules(ms moduleservice.ModuleService) {
 			IsActivated: 1,
 		},
 		{
-			ModuleName:  "super_reaction",
+			ModuleName:  "grant_role_module",
 			IsActivated: 1,
 		},
 	}

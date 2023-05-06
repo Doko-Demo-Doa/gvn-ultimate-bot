@@ -43,8 +43,8 @@ func (mr *moduleRepo) CreateModule(name string, activated uint8) (*models.AppMod
 
 func (mr *moduleRepo) ActivateOrDisableModule(id uint, newStatus uint8) (*models.AppModule, error) {
 	var module *models.AppModule
-	if err := mr.db.Where("id = ?", id).First(&module).Error; err != nil {
-		module.IsActivated = 1 // 0 = disable, 1 = enable
+	if err := mr.db.Where("id = ?", id).First(&module).Error; err == nil {
+		module.IsActivated = newStatus // 0 = disable, 1 = enable
 		mr.db.Save(&module)
 		return module, err
 	}

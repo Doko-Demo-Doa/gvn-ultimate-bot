@@ -108,6 +108,7 @@ func Run() {
 	// Module-related
 	module := api.Group("/module")
 	module.GET("/list", moduleCtl.ListModules)
+	module.POST("/on-off", moduleCtl.ActivateOrDisableModule)
 
 	port := fmt.Sprintf(":%s", config.Port)
 

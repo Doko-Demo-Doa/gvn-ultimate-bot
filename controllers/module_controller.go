@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type GVNModuleInput struct {
-	ModuleName  string `json:"module_name"`
-	IsActivated int8   `json:"is_activated"`
+type ActivateDeactivateModuleInput struct {
+	ModuleId    uint  `json:"module_id"`
+	IsActivated uint8 `json:"is_activated"`
 }
 
 type ModuleController interface {
@@ -39,6 +39,17 @@ func (ctl *moduleController) ListModules(c *gin.Context) {
 }
 
 func (ctl *moduleController) ActivateOrDisableModule(c *gin.Context) {
+	var moduleInput ActivateDeactivateModuleInput
 
-	panic("unimplemented")
+	if err := c.ShouldBindJSON(&moduleInput); err != nil {
+		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	module, err := ctl.ms.ActivateOrDisableModule(moduleInput.ModuleId, moduleInput.IsActivated)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+	}
+
+	HTTPRes(c, http.StatusOK, "ok", module)
 }
