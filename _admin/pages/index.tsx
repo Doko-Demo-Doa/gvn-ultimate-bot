@@ -15,10 +15,9 @@ const LABEL_MAPPER: Record<string, string> = {
 };
 
 const HomepageRoute: Props = () => {
-  const { data, isLoading } = useAppModules();
+  const { data, isLoading, refetch } = useAppModules();
 
-  console.log(data);
-  const { mutate } = useAppModuleEnabler();
+  const { mutateAsync } = useAppModuleEnabler();
 
   if (!data || isLoading) {
     return <Loader />;
@@ -41,9 +40,14 @@ const HomepageRoute: Props = () => {
         <Switch
           key={n.ID}
           label={LABEL_MAPPER[n.ModuleName]}
-          value={n.IsActivated}
-          onChange={(newVal) => {
-            mutate(newVal.currentTarget.checked ? 1 : 0);
+          checked={Boolean(n.IsActivated)}
+          onChange={async (newVal) => {
+            await mutateAsync({
+              id: n.ID,
+              activated: newVal.currentTarget.checked,
+            });
+
+            await refetch();
           }}
         />
       ))}

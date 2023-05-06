@@ -14,6 +14,7 @@ import {
   IconHistory,
   IconRosetteFilled,
 } from "@tabler/icons-react";
+import NextLink from "next/link";
 
 interface Props {
   title?: string;
@@ -47,11 +48,14 @@ interface MainLinkProps {
   icon: React.ReactNode;
   color: string;
   label: string;
+  to: string;
 }
 
-function MainLink({ icon, color, label }: MainLinkProps) {
+function MainLink({ icon, color, label, to }: MainLinkProps) {
   return (
     <UnstyledButton
+      component={NextLink}
+      href={to}
       sx={(theme) => ({
         display: "block",
         width: "100%",
@@ -90,16 +94,19 @@ const data = [
     icon: <IconBrandFramerMotion size="1rem" />,
     color: "teal",
     label: "Role Reaction Composer",
+    to: "/role-reaction",
   },
   {
     icon: <IconHistory size="1rem" />,
     color: "violet",
     label: "Server Message Log",
+    to: "/server-log",
   },
   {
     icon: <IconRosetteFilled size="1rem" />,
     color: "grape",
     label: "Role Manager",
+    to: "/role-manager",
   },
 ];
 
