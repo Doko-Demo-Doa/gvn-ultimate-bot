@@ -1,12 +1,9 @@
 import {
   AppShell,
-  Header,
   Text,
-  Navbar,
   ThemeIcon,
   UnstyledButton,
   Group,
-  Title,
 } from "@mantine/core";
 import {
   IconGitPullRequest,
@@ -24,21 +21,12 @@ interface Props {
 
 const MasterLayout: React.FC<Props> = ({ children, title, description }) => {
   return (
-    <AppShell
-      padding={0}
-      header={
-        <Header height={60} px={20} p="xs">
-          <Title order={2}>DautoVN Control Panel</Title>
-        </Header>
-      }
-      navbar={
-        <Navbar p="md" hiddenBreakpoint="sm" width={{ sm: 200, lg: 300 }}>
-          <Navbar.Section grow mt="md">
-            <MainLinks />
-          </Navbar.Section>
-        </Navbar>
-      }
-    >
+    <AppShell padding={0} header={{ height: 60 }}>
+      <AppShell.Header></AppShell.Header>
+
+      <AppShell.Navbar>
+        <MainLinks />
+      </AppShell.Navbar>
       {children}
     </AppShell>
   );
@@ -56,21 +44,21 @@ function MainLink({ icon, color, label, to }: MainLinkProps) {
     <UnstyledButton
       component={NextLink}
       href={to}
-      sx={(theme) => ({
-        display: "block",
-        width: "100%",
-        padding: theme.spacing.xs,
-        borderRadius: theme.radius.sm,
-        color:
-          theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
+      // sx={(theme) => ({
+      //   display: "block",
+      //   width: "100%",
+      //   padding: theme.spacing.xs,
+      //   borderRadius: theme.radius.sm,
+      //   color:
+      //     theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
 
-        "&:hover": {
-          backgroundColor:
-            theme.colorScheme === "dark"
-              ? theme.colors.dark[6]
-              : theme.colors.gray[0],
-        },
-      })}
+      //   "&:hover": {
+      //     backgroundColor:
+      //       theme.colorScheme === "dark"
+      //         ? theme.colors.dark[6]
+      //         : theme.colors.gray[0],
+      //   },
+      // })}
     >
       <Group>
         <ThemeIcon color={color} variant="light">
