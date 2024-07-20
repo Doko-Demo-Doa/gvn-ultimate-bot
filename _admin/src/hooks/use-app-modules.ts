@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { BackendModuleType, BackendResponseType } from "~/types/types";
+import { IBackendModuleType, BackendResponseType } from "~/types/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
 
@@ -13,7 +13,7 @@ export function useAppModules() {
     queryKey: ["module-list"],
     queryFn: async () => {
       const resp = await fetch(BASE_URL + "/module/list");
-      const data: BackendResponseType<BackendModuleType[]> = await resp.json();
+      const data: BackendResponseType<IBackendModuleType[]> = await resp.json();
       return data;
     },
   });
@@ -30,7 +30,7 @@ export function useAppModuleEnabler() {
         body: JSON.stringify(params),
       });
 
-      const data: BackendResponseType<BackendModuleType[]> = await resp.json();
+      const data: BackendResponseType<IBackendModuleType[]> = await resp.json();
 
       return data;
     },
