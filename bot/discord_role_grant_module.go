@@ -36,9 +36,6 @@ func RegisterGrantRoleModule(s *state.State) {
 			reasonOpt = parsedOptions.Find(REASON)
 
 			snow, err := targetOpt.SnowflakeValue()
-			if err != nil {
-				return
-			}
 
 			if err != nil {
 				log.Fatalf("Cannot parse Snowflake")
