@@ -1,7 +1,7 @@
 import "@mantine/core/styles.css";
 import React from "react";
 import { MantineProvider, ColorSchemeScript } from "@mantine/core";
-import { theme } from "../../theme";
+import { theme } from "../theme";
 import { Metadata } from "next";
 import Providers from "~/providers/master-provider";
 
