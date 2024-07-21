@@ -19,7 +19,7 @@ func SeedUsers(us userservice.UserService) {
 	users := []models.User{
 		{
 			Name:     "Quan Pham",
-			Email:    "quan.pham@darenft.com",
+			Email:    "quan@example.com",
 			Password: string(hashed[:]),
 			Role:     statics.AdminRole,
 		},
@@ -41,10 +41,12 @@ func SeedModules(ms moduleservice.ModuleService) {
 	modules := []models.AppModule{
 		{
 			ModuleName:  "pin_module",
+			ModuleLabel: "Pin Module",
 			IsActivated: 1,
 		},
 		{
 			ModuleName:  "grant_role_module",
+			ModuleLabel: "Grant Role Module",
 			IsActivated: 1,
 		},
 	}

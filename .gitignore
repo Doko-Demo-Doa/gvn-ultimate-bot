@@ -29,3 +29,6 @@ demo.go
 node_modules/
 .next/
 gvn-ultimate-bot
+
+# Other
+primal_seeds.go

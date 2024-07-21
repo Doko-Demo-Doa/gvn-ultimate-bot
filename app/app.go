@@ -11,6 +11,8 @@ import (
 	modulerepo "doko/gvn-ultimate-bot/repositories/module_repo"
 	"doko/gvn-ultimate-bot/repositories/passwordreset"
 	"doko/gvn-ultimate-bot/repositories/userrepo"
+
+	// "doko/gvn-ultimate-bot/seeds"
 	"doko/gvn-ultimate-bot/services/authservice"
 	"doko/gvn-ultimate-bot/services/discordservice"
 	"doko/gvn-ultimate-bot/services/moduleservice"
