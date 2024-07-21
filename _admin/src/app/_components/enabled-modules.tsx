@@ -1,6 +1,7 @@
 "use client";
 
-import { useAppModules } from "~/hooks/use-app-modules";
+import { Loader, Space, Stack, Switch, Title } from "@mantine/core";
+import { useAppModuleEnabler, useAppModules } from "~/hooks/use-app-modules";
 
 const moduleNameMap: Record<string, string> = {
   pin_module: "Pin Module",
@@ -9,21 +10,32 @@ const moduleNameMap: Record<string, string> = {
 
 const EnabledModules = () => {
   const { data } = useAppModules();
+  const { mutate } = useAppModuleEnabler();
 
   if (!data) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
 
   return (
-    <div>
-      <h1>Enabled Modules</h1>
-
-      {data?.data.map((module) => (
-        <div key={module.ID}>
-          <h2>{moduleNameMap[module.ModuleName] || ""}</h2>
-        </div>
-      ))}
-    </div>
+    <>
+      <Title order={3}>Enabled Modules</Title>
+      <Space h="lg" />
+      <Stack>
+        {data?.data.map((module) => (
+          <Switch
+            key={module.ID}
+            defaultChecked={!!module.IsActivated}
+            label={module.ModuleLabel || ""}
+            onChange={(event) =>
+              mutate({
+                id: module.ID,
+                activated: event.target.checked,
+              })
+            }
+          />
+        ))}
+      </Stack>
+    </>
   );
 };
 

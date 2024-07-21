@@ -12,7 +12,7 @@ import (
 	"doko/gvn-ultimate-bot/repositories/passwordreset"
 	"doko/gvn-ultimate-bot/repositories/userrepo"
 
-	// "doko/gvn-ultimate-bot/seeds"
+	"doko/gvn-ultimate-bot/seeds"
 	"doko/gvn-ultimate-bot/services/authservice"
 	"doko/gvn-ultimate-bot/services/discordservice"
 	"doko/gvn-ultimate-bot/services/moduleservice"
@@ -69,7 +69,7 @@ func Run() {
 	discordService := discordservice.NewDiscordService(discordRepo)
 
 	// Seeding
-	// seeds.SeedModules(moduleService)
+	seeds.SeedModules(moduleService)
 
 	// Setup controllers
 	userCtrl := controllers.NewUserController(userService, authService)

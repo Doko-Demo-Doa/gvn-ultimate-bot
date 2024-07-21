@@ -8,7 +8,7 @@ import (
 type ModuleService interface {
 	ActivateOrDisableModule(id uint, newStatus uint8) (*models.AppModule, error)
 	ListModules() ([]*models.AppModule, error)
-	CreateModule(name string, activated uint8) (*models.AppModule, error)
+	CreateModule(name string, label string, activated uint8) (*models.AppModule, error)
 }
 
 type moduleService struct {
@@ -30,8 +30,8 @@ func (ms *moduleService) ActivateOrDisableModule(id uint, newStatus uint8) (*mod
 	return module, nil
 }
 
-func (ms *moduleService) CreateModule(name string, activated uint8) (*models.AppModule, error) {
-	module, err := ms.Repo.CreateModule(name, activated)
+func (ms *moduleService) CreateModule(name string, label string, activated uint8) (*models.AppModule, error) {
+	module, err := ms.Repo.CreateModule(name, label, activated)
 
 	if err != nil {
 		return nil, err

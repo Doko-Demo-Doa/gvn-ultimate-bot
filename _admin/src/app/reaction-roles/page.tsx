@@ -1,17 +1,18 @@
 "use client";
 
-import { Box, Divider, Paper, Title } from "@mantine/core";
+import { Divider, Paper, Title } from "@mantine/core";
 import EmbedEditor from "~/components/embed-editor/embed-editor";
+import MasterLayout from "~/layouts/master-layout";
 
 export default function ReactionRolesPage() {
   return (
-    <Box p="lg">
+    <MasterLayout>
       <Paper>
         <Title order={3}>Your reaction role messages</Title>
         <Divider my="sm" />
 
         <EmbedEditor messageId="" />
       </Paper>
-    </Box>
+    </MasterLayout>
   );
 }

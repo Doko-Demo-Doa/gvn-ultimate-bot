@@ -52,6 +52,6 @@ func SeedModules(ms moduleservice.ModuleService) {
 	}
 
 	for _, model := range modules {
-		ms.CreateModule(model.ModuleName, model.IsActivated)
+		ms.CreateModule(model.ModuleName, model.ModuleLabel, model.IsActivated)
 	}
 }

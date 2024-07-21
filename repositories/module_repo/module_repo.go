@@ -9,7 +9,7 @@ import (
 type ModuleRepo interface {
 	ListModules() ([]*models.AppModule, error)
 	ActivateOrDisableModule(id uint, newStatus uint8) (*models.AppModule, error)
-	CreateModule(name string, activated uint8) (*models.AppModule, error)
+	CreateModule(name string, label string, activated uint8) (*models.AppModule, error)
 }
 
 type moduleRepo struct {
@@ -31,8 +31,8 @@ func (ar *moduleRepo) ListModules() ([]*models.AppModule, error) {
 	return modules, nil
 }
 
-func (mr *moduleRepo) CreateModule(name string, activated uint8) (*models.AppModule, error) {
-	module := models.AppModule{IsActivated: activated, ModuleName: name}
+func (mr *moduleRepo) CreateModule(name string, label string, activated uint8) (*models.AppModule, error) {
+	module := models.AppModule{IsActivated: activated, ModuleLabel: label, ModuleName: name}
 
 	if err := mr.db.Create(&module).Error; err != nil {
 		return &module, nil

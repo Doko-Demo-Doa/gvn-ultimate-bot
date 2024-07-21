@@ -1,17 +1,17 @@
-import {
-  AppShell,
-  Text,
-  ThemeIcon,
-  UnstyledButton,
-  Group,
-} from "@mantine/core";
+"use client";
+
+import { AppShell, Group, NavLink, Title } from "@mantine/core";
 import {
   IconGitPullRequest,
   IconBrandFramerMotion,
   IconHistory,
   IconRosetteFilled,
 } from "@tabler/icons-react";
-import NextLink from "next/link";
+import Link from "next/link";
+import { useDisclosure } from "@mantine/hooks";
+
+import * as classes from "./master-layout.css";
+import { usePathname } from "next/navigation";
 
 interface Props {
   title?: string;
@@ -20,14 +20,25 @@ interface Props {
 }
 
 const MasterLayout: React.FC<Props> = ({ children, title, description }) => {
-  return (
-    <AppShell padding={0} header={{ height: 60 }}>
-      <AppShell.Header></AppShell.Header>
+  const [opened, { toggle }] = useDisclosure();
 
-      <AppShell.Navbar>
+  return (
+    <AppShell
+      header={{ height: 60 }}
+      navbar={{ width: 300, breakpoint: "sm", collapsed: { mobile: !opened } }}
+      padding="md"
+    >
+      <AppShell.Header>
+        <Group className={classes.header}>
+          <Title order={3}>DautoVN Bot CP</Title>
+        </Group>
+      </AppShell.Header>
+
+      <AppShell.Navbar px="lg" py="lg">
         <MainLinks />
       </AppShell.Navbar>
-      {children}
+
+      <AppShell.Main>{children}</AppShell.Main>
     </AppShell>
   );
 };
@@ -40,34 +51,18 @@ interface MainLinkProps {
 }
 
 function MainLink({ icon, color, label, to }: MainLinkProps) {
+  const pathname = usePathname();
+
   return (
-    <UnstyledButton
-      component={NextLink}
+    <NavLink
+      component={Link}
       href={to}
-      // sx={(theme) => ({
-      //   display: "block",
-      //   width: "100%",
-      //   padding: theme.spacing.xs,
-      //   borderRadius: theme.radius.sm,
-      //   color:
-      //     theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
-
-      //   "&:hover": {
-      //     backgroundColor:
-      //       theme.colorScheme === "dark"
-      //         ? theme.colors.dark[6]
-      //         : theme.colors.gray[0],
-      //   },
-      // })}
-    >
-      <Group>
-        <ThemeIcon color={color} variant="light">
-          {icon}
-        </ThemeIcon>
-
-        <Text size="sm">{label}</Text>
-      </Group>
-    </UnstyledButton>
+      className={classes.menuItem}
+      label={label}
+      active={to === pathname}
+      color={color}
+      leftSection={icon}
+    />
   );
 }
 
@@ -82,7 +77,7 @@ const data = [
     icon: <IconBrandFramerMotion size="1rem" />,
     color: "teal",
     label: "Role Reaction Composer",
-    to: "/role-reaction",
+    to: "/reaction-roles",
   },
   {
     icon: <IconHistory size="1rem" />,

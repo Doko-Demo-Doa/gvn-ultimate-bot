@@ -73,6 +73,7 @@ export type BackendResponseType<D> = {
 export type IBackendModuleType = {
   ID: number;
   ModuleName: string;
+  ModuleLabel: string;
   IsActivated: ModuleActivation;
 };
 
