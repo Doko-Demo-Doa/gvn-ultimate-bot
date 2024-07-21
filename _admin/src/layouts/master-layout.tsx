@@ -1,17 +1,20 @@
 "use client";
 
-import { AppShell, Group, NavLink, Title } from "@mantine/core";
+import { AppShell, Group, Loader, NavLink, Title } from "@mantine/core";
 import {
   IconGitPullRequest,
   IconBrandFramerMotion,
   IconHistory,
   IconRosetteFilled,
+  IconPin,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useDisclosure } from "@mantine/hooks";
 
 import * as classes from "./master-layout.css";
 import { usePathname } from "next/navigation";
+import { useAppModules } from "~/hooks/use-app-modules";
+import { BotModuleConst } from "~/common/bot-module-const";
 
 interface Props {
   title?: string;
@@ -19,8 +22,8 @@ interface Props {
   children?: React.ReactNode;
 }
 
-const MasterLayout: React.FC<Props> = ({ children, title, description }) => {
-  const [opened, { toggle }] = useDisclosure();
+const MasterLayout: React.FC<Props> = ({ children }) => {
+  const [opened] = useDisclosure();
 
   return (
     <AppShell
@@ -48,10 +51,16 @@ interface MainLinkProps {
   color: string;
   label: string;
   to: string;
+  disabled?: boolean;
+  internalModuleName?: string;
 }
 
-function MainLink({ icon, color, label, to }: MainLinkProps) {
+function MainLink({ icon, color, label, disabled, to }: MainLinkProps) {
   const pathname = usePathname();
+
+  if (disabled) {
+    return null;
+  }
 
   return (
     <NavLink
@@ -74,10 +83,18 @@ const data = [
     to: "/",
   },
   {
+    icon: <IconPin size="1rem" />,
+    color: "orange",
+    label: "Pin module",
+    to: "/pin",
+    internalModuleName: BotModuleConst.PIN_MODULE,
+  },
+  {
     icon: <IconBrandFramerMotion size="1rem" />,
     color: "teal",
     label: "Role Reaction Composer",
     to: "/reaction-roles",
+    internalModuleName: BotModuleConst.REACTION_ROLE_MODULE,
   },
   {
     icon: <IconHistory size="1rem" />,
@@ -94,7 +111,22 @@ const data = [
 ];
 
 export function MainLinks() {
-  const links = data.map((link) => <MainLink {...link} key={link.label} />);
+  const { data: remoteData } = useAppModules();
+
+  if (!remoteData) {
+    return <Loader color="teal" />;
+  }
+
+  const links = data.map((link) => (
+    <MainLink
+      {...link}
+      disabled={
+        remoteData.data.find((n) => n.ModuleName === link.internalModuleName)
+          ?.IsActivated === 0
+      }
+      key={link.label}
+    />
+  ));
   return <div>{links}</div>;
 }
 

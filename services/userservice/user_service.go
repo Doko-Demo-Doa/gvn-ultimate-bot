@@ -22,6 +22,7 @@ type UserService interface {
 	ComparePassword(rawPassword string, passwordFromDB string) error
 	InitiateResetPassowrd(email string) (string, error)
 	CompleteUpdatePassword(token, newPassword string) (*models.User, error)
+	ListUsers() ([]models.User, error)
 }
 
 type userService struct {
@@ -149,6 +150,10 @@ func (us *userService) InitiateResetPassowrd(email string) (string, error) {
 // Update implements UserService
 func (us *userService) Update(user *models.User) error {
 	return us.Repo.Update(user)
+}
+
+func (us *userService) ListUsers() ([]models.User, error) {
+	return us.Repo.ListUsers()
 }
 
 func NewUserService(

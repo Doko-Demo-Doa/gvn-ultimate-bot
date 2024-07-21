@@ -68,8 +68,17 @@ func Run() {
 	authService := authservice.NewAuthService(config.JWTSecret)
 	discordService := discordservice.NewDiscordService(discordRepo)
 
-	// Seeding
-	seeds.SeedModules(moduleService)
+	// Seeding modules
+	mModules, _ := moduleService.ListModules()
+	if len(mModules) <= 0 {
+		seeds.SeedModules(moduleService)
+	}
+
+	// Seeding users
+	mUsers, _ := userService.ListUsers()
+	if len(mUsers) <= 0 {
+		seeds.SeedUsers(userService)
+	}
 
 	// Setup controllers
 	userCtrl := controllers.NewUserController(userService, authService)

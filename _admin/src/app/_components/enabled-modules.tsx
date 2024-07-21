@@ -1,16 +1,15 @@
 "use client";
 
 import { Loader, Space, Stack, Switch, Title } from "@mantine/core";
-import { useAppModuleEnabler, useAppModules } from "~/hooks/use-app-modules";
-
-const moduleNameMap: Record<string, string> = {
-  pin_module: "Pin Module",
-  grant_role_module: "Grant Role Module",
-};
+import {
+  ModuleActivationStatus,
+  useAppModuleEnabler,
+  useAppModules,
+} from "~/hooks/use-app-modules";
 
 const EnabledModules = () => {
-  const { data } = useAppModules();
-  const { mutate } = useAppModuleEnabler();
+  const { data, refetch } = useAppModules();
+  const { mutateAsync } = useAppModuleEnabler();
 
   if (!data) {
     return <Loader />;
@@ -26,12 +25,16 @@ const EnabledModules = () => {
             key={module.ID}
             defaultChecked={!!module.IsActivated}
             label={module.ModuleLabel || ""}
-            onChange={(event) =>
-              mutate({
-                id: module.ID,
-                activated: event.target.checked,
-              })
-            }
+            onChange={async (event) => {
+              await mutateAsync({
+                module_id: module.ID,
+                is_activated: event.target.checked
+                  ? ModuleActivationStatus.ENABLED
+                  : ModuleActivationStatus.DISABLED,
+              });
+
+              refetch();
+            }}
           />
         ))}
       </Stack>

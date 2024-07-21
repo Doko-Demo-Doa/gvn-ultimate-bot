@@ -11,6 +11,7 @@ type Repo interface {
 	GetByEmail(email string) (*models.User, error)
 	Create(user *models.User) error
 	Update(user *models.User) error
+	ListUsers() ([]models.User, error)
 }
 
 type userRepo struct {
@@ -46,4 +47,12 @@ func (u *userRepo) GetByID(id uint) (*models.User, error) {
 
 func (u *userRepo) Update(user *models.User) error {
 	return u.db.Save(user).Error
+}
+
+func (u *userRepo) ListUsers() ([]models.User, error) {
+	var users []models.User
+	if err := u.db.Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
 }
