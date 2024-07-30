@@ -20,7 +20,7 @@ type UserService interface {
 	Update(*models.User) error
 	HashPassword(rawPassword string) (string, error)
 	ComparePassword(rawPassword string, passwordFromDB string) error
-	InitiateResetPassowrd(email string) (string, error)
+	InitiateResetPassword(email string) (string, error)
 	CompleteUpdatePassword(token, newPassword string) (*models.User, error)
 	ListUsers() ([]models.User, error)
 }
@@ -122,7 +122,7 @@ func (us *userService) HashPassword(rawPassword string) (string, error) {
 	return string(hashed), err
 }
 
-func (us *userService) InitiateResetPassowrd(email string) (string, error) {
+func (us *userService) InitiateResetPassword(email string) (string, error) {
 	user, err := us.Repo.GetByEmail(email)
 	if err != nil {
 		return "", err
