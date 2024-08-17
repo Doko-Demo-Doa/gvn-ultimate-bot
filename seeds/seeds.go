@@ -19,16 +19,9 @@ func SeedUsers(us userservice.UserService) {
 	users := []models.User{
 		{
 			Name:     "Quan Pham",
-			Email:    "quan@example.com",
+			Email:    "example@example.com",
 			Password: string(hashed[:]),
 			Role:     statics.AdminRole,
-		},
-
-		{
-			Name:     "Giap Tran",
-			Email:    "giap.tran@darenft.com",
-			Password: string(hashed[:]),
-			Role:     statics.Standard,
 		},
 	}
 

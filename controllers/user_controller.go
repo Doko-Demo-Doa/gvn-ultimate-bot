@@ -73,7 +73,8 @@ func (ctl *userController) ForgotPassword(c *gin.Context) {
 	resendApiKey := os.Getenv("RESEND_API_KEY")
 	client := resend.NewClient(resendApiKey)
 	params := &resend.SendEmailRequest{
-		To:      []string{"input.Email"},
+		From:    "Admin <info@aniviet.com>",
+		To:      []string{input.Email},
 		Text:    "Reset your password. Token is: " + resetToken,
 		Subject: "Reset your password",
 	}

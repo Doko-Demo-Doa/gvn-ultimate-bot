@@ -49,7 +49,8 @@ func Run() {
 		panic(err)
 	}
 
-	db.AutoMigrate(&models.User{}, &models.DiscordRole{}, &models.AppModule{})
+	// WARNING: Remember to run this the first time to create tables
+	db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.DiscordRole{}, &models.AppModule{})
 
 	// Setup common
 	rds := randomstring.NewRandomString()
@@ -79,6 +80,8 @@ func Run() {
 	if len(mUsers) <= 0 {
 		seeds.SeedUsers(userService)
 	}
+
+	pwdRepo.GetOneByToken("")
 
 	// Setup controllers
 	userCtrl := controllers.NewUserController(userService, authService)
