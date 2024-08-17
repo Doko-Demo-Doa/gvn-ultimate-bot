@@ -10,6 +10,7 @@ type ModuleRepo interface {
 	ListModules() ([]*models.AppModule, error)
 	ActivateOrDisableModule(id uint, newStatus uint8) (*models.AppModule, error)
 	CreateModule(name string, label string, activated uint8) (*models.AppModule, error)
+	UpdateModuleConfig(id uint, newConfig string) (*models.AppModule, error)
 }
 
 type moduleRepo struct {
@@ -45,6 +46,17 @@ func (mr *moduleRepo) ActivateOrDisableModule(id uint, newStatus uint8) (*models
 	var module *models.AppModule
 	if err := mr.db.Where("id = ?", id).First(&module).Error; err == nil {
 		module.IsActivated = newStatus // 0 = disable, 1 = enable
+		mr.db.Save(&module)
+		return module, err
+	}
+
+	return nil, nil
+}
+
+func (mr *moduleRepo) UpdateModuleConfig(id uint, newConfig string) (*models.AppModule, error) {
+	var module *models.AppModule
+	if err := mr.db.Where("id = ?", id).First(&module).Error; err == nil {
+		module.CustomConfig = newConfig // Must be valid JSON
 		mr.db.Save(&module)
 		return module, err
 	}

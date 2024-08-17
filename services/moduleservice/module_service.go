@@ -48,3 +48,12 @@ func (ms *moduleService) ListModules() ([]*models.AppModule, error) {
 
 	return user, nil
 }
+
+func (ms *moduleService) UpdateModuleConfig(id uint, newConfig string) (*models.AppModule, error) {
+	module, err := ms.Repo.UpdateModuleConfig(id, newConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return module, nil
+}

@@ -1,12 +1,16 @@
 "use client";
 
-import { Paper } from "@mantine/core";
+import { Button, Group, NumberInput, Text } from "@mantine/core";
 import MasterLayout from "~/layouts/master-layout";
 
 export default function Page() {
   return (
     <MasterLayout>
-      <Paper>Pin config</Paper>
+      <Group>
+        <NumberInput placeholder="Max threshold" />
+        <Button>Save</Button>
+        <Text>Saved</Text>
+      </Group>
     </MasterLayout>
   );
 }
