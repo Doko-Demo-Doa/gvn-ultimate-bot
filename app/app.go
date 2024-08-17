@@ -126,6 +126,7 @@ func Run() {
 	module.GET("/id/:id", moduleCtl.GetModuleByID)
 	module.GET("/", moduleCtl.GetModuleByName)
 	module.POST("/on-off", moduleCtl.ActivateOrDisableModule)
+	module.POST("/update-config", moduleCtl.UpdateModuleConfig)
 
 	port := fmt.Sprintf(":%s", config.Port)
 

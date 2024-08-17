@@ -75,6 +75,7 @@ export type IBackendModuleType = {
   ModuleName: string;
   ModuleLabel: string;
   IsActivated: ModuleActivation;
+  CustomConfig: string;
 };
 
 export interface IReactionRoleMessagePayload {

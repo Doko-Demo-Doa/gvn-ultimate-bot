@@ -7,6 +7,7 @@ import (
 
 type ModuleService interface {
 	ActivateOrDisableModule(id uint, newStatus uint8) (*models.AppModule, error)
+	UpdateModuleConfig(id uint, newConfig string) (*models.AppModule, error)
 	ListModules() ([]*models.AppModule, error)
 	CreateModule(name string, label string, activated uint8) (*models.AppModule, error)
 	GetModuleByID(id uint) (*models.AppModule, error)

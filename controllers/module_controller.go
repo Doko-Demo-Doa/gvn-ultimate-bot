@@ -13,8 +13,14 @@ type ActivateDeactivateModuleInput struct {
 	IsActivated uint8 `json:"is_activated"`
 }
 
+type ReconfigureModuleInput struct {
+	ModuleId  uint   `json:"module_id"`
+	NewConfig string `json:"new_config"`
+}
+
 type ModuleController interface {
 	ActivateOrDisableModule(*gin.Context)
+	UpdateModuleConfig(*gin.Context)
 	ListModules(c *gin.Context)
 	GetModuleByID(c *gin.Context)
 	GetModuleByName(c *gin.Context)
@@ -78,6 +84,22 @@ func (ctl *moduleController) ActivateOrDisableModule(c *gin.Context) {
 	}
 
 	module, err := ctl.ms.ActivateOrDisableModule(moduleInput.ModuleId, moduleInput.IsActivated)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+	}
+
+	HTTPRes(c, http.StatusOK, "ok", module)
+}
+
+func (ctl *moduleController) UpdateModuleConfig(c *gin.Context) {
+	var moduleInput ReconfigureModuleInput
+
+	if err := c.ShouldBindJSON(&moduleInput); err != nil {
+		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	module, err := ctl.ms.UpdateModuleConfig(moduleInput.ModuleId, moduleInput.NewConfig)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 	}
