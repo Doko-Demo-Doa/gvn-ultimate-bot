@@ -3,15 +3,15 @@
 // Note: This is a pretty complicated component
 import {
   ActionIcon,
-  Box,
   ColorPicker,
+  Fieldset,
   Group,
-  Paper,
   Popover,
   SegmentedControl,
   Space,
   Stack,
   Text,
+  Textarea,
   TextInput,
 } from "@mantine/core";
 import { IconPencil, IconSun } from "@tabler/icons-react";
@@ -22,8 +22,9 @@ interface Props {
   messageId: string;
 }
 
+// https://github.com/skyra-project/discord-components
 const EmbedEditor: React.FC<Props> = () => {
-  const [embedEnabled, setEmbedEnabled] = useState(false);
+  const [embedEnabled, setEmbedEnabled] = useState(true);
   const [value, setValue] = useState("emoji");
 
   return (
@@ -76,9 +77,19 @@ const EmbedEditor: React.FC<Props> = () => {
           </Stack>
 
           <Stack>
-            <Paper>
-              <Box className={classes.typeIndicator} />
-            </Paper>
+            <Group align="start" className={classes.groupWrapper}>
+              <Stack>
+                <TextInput placeholder="Title" />
+                <Textarea placeholder="Long message" />
+
+                {[1].map((i, n) => (
+                  <Fieldset legend={`Custom field ${i}`} disabled>
+                    <TextInput label="Your name" placeholder="Your name" />
+                    <TextInput label="Email" placeholder="Email" mt="md" />
+                  </Fieldset>
+                ))}
+              </Stack>
+            </Group>
           </Stack>
         </Group>
       )}

@@ -6,10 +6,9 @@ export const embedPreviewContainer = style({
   padding: `${rem(vars.spacing.sm)} ${rem(vars.spacing.md)}`,
 });
 
-export const typeIndicator = style({
-  width: "2px",
-  height: "400px",
-  backgroundColor: vars.colors.red[6],
+export const groupWrapper = style({
+  borderLeft: `2px solid ${vars.colors.red[6]}`,
+  paddingLeft: rem(vars.spacing.md),
 });
 
 export const segmented = style({
