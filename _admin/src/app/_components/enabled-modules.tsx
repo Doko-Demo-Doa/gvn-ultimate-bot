@@ -5,7 +5,7 @@ import {
   ModuleActivationStatus,
   useAppModuleEnabler,
   useAppModules,
-} from "~/hooks/use-app-modules";
+} from "~/hooks/api-hooks";
 
 const EnabledModules = () => {
   const { data, refetch } = useAppModules();

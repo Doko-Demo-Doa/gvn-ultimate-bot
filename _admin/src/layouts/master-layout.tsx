@@ -13,7 +13,7 @@ import { useDisclosure } from "@mantine/hooks";
 
 import * as classes from "./master-layout.css";
 import { usePathname } from "next/navigation";
-import { useAppModules } from "~/hooks/use-app-modules";
+import { useAppModules } from "~/hooks/api-hooks";
 import { BotModuleConst } from "~/common/bot-module-const";
 
 interface Props {

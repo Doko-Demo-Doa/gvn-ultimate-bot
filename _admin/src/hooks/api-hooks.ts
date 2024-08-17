@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { customApiClient } from "~/datasource/rest/api-client";
 import { IBackendModuleType, BackendResponseType } from "~/types/types";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
 
 export const ModuleActivationStatus = {
   ENABLED: 1,
@@ -13,13 +12,17 @@ type Params = {
   is_activated: number; // 0 = disabled, 1 = enabled
 };
 
+customApiClient.init({
+  baseUrl: process.env.NEXT_PUBLIC_BASE_API_URL || "",
+});
+
 export function useAppModules() {
   return useQuery({
     queryKey: ["module-list"],
     queryFn: async () => {
-      const resp = await fetch(BASE_URL + "/module/list");
-      const data: BackendResponseType<IBackendModuleType[]> = await resp.json();
-      return data;
+      const resp: BackendResponseType<IBackendModuleType[]> =
+        await customApiClient.get("/module/list", {});
+      return resp;
     },
   });
 }
@@ -27,17 +30,8 @@ export function useAppModules() {
 export function useAppModuleEnabler() {
   return useMutation({
     mutationFn: async (params: Params) => {
-      const resp = await fetch(BASE_URL + "/module/on-off", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(params),
-      });
-
-      const data: BackendResponseType<IBackendModuleType[]> = await resp.json();
-
-      return data;
+      const resp = await customApiClient.post("/module/on-off", params);
+      return resp;
     },
   });
 }
