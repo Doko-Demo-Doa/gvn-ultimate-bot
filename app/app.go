@@ -116,12 +116,15 @@ func Run() {
 
 	// Discord-related APIs
 	discord := api.Group("/discord")
+
 	discord.GET("/role/list", discordCtl.ListDiscordRoles)
 	discord.POST("/role/create", discordCtl.CreateDiscordRole)
 
 	// Module-related
 	module := api.Group("/module")
 	module.GET("/list", moduleCtl.ListModules)
+	module.GET("/id/:id", moduleCtl.GetModuleByID)
+	module.GET("/", moduleCtl.GetModuleByName)
 	module.POST("/on-off", moduleCtl.ActivateOrDisableModule)
 
 	port := fmt.Sprintf(":%s", config.Port)

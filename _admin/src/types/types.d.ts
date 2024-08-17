@@ -77,4 +77,13 @@ export type IBackendModuleType = {
   IsActivated: ModuleActivation;
 };
 
-export {};
+export interface IReactionRoleMessagePayload {
+  guildId: string;
+  channelId: string;
+  messageId: string;
+  detail: {
+    message: string;
+    embedTitle: string;
+    embedDescription: string;
+  };
+}

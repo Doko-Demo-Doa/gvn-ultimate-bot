@@ -10,6 +10,8 @@ type ModuleRepo interface {
 	ListModules() ([]*models.AppModule, error)
 	ActivateOrDisableModule(id uint, newStatus uint8) (*models.AppModule, error)
 	CreateModule(name string, label string, activated uint8) (*models.AppModule, error)
+	GetModuleByID(id uint) (*models.AppModule, error)
+	GetModuleByName(name string) (*models.AppModule, error)
 	UpdateModuleConfig(id uint, newConfig string) (*models.AppModule, error)
 }
 
@@ -37,6 +39,24 @@ func (mr *moduleRepo) CreateModule(name string, label string, activated uint8) (
 
 	if err := mr.db.Create(&module).Error; err != nil {
 		return &module, nil
+	}
+
+	return nil, nil
+}
+
+func (mr *moduleRepo) GetModuleByID(id uint) (*models.AppModule, error) {
+	var module *models.AppModule
+	if err := mr.db.Where("id = ?", id).First(&module).Error; err == nil {
+		return module, err
+	}
+
+	return nil, nil
+}
+
+func (mr *moduleRepo) GetModuleByName(name string) (*models.AppModule, error) {
+	var module *models.AppModule
+	if err := mr.db.Where("module_name = ?", name).First(&module).Error; err == nil {
+		return module, err
 	}
 
 	return nil, nil

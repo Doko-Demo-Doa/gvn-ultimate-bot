@@ -9,6 +9,8 @@ type ModuleService interface {
 	ActivateOrDisableModule(id uint, newStatus uint8) (*models.AppModule, error)
 	ListModules() ([]*models.AppModule, error)
 	CreateModule(name string, label string, activated uint8) (*models.AppModule, error)
+	GetModuleByID(id uint) (*models.AppModule, error)
+	GetModuleByName(name string) (*models.AppModule, error)
 }
 
 type moduleService struct {
@@ -33,6 +35,24 @@ func (ms *moduleService) ActivateOrDisableModule(id uint, newStatus uint8) (*mod
 func (ms *moduleService) CreateModule(name string, label string, activated uint8) (*models.AppModule, error) {
 	module, err := ms.Repo.CreateModule(name, label, activated)
 
+	if err != nil {
+		return nil, err
+	}
+
+	return module, nil
+}
+
+func (ms *moduleService) GetModuleByID(id uint) (*models.AppModule, error) {
+	module, err := ms.Repo.GetModuleByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return module, nil
+}
+
+func (ms *moduleService) GetModuleByName(name string) (*models.AppModule, error) {
+	module, err := ms.Repo.GetModuleByName(name)
 	if err != nil {
 		return nil, err
 	}
