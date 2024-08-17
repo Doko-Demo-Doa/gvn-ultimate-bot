@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { customApiClient } from "~/datasource/rest/api-client";
-import { IPinModuleInput } from "~/types/payload";
+import { IModuleConfigInput } from "~/types/payload";
 import { IBackendModuleType, BackendResponseType } from "~/types/types";
 
 export const ModuleActivationStatus = {
@@ -12,10 +12,6 @@ type Params = {
   module_id: number;
   is_activated: number; // 0 = disabled, 1 = enabled
 };
-
-customApiClient.init({
-  baseUrl: process.env.NEXT_PUBLIC_BASE_API_URL || "",
-});
 
 export function useAppModules() {
   return useQuery({
@@ -33,7 +29,7 @@ export function useAppModule(id: number) {
     queryKey: ["module-dautovn", id],
     queryFn: async () => {
       const resp: BackendResponseType<IBackendModuleType> =
-        await customApiClient.get(`/module/${id}`, {});
+        await customApiClient.get(`/module/id/${id}`, {});
       return resp;
     },
   });
@@ -48,10 +44,14 @@ export function useAppModuleEnabler() {
   });
 }
 
-export function usePinThresholdMutation() {
+export function useModuleConfigMutation() {
   return useMutation({
-    mutationFn: async (params: IPinModuleInput) => {
-      const resp = await customApiClient.post("/module/update-config", params);
+    mutationFn: async (params: IModuleConfigInput) => {
+      const payload = {
+        module_id: params.module_id,
+        new_config: JSON.stringify(params.new_config),
+      };
+      const resp = await customApiClient.post("/module/update-config", payload);
       return resp;
     },
   });

@@ -15,12 +15,18 @@ import * as classes from "./master-layout.css";
 import { usePathname } from "next/navigation";
 import { useAppModules } from "~/hooks/api-hooks";
 import { BotModuleConst } from "~/common/bot-module-const";
+import { customApiClient } from "~/datasource/rest/api-client";
 
 interface Props {
   title?: string;
   description?: string;
   children?: React.ReactNode;
 }
+
+// We have to init twice, one for client and one for server
+customApiClient.init({
+  baseUrl: process.env.NEXT_PUBLIC_BASE_API_URL || "",
+});
 
 const MasterLayout: React.FC<Props> = ({ children }) => {
   const [opened] = useDisclosure();
