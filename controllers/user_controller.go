@@ -6,10 +6,12 @@ import (
 	"doko/gvn-ultimate-bot/services/userservice"
 	"errors"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/resend/resend-go/v2"
 )
 
 type UserInput struct {
@@ -54,7 +56,6 @@ func NewUserController(
 	}
 }
 
-// ForgotPassword implements UserController
 func (ctl *userController) ForgotPassword(c *gin.Context) {
 	var input UserInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -62,12 +63,28 @@ func (ctl *userController) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	_, err := ctl.us.InitiateResetPassowrd(input.Email)
+	resetToken, err := ctl.us.InitiateResetPassword(input.Email)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	// Send the email:
+	resendApiKey := os.Getenv("RESEND_API_KEY")
+	client := resend.NewClient(resendApiKey)
+	params := &resend.SendEmailRequest{
+		To:      []string{"input.Email"},
+		Text:    "Reset your password. Token is: " + resetToken,
+		Subject: "Reset your password",
+	}
+
+	sent, err := client.Emails.Send(params)
+
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 	}
 
-	HTTPRes(c, http.StatusOK, "Email sent", nil)
+	HTTPRes(c, http.StatusOK, "Email sent", sent.Id)
 }
 
 // GetByID implements UserController
@@ -170,7 +187,6 @@ func (ctl *userController) Register(c *gin.Context) {
 	}
 }
 
-// ResetPassword implements UserController
 func (ctl *userController) ResetPassword(c *gin.Context) {
 	var input UserInput
 	if err := c.ShouldBindJSON(&input); err != nil {

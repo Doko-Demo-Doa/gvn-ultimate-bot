@@ -5,4 +5,4 @@ $target = "$curr\$tempdir"
 
 $env:GOTMPDIR = $target
 $env:GO111MODULE = "on"
-go run main.go
+go build main.go
