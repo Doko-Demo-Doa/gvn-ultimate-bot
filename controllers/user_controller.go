@@ -31,6 +31,11 @@ type UserUpdateInput struct {
 	Email string `json:"email"`
 }
 
+type PasswordResetTokenOutput struct {
+	Token string `json:"token"`
+	Email string `json:"email"`
+}
+
 type UserController interface {
 	Register(*gin.Context)
 	Login(*gin.Context)
@@ -79,13 +84,18 @@ func (ctl *userController) ForgotPassword(c *gin.Context) {
 		Subject: "Reset your password",
 	}
 
-	sent, err := client.Emails.Send(params)
+	_, err = client.Emails.Send(params)
 
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 	}
 
-	HTTPRes(c, http.StatusOK, "Email sent", sent.Id)
+	resp := PasswordResetTokenOutput{
+		Token: resetToken,
+		Email: input.Email,
+	}
+
+	HTTPRes(c, http.StatusOK, "Email sent", resp)
 }
 
 // GetByID implements UserController

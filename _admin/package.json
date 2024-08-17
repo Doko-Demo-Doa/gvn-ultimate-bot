@@ -14,6 +14,7 @@
     "@emotion/server": "^11.11.0",
     "@mantine/core": "^7.12.1",
     "@mantine/hooks": "^7.12.1",
+    "@react-email/components": "0.0.22",
     "@tabler/icons-react": "^3.12.0",
     "@tanstack/react-query": "^5.51.23",
     "@types/node": "^22.4.0",
@@ -26,6 +27,8 @@
     "querystringify-ts": "^0.1.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-email": "2.1.6",
+    "resend": "^4.0.0",
     "typescript": "^5.5.4",
     "zustand": "^4.5.5"
   },
