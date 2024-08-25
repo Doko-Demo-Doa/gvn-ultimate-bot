@@ -7,7 +7,8 @@ export const embedPreviewContainer = style({
 });
 
 export const groupWrapper = style({
-  borderLeft: `2px solid ${vars.colors.red[6]}`,
+  borderLeftWidth: `2px solid`,
+  borderLeftStyle: "solid",
   paddingLeft: rem(vars.spacing.md),
 });
 
