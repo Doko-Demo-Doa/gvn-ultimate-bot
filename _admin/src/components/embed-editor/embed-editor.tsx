@@ -21,6 +21,7 @@ import { IconPencil, IconPlus, IconSun } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import * as classes from "./embed-editor.css";
 import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 interface Props {
   messageId: string;
@@ -32,14 +33,15 @@ interface IFormData {
   headerMessage: string;
   titleMessage: string;
   embedMainMessage: string;
-  customFields: Array<{ fieldName: string; fieldValue: string }>;
+  customFields: Array<{ id: string; fieldName: string; fieldValue: string }>;
 }
+
+const MAX_CUSTOM_FIELDS = 5;
 
 // https://github.com/skyra-project/discord-components
 const EmbedEditor: React.FC<Props> = () => {
   const [embedEnabled, setEmbedEnabled] = useState(true);
   const [value, setValue] = useState("emoji");
-
   const [files, setFiles] = useState<File[]>([]);
 
   const form = useForm<IFormData>({
@@ -50,13 +52,21 @@ const EmbedEditor: React.FC<Props> = () => {
       headerMessage: "",
       titleMessage: "",
       embedMainMessage: "",
-      customFields: [],
+      customFields: [
+        {
+          id: uuidv4(),
+          fieldName: "",
+          fieldValue: "",
+        },
+      ],
     },
   });
 
   const handleSubmit = (values: typeof form.values) => {
     console.log(values);
   };
+
+  const cFields = form.getValues().customFields;
 
   return (
     <form onSubmit={form.onSubmit((values) => handleSubmit(values))}>
@@ -134,8 +144,14 @@ const EmbedEditor: React.FC<Props> = () => {
                   </Group>
                   <Group>
                     <Stack>
-                      <TextInput placeholder="Title" />
-                      <Textarea placeholder="Main message" />
+                      <TextInput
+                        placeholder="Title"
+                        {...form.getInputProps("titleMessage")}
+                      />
+                      <Textarea
+                        placeholder="Main content"
+                        {...form.getInputProps("embedMainMessage")}
+                      />
                     </Stack>
 
                     <Image
@@ -147,8 +163,8 @@ const EmbedEditor: React.FC<Props> = () => {
                     />
                   </Group>
 
-                  {[1].map((i, n) => (
-                    <Fieldset key={i} legend={`Custom field ${i}`} disabled>
+                  {cFields.map((n, i) => (
+                    <Fieldset key={n.id} legend={`Custom field ${i + 1}`}>
                       <TextInput placeholder="Field name" />
                       <TextInput placeholder="Field value" mt="md" />
                     </Fieldset>
@@ -156,6 +172,17 @@ const EmbedEditor: React.FC<Props> = () => {
                   <Button
                     leftSection={<IconPlus size={14} />}
                     variant="default"
+                    disabled={cFields.length >= MAX_CUSTOM_FIELDS}
+                    onClick={() => {
+                      if (form.values.customFields.length >= MAX_CUSTOM_FIELDS)
+                        return;
+
+                      form.insertListItem("customFields", {
+                        id: uuidv4(),
+                        fieldName: "",
+                        fieldValue: "",
+                      });
+                    }}
                   >
                     Add new field
                   </Button>
@@ -171,7 +198,13 @@ const EmbedEditor: React.FC<Props> = () => {
                       }}
                       accept="image/png,image/jpeg"
                     >
-                      {(props) => <Avatar radius="xl" {...props} />}
+                      {(props) => (
+                        <Avatar
+                          styles={{ root: { cursor: "pointer" } }}
+                          radius="xl"
+                          {...props}
+                        />
+                      )}
                     </FileButton>
 
                     <TextInput placeholder="Footer" />
