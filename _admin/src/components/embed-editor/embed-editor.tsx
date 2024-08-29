@@ -6,6 +6,7 @@ import {
   ColorPicker,
   Divider,
   Fieldset,
+  FileButton,
   Group,
   Image,
   Popover,
@@ -25,12 +26,23 @@ interface Props {
   messageId: string;
 }
 
+interface IFormData {
+  color: string;
+  mainMessage: string;
+  headerMessage: string;
+  titleMessage: string;
+  embedMainMessage: string;
+  customFields: Array<{ fieldName: string; fieldValue: string }>;
+}
+
 // https://github.com/skyra-project/discord-components
 const EmbedEditor: React.FC<Props> = () => {
   const [embedEnabled, setEmbedEnabled] = useState(true);
   const [value, setValue] = useState("emoji");
 
-  const form = useForm({
+  const [files, setFiles] = useState<File[]>([]);
+
+  const form = useForm<IFormData>({
     mode: "uncontrolled",
     initialValues: {
       color: "#fff",
@@ -38,117 +50,143 @@ const EmbedEditor: React.FC<Props> = () => {
       headerMessage: "",
       titleMessage: "",
       embedMainMessage: "",
+      customFields: [],
     },
   });
 
+  const handleSubmit = (values: typeof form.values) => {
+    console.log(values);
+  };
+
   return (
-    <Stack>
+    <form onSubmit={form.onSubmit((values) => handleSubmit(values))}>
       <Stack>
-        <Text>1. Create a message</Text>
-        <TextInput
-          width={500}
-          placeholder="Write your message here!"
-          {...form.getInputProps("mainMessage")}
-        />
-      </Stack>
+        <Stack>
+          <Text>1. Create a message</Text>
+          <TextInput
+            width={500}
+            placeholder="Write your message here!"
+            {...form.getInputProps("mainMessage")}
+          />
+        </Stack>
 
-      <Space h="lg" />
+        <Space h="lg" />
 
-      <Stack>
-        <Text>2. Add reactions</Text>
+        <Stack>
+          <Text>2. Add reactions</Text>
 
-        <SegmentedControl
-          value={value}
-          onChange={setValue}
-          className={classes.segmented}
-          data={[
-            { label: "Emoji", value: "emoji" },
-            { label: "Button", value: "button" },
-            { label: "Dropdown", value: "dropdown" },
-          ]}
-        />
-      </Stack>
+          <SegmentedControl
+            value={value}
+            onChange={setValue}
+            className={classes.segmented}
+            data={[
+              { label: "Emoji", value: "emoji" },
+              { label: "Button", value: "button" },
+              { label: "Dropdown", value: "dropdown" },
+            ]}
+          />
+        </Stack>
 
-      {embedEnabled && (
-        <Group align="start">
-          <Stack>
-            <Popover
-              closeOnClickOutside
-              position="bottom"
-              withArrow
-              shadow="md"
-            >
-              <Popover.Target>
-                <ActionIcon color="red.6" size="lg" variant="outline">
-                  <IconSun size="1rem" />
-                </ActionIcon>
-              </Popover.Target>
+        {embedEnabled && (
+          <Group align="start">
+            <Stack>
+              <Popover
+                closeOnClickOutside
+                position="bottom"
+                withArrow
+                shadow="md"
+              >
+                <Popover.Target>
+                  <ActionIcon color="red.6" size="lg" variant="outline">
+                    <IconSun size="1rem" />
+                  </ActionIcon>
+                </Popover.Target>
 
-              <Popover.Dropdown>
-                <ColorPicker
-                  format="hex"
-                  {...form.getInputProps("color")}
-                  onChange={(newColor) => form.setFieldValue("color", newColor)}
-                />
-              </Popover.Dropdown>
-            </Popover>
-
-            <ActionIcon color="blue" size="lg" variant="outline">
-              <IconPencil size="1rem" />
-            </ActionIcon>
-          </Stack>
-
-          <Stack>
-            <Group
-              align="start"
-              className={classes.groupWrapper}
-              style={{ borderLeftColor: form.getValues().color }}
-            >
-              <Stack>
-                <Group>
-                  <Avatar radius="xl" />
-                  <TextInput
-                    placeholder="Header"
-                    {...form.getInputProps("headerMessage")}
+                <Popover.Dropdown>
+                  <ColorPicker
+                    format="hex"
+                    {...form.getInputProps("color")}
+                    onChange={(newColor) =>
+                      form.setFieldValue("color", newColor)
+                    }
                   />
-                </Group>
-                <Group>
-                  <Stack>
-                    <TextInput placeholder="Title" />
-                    <Textarea placeholder="Main message" />
-                  </Stack>
+                </Popover.Dropdown>
+              </Popover>
 
-                  <Image
-                    radius="md"
-                    h={100}
-                    w="auto"
-                    fit="contain"
-                    src="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-9.png"
-                  />
-                </Group>
+              <ActionIcon color="blue" size="lg" variant="outline">
+                <IconPencil size="1rem" />
+              </ActionIcon>
+            </Stack>
 
-                {[1].map((i, n) => (
-                  <Fieldset key={i} legend={`Custom field ${i}`} disabled>
-                    <TextInput placeholder="Field name" />
-                    <TextInput placeholder="Field value" mt="md" />
-                  </Fieldset>
-                ))}
-                <Button leftSection={<IconPlus size={14} />} variant="default">
-                  Add new field
-                </Button>
+            <Stack>
+              <Group
+                align="start"
+                className={classes.groupWrapper}
+                style={{ borderLeftColor: form.getValues().color }}
+              >
+                <Stack>
+                  <Group>
+                    <Avatar radius="xl" />
+                    <TextInput
+                      placeholder="Header"
+                      {...form.getInputProps("headerMessage")}
+                    />
+                  </Group>
+                  <Group>
+                    <Stack>
+                      <TextInput placeholder="Title" />
+                      <Textarea placeholder="Main message" />
+                    </Stack>
 
-                <Divider variant="dotted" my="md" />
+                    <Image
+                      radius="md"
+                      h={100}
+                      w="auto"
+                      fit="contain"
+                      src="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-9.png"
+                    />
+                  </Group>
 
-                <Group>
-                  <Avatar radius="xl" />
-                  <TextInput placeholder="Footer" />
-                </Group>
-              </Stack>
-            </Group>
-          </Stack>
-        </Group>
-      )}
-    </Stack>
+                  {[1].map((i, n) => (
+                    <Fieldset key={i} legend={`Custom field ${i}`} disabled>
+                      <TextInput placeholder="Field name" />
+                      <TextInput placeholder="Field value" mt="md" />
+                    </Fieldset>
+                  ))}
+                  <Button
+                    leftSection={<IconPlus size={14} />}
+                    variant="default"
+                  >
+                    Add new field
+                  </Button>
+
+                  <Divider variant="dotted" my="md" />
+
+                  <Group>
+                    <FileButton
+                      onChange={(f) => {
+                        if (f) {
+                          setFiles([f]);
+                        }
+                      }}
+                      accept="image/png,image/jpeg"
+                    >
+                      {(props) => <Avatar radius="xl" {...props} />}
+                    </FileButton>
+
+                    <TextInput placeholder="Footer" />
+                  </Group>
+                </Stack>
+              </Group>
+
+              <Button variant="gradient" type="submit">
+                Save
+              </Button>
+            </Stack>
+          </Group>
+        )}
+      </Stack>
+    </form>
   );
 };
 
