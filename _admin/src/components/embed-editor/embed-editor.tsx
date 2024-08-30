@@ -25,6 +25,7 @@ import * as classes from "~/components/embed-editor/embed-editor.css";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { UploadDropzone } from "~/utils/uploadthing";
+import { notifications } from "@mantine/notifications";
 
 interface Props {
   messageId: string;
@@ -36,6 +37,7 @@ interface IFormData {
   headerMessage: string;
   titleMessage: string;
   embedMainMessage: string;
+  featuredImage: string;
   customFields: Array<{ id: string; fieldName: string; fieldValue: string }>;
 }
 
@@ -55,6 +57,7 @@ const EmbedEditor: React.FC<Props> = () => {
       headerMessage: "",
       titleMessage: "",
       embedMainMessage: "",
+      featuredImage: "",
       customFields: [
         {
           id: uuidv4(),
@@ -169,13 +172,19 @@ const EmbedEditor: React.FC<Props> = () => {
                       <UploadDropzone
                         endpoint="imageUploader"
                         config={{ mode: "auto" }}
+                        content={{ allowedContent: "image/png,image/jpeg" }}
                         onClientUploadComplete={(res) => {
                           // Do something with the response
-                          console.log("Files: ", res);
                           setMainImageUrl(res[0].url);
                         }}
                         onUploadError={(error: Error) => {
                           // Do something with the error.
+                          console.log("Error Uploadthing: ", error);
+                          notifications.show({
+                            color: "red",
+                            title: "Lỗi",
+                            message: "Không thể upload file này",
+                          });
                         }}
                       />
                     </Box>
