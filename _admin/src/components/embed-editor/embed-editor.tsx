@@ -1,7 +1,9 @@
 // Note: This is a pretty complicated component
 import {
   ActionIcon,
+  AspectRatio,
   Avatar,
+  Box,
   Button,
   ColorPicker,
   Divider,
@@ -19,9 +21,10 @@ import {
 } from "@mantine/core";
 import { IconPencil, IconPlus, IconSun } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
-import * as classes from "./embed-editor.css";
+import * as classes from "~/components/embed-editor/embed-editor.css";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { UploadDropzone } from "~/utils/uploadthing";
 
 interface Props {
   messageId: string;
@@ -40,9 +43,9 @@ const MAX_CUSTOM_FIELDS = 5;
 
 // https://github.com/skyra-project/discord-components
 const EmbedEditor: React.FC<Props> = () => {
-  const [embedEnabled, setEmbedEnabled] = useState(true);
   const [value, setValue] = useState("emoji");
   const [files, setFiles] = useState<File[]>([]);
+  const [mainImageUrl, setMainImageUrl] = useState("");
 
   const form = useForm<IFormData>({
     mode: "uncontrolled",
@@ -70,7 +73,7 @@ const EmbedEditor: React.FC<Props> = () => {
 
   return (
     <form onSubmit={form.onSubmit((values) => handleSubmit(values))}>
-      <Stack>
+      <Stack className="embed-editor-wrapper">
         <Stack>
           <Text>1. Create a message</Text>
           <TextInput
@@ -97,127 +100,142 @@ const EmbedEditor: React.FC<Props> = () => {
           />
         </Stack>
 
-        {embedEnabled && (
-          <Group align="start">
-            <Stack>
-              <Popover
-                closeOnClickOutside
-                position="bottom"
-                withArrow
-                shadow="md"
-              >
-                <Popover.Target>
-                  <ActionIcon color="red.6" size="lg" variant="outline">
-                    <IconSun size="1rem" />
-                  </ActionIcon>
-                </Popover.Target>
+        <Group align="stretch" className="main-area">
+          <Stack>
+            <Popover
+              closeOnClickOutside
+              position="bottom"
+              withArrow
+              shadow="md"
+            >
+              <Popover.Target>
+                <ActionIcon color="red.6" size="lg" variant="outline">
+                  <IconSun size="1rem" />
+                </ActionIcon>
+              </Popover.Target>
 
-                <Popover.Dropdown>
-                  <ColorPicker
-                    format="hex"
-                    {...form.getInputProps("color")}
-                    onChange={(newColor) =>
-                      form.setFieldValue("color", newColor)
-                    }
+              <Popover.Dropdown>
+                <ColorPicker
+                  format="hex"
+                  {...form.getInputProps("color")}
+                  onChange={(newColor) => form.setFieldValue("color", newColor)}
+                />
+              </Popover.Dropdown>
+            </Popover>
+
+            <ActionIcon color="blue" size="lg" variant="outline">
+              <IconPencil size="1rem" />
+            </ActionIcon>
+          </Stack>
+
+          <Stack className={classes.rightArea}>
+            <Group
+              align="start"
+              className={classes.groupWrapper}
+              style={{ borderLeftColor: form.getValues().color }}
+            >
+              <Stack className={classes.mainEmbedEditorArea}>
+                <Group>
+                  <Avatar radius="xl" />
+                  <TextInput
+                    placeholder="Header"
+                    {...form.getInputProps("headerMessage")}
                   />
-                </Popover.Dropdown>
-              </Popover>
-
-              <ActionIcon color="blue" size="lg" variant="outline">
-                <IconPencil size="1rem" />
-              </ActionIcon>
-            </Stack>
-
-            <Stack>
-              <Group
-                align="start"
-                className={classes.groupWrapper}
-                style={{ borderLeftColor: form.getValues().color }}
-              >
-                <Stack>
-                  <Group>
-                    <Avatar radius="xl" />
+                </Group>
+                <Group className={classes.titleAndMainContentArea}>
+                  <Stack className={classes.titleAndMainText}>
                     <TextInput
-                      placeholder="Header"
-                      {...form.getInputProps("headerMessage")}
+                      placeholder="Title"
+                      {...form.getInputProps("titleMessage")}
                     />
-                  </Group>
-                  <Group>
-                    <Stack>
-                      <TextInput
-                        placeholder="Title"
-                        {...form.getInputProps("titleMessage")}
-                      />
-                      <Textarea
-                        placeholder="Main content"
-                        {...form.getInputProps("embedMainMessage")}
-                      />
-                    </Stack>
-
-                    <Image
-                      radius="md"
-                      h={100}
-                      w="auto"
-                      fit="contain"
-                      src="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/images/bg-9.png"
+                    <Textarea
+                      placeholder="Main content"
+                      maxRows={9}
+                      autosize
+                      {...form.getInputProps("embedMainMessage")}
                     />
-                  </Group>
+                  </Stack>
 
-                  {cFields.map((n, i) => (
-                    <Fieldset key={n.id} legend={`Custom field ${i + 1}`}>
-                      <TextInput placeholder="Field name" />
-                      <TextInput placeholder="Field value" mt="md" />
-                    </Fieldset>
-                  ))}
-                  <Button
-                    leftSection={<IconPlus size={14} />}
-                    variant="default"
-                    disabled={cFields.length >= MAX_CUSTOM_FIELDS}
-                    onClick={() => {
-                      if (form.values.customFields.length >= MAX_CUSTOM_FIELDS)
-                        return;
+                  <AspectRatio className={classes.mainImageWrapper}>
+                    {mainImageUrl && (
+                      <Image
+                        h={250}
+                        className={classes.mainImage}
+                        w="100%"
+                        src={mainImageUrl}
+                      />
+                    )}
+                    <Box className={classes.uploadBoxWrapper}>
+                      <UploadDropzone
+                        endpoint="imageUploader"
+                        config={{ mode: "auto" }}
+                        onClientUploadComplete={(res) => {
+                          // Do something with the response
+                          console.log("Files: ", res);
+                          setMainImageUrl(res[0].url);
+                        }}
+                        onUploadError={(error: Error) => {
+                          // Do something with the error.
+                        }}
+                      />
+                    </Box>
+                  </AspectRatio>
+                </Group>
 
-                      form.insertListItem("customFields", {
-                        id: uuidv4(),
-                        fieldName: "",
-                        fieldValue: "",
-                      });
+                {cFields.map((n, i) => (
+                  <Fieldset key={n.id} legend={`Custom field ${i + 1}`}>
+                    <TextInput placeholder="Field name" />
+                    <TextInput placeholder="Field value" mt="md" />
+                  </Fieldset>
+                ))}
+                <Button
+                  leftSection={<IconPlus size={14} />}
+                  variant="default"
+                  disabled={cFields.length >= MAX_CUSTOM_FIELDS}
+                  onClick={() => {
+                    if (form.values.customFields.length >= MAX_CUSTOM_FIELDS)
+                      return;
+
+                    form.insertListItem("customFields", {
+                      id: uuidv4(),
+                      fieldName: "",
+                      fieldValue: "",
+                    });
+                  }}
+                >
+                  Add new field
+                </Button>
+
+                <Divider variant="dotted" my="md" />
+
+                <Group>
+                  <FileButton
+                    onChange={(f) => {
+                      if (f) {
+                        setFiles([f]);
+                      }
                     }}
+                    accept="image/png,image/jpeg"
                   >
-                    Add new field
-                  </Button>
+                    {(props) => (
+                      <Avatar
+                        styles={{ root: { cursor: "pointer" } }}
+                        radius="xl"
+                        {...props}
+                      />
+                    )}
+                  </FileButton>
 
-                  <Divider variant="dotted" my="md" />
+                  <TextInput placeholder="Footer" />
+                </Group>
+              </Stack>
+            </Group>
 
-                  <Group>
-                    <FileButton
-                      onChange={(f) => {
-                        if (f) {
-                          setFiles([f]);
-                        }
-                      }}
-                      accept="image/png,image/jpeg"
-                    >
-                      {(props) => (
-                        <Avatar
-                          styles={{ root: { cursor: "pointer" } }}
-                          radius="xl"
-                          {...props}
-                        />
-                      )}
-                    </FileButton>
-
-                    <TextInput placeholder="Footer" />
-                  </Group>
-                </Stack>
-              </Group>
-
-              <Button variant="gradient" type="submit">
-                Save
-              </Button>
-            </Stack>
-          </Group>
-        )}
+            <Button variant="gradient" type="submit">
+              Save
+            </Button>
+          </Stack>
+        </Group>
       </Stack>
     </form>
   );

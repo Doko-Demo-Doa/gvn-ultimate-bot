@@ -17,6 +17,8 @@ import { useAppModules } from "~/hooks/api-hooks";
 import { BotModuleConst } from "~/common/bot-module-const";
 import { customApiClient } from "~/datasource/rest/api-client";
 
+import "@uploadthing/react/styles.css";
+
 interface Props {
   title?: string;
   description?: string;
