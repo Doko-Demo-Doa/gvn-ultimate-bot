@@ -173,6 +173,15 @@ const EmbedEditor: React.FC<Props> = () => {
                         endpoint="imageUploader"
                         config={{ mode: "auto" }}
                         content={{ allowedContent: "image/png,image/jpeg" }}
+                        onBeforeUploadBegin={(files) => {
+                          // Preprocess files before uploading (e.g. rename them)
+                          return files.map(
+                            (f) =>
+                              new File([f], "temp-" + f.name, {
+                                type: f.type,
+                              })
+                          );
+                        }}
                         onClientUploadComplete={(res) => {
                           // Do something with the response
                           setMainImageUrl(res[0].url);
