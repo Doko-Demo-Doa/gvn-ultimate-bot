@@ -38,7 +38,31 @@ func (dr *discordService) ListRoles() ([]*models.DiscordRole, error) {
 	return dr.Repo.ListRoles()
 }
 
-// RemoveRole implements DiscordService
 func (*discordService) RemoveRole(email uint) (*models.DiscordRole, error) {
 	panic("unimplemented")
+}
+
+// ################# For DiscordRoleReactionEmbed #################
+
+type DiscordRoleReactionEmbedService interface {
+	ListEmbeds() ([]*models.DiscordRoleReactionEmbed, error)
+}
+
+type discordRoleReactionEmbedService struct {
+	Repo discordrepos.DiscordRoleReactionEmbedRepo
+}
+
+func NewDiscordRoleReactionEmbedService(repo discordrepos.DiscordRoleReactionEmbedRepo) DiscordRoleReactionEmbedService {
+	return &discordRoleReactionEmbedService{
+		Repo: repo,
+	}
+}
+
+// ListEmbeds implements DiscordRoleReactionEmbedService.
+func (d *discordRoleReactionEmbedService) ListEmbeds() ([]*models.DiscordRoleReactionEmbed, error) {
+	return d.Repo.ListRoleReactionEmbeds()
+}
+
+func (dr *discordService) UpsertEmbed(r *models.DiscordRole) (*models.DiscordRole, error) {
+	return dr.Repo.CreateRole(r)
 }
