@@ -5,7 +5,8 @@ import (
 	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
 )
 
-// Interface for DiscordService
+// ################# For DiscordRole #################
+
 type DiscordService interface {
 	// Listing the roles as DiscordRole model array
 	ListRoles() ([]*models.DiscordRole, error)
