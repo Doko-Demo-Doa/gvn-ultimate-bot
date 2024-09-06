@@ -125,10 +125,6 @@ const EmbedEditor: React.FC<Props> = () => {
                 />
               </Popover.Dropdown>
             </Popover>
-
-            <ActionIcon color="blue" size="lg" variant="outline">
-              <IconPencil size="1rem" />
-            </ActionIcon>
           </Stack>
 
           <Stack className={classes.rightArea}>

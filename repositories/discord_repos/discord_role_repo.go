@@ -13,6 +13,7 @@ type DiscordRoleRepo interface {
 	UnassignRole(user models.DiscordUser, fromRole models.DiscordRole) (*models.DiscordUserRole, error) // For history
 	CreateRole(role *models.DiscordRole) (*models.DiscordRole, error)                                   // Actually upsert
 	EditRole(role *models.DiscordRole) (*models.DiscordRole, error)
+	ListRoles() ([]*models.DiscordRole, error)
 }
 
 type discordRoleRepo struct {
@@ -72,4 +73,13 @@ func (dr *discordRoleRepo) GetByNativeID(nativeId string) (*models.DiscordRole, 
 	}
 
 	return &r, nil
+}
+
+func (dr *discordRoleRepo) ListRoles() ([]*models.DiscordRole, error) {
+	var roles []*models.DiscordRole
+	if err := dr.db.Find(&roles).Error; err != nil {
+		return roles, err
+	}
+
+	return roles, nil
 }

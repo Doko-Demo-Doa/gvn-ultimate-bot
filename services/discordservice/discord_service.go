@@ -34,9 +34,8 @@ func (dr *discordService) EditRole(r *models.DiscordRole) (*models.DiscordRole, 
 	return dr.Repo.EditRole(r)
 }
 
-// ListRoles implements DiscordService
-func (*discordService) ListRoles() ([]*models.DiscordRole, error) {
-	panic("unimplemented")
+func (dr *discordService) ListRoles() ([]*models.DiscordRole, error) {
+	return dr.Repo.ListRoles()
 }
 
 // RemoveRole implements DiscordService
