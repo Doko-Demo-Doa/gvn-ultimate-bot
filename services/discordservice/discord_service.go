@@ -20,7 +20,7 @@ type discordService struct {
 	Repo discordrepos.DiscordRoleRepo
 }
 
-func NewDiscordService(repo discordrepos.DiscordRoleRepo) DiscordService {
+func NewDiscordRoleService(repo discordrepos.DiscordRoleRepo) DiscordService {
 	return &discordService{
 		Repo: repo,
 	}

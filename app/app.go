@@ -67,7 +67,7 @@ func Run() {
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	moduleService := moduleservice.NewModuleService(moduleRepo)
 	authService := authservice.NewAuthService(config.JWTSecret)
-	discordService := discordservice.NewDiscordService(discordRepo)
+	discordRoleService := discordservice.NewDiscordRoleService(discordRepo)
 
 	// Seeding modules
 	mModules, _ := moduleService.ListModules()
@@ -86,7 +86,7 @@ func Run() {
 	// Setup controllers
 	userCtrl := controllers.NewUserController(userService, authService)
 	moduleCtl := controllers.NewModuleController(moduleService)
-	discordCtl := controllers.NewDiscordController(discordService)
+	discordRoleCtl := controllers.NewDiscordController(discordRoleService)
 
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
@@ -117,8 +117,8 @@ func Run() {
 	// Discord-related APIs
 	discord := api.Group("/discord")
 
-	discord.GET("/role/list", discordCtl.ListDiscordRoles)
-	discord.POST("/role/create", discordCtl.CreateDiscordRole)
+	discord.GET("/role/list", discordRoleCtl.ListDiscordRoles)
+	discord.POST("/role/create", discordRoleCtl.CreateDiscordRole)
 
 	// Module-related
 	module := api.Group("/module")
@@ -141,7 +141,7 @@ func Run() {
 
 	go func() {
 		// Bot setup
-		bot.Bootstrap(db, discordService, moduleService)
+		bot.Bootstrap(db, discordRoleService, moduleService)
 		wg.Done()
 	}()
 
