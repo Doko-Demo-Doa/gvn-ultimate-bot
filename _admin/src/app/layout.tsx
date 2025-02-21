@@ -1,14 +1,18 @@
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/dropzone/styles.css";
-import React from "react";
-import { MantineProvider, ColorSchemeScript } from "@mantine/core";
-import { Notifications } from "@mantine/notifications";
-import { theme } from "../theme";
-import { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import Providers from "~/providers/master-provider";
+import {
+  ColorSchemeScript,
+  MantineProvider,
+  mantineHtmlProps,
+} from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
+import type { Metadata } from "next";
+import type React from "react";
 import { customApiClient } from "~/datasource/rest/api-client";
+import Providers from "~/providers/master-provider";
+import { theme } from "../theme";
 
 export const metadata: Metadata = {
   title: "DautoVN Admin",
@@ -19,10 +23,14 @@ customApiClient.init({
   baseUrl: process.env.NEXT_PUBLIC_BASE_API_URL || "",
 });
 
-export default function RootLayout({ children }: { children: any }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" {...mantineHtmlProps}>
         <head>
           <ColorSchemeScript />
           <link rel="shortcut icon" href="/favicon.svg" />
