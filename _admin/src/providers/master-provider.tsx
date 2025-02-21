@@ -1,11 +1,11 @@
 "use client";
 
 import {
-  isServer,
   QueryClient,
   QueryClientProvider,
+  isServer,
 } from "@tanstack/react-query";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -23,10 +23,9 @@ function getQueryClient() {
   if (isServer) {
     // Server: always make a new query client
     return makeQueryClient();
-  } else {
-    if (!browserQueryClient) browserQueryClient = makeQueryClient();
-    return browserQueryClient;
   }
+  if (!browserQueryClient) browserQueryClient = makeQueryClient();
+  return browserQueryClient;
 }
 
 export default function Providers({ children }: { children: ReactNode }) {

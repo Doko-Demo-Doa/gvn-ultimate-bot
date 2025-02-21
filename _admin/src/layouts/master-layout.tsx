@@ -1,21 +1,21 @@
 "use client";
 
 import { AppShell, Group, Loader, NavLink, Title } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import {
-  IconGitPullRequest,
   IconBrandFramerMotion,
+  IconGitPullRequest,
   IconHistory,
-  IconRosetteFilled,
   IconPin,
+  IconRosetteFilled,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { useDisclosure } from "@mantine/hooks";
 
-import * as classes from "./master-layout.css";
 import { usePathname } from "next/navigation";
-import { useAppModules } from "~/hooks/api-hooks";
 import { BotModuleConst } from "~/common/bot-module-const";
 import { customApiClient } from "~/datasource/rest/api-client";
+import { useAppModules } from "~/hooks/api-hooks";
+import * as classes from "./master-layout.css";
 
 import "@uploadthing/react/styles.css";
 

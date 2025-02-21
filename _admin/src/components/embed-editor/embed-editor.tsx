@@ -16,16 +16,16 @@ import {
   Space,
   Stack,
   Text,
-  Textarea,
   TextInput,
+  Textarea,
 } from "@mantine/core";
-import { IconPencil, IconPlus, IconSun } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
-import * as classes from "~/components/embed-editor/embed-editor.css";
+import { notifications } from "@mantine/notifications";
+import { IconPencil, IconPlus, IconSun } from "@tabler/icons-react";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import * as classes from "~/components/embed-editor/embed-editor.css";
 import { UploadDropzone } from "~/utils/uploadthing";
-import { notifications } from "@mantine/notifications";
 
 interface Props {
   messageId: string;
@@ -173,7 +173,7 @@ const EmbedEditor: React.FC<Props> = () => {
                           // Preprocess files before uploading (e.g. rename them)
                           return files.map(
                             (f) =>
-                              new File([f], "temp-" + f.name, {
+                              new File([f], `temp-${f.name}`, {
                                 type: f.type,
                               })
                           );

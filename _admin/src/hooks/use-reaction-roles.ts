@@ -1,5 +1,5 @@
 export enum ReactionType {
-  Emoji,
-  Button,
-  Dropdown,
+	Emoji = 0,
+	Button = 1,
+	Dropdown = 2,
 }
