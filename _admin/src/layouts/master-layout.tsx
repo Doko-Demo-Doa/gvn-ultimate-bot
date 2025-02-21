@@ -34,23 +34,29 @@ const MasterLayout: React.FC<Props> = ({ children }) => {
   const [opened] = useDisclosure();
 
   return (
-    <AppShell
-      header={{ height: 60 }}
-      navbar={{ width: 300, breakpoint: "sm", collapsed: { mobile: !opened } }}
-      padding="md"
-    >
-      <AppShell.Header>
-        <Group className={classes.header}>
-          <Title order={3}>DautoVN Bot CP</Title>
-        </Group>
-      </AppShell.Header>
+    <>
+      <AppShell
+        header={{ height: 60 }}
+        navbar={{
+          width: 300,
+          breakpoint: "sm",
+          collapsed: { mobile: !opened },
+        }}
+        padding="md"
+      >
+        <AppShell.Header>
+          <Group className={classes.header}>
+            <Title order={3}>DautoVN Bot CP</Title>
+          </Group>
+        </AppShell.Header>
 
-      <AppShell.Navbar px="lg" py="lg">
-        <MainLinks />
-      </AppShell.Navbar>
+        <AppShell.Navbar px="lg" py="lg">
+          <MainLinks />
+        </AppShell.Navbar>
 
-      <AppShell.Main>{children}</AppShell.Main>
-    </AppShell>
+        <AppShell.Main>{children}</AppShell.Main>
+      </AppShell>
+    </>
   );
 };
 

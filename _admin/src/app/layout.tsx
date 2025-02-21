@@ -12,6 +12,7 @@ import type { Metadata } from "next";
 import type React from "react";
 import { customApiClient } from "~/datasource/rest/api-client";
 import Providers from "~/providers/master-provider";
+
 import { theme } from "../theme";
 
 export const metadata: Metadata = {
