@@ -88,3 +88,9 @@ export interface IReactionRoleMessagePayload {
     embedDescription: string;
   };
 }
+
+declare namespace NodeJS {
+  interface ProcessEnv {
+    DISCORD_GUILD_ID: string;
+  }
+}

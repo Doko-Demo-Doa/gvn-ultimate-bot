@@ -9,6 +9,7 @@ import {
   Divider,
   Fieldset,
   FileButton,
+  Flex,
   Group,
   Image,
   Popover,
@@ -21,27 +22,42 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
-import { IconPencil, IconPlus, IconSun } from "@tabler/icons-react";
+import { IconPlus, IconSun, IconTrashFilled } from "@tabler/icons-react";
+import { zodResolver } from "mantine-form-zod-resolver";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 import * as classes from "~/components/embed-editor/embed-editor.css";
+import { vars } from "~/theme";
 import { UploadDropzone } from "~/utils/uploadthing";
 
 interface Props {
   messageId: string;
 }
 
-interface IFormData {
-  color: string;
-  mainMessage: string;
-  headerMessage: string;
-  titleMessage: string;
-  embedMainMessage: string;
-  featuredImage: string;
-  customFields: Array<{ id: string; fieldName: string; fieldValue: string }>;
-}
-
 const MAX_CUSTOM_FIELDS = 5;
+
+const schema = z.object({
+  color: z.string().optional(),
+  mainMessage: z.string().optional(),
+  headerMessage: z.string().optional(),
+  footerMessage: z.string().optional(),
+  titleMessage: z.string().optional(),
+  embedMainMessage: z.string().optional(),
+  featuredImage: z.string().optional(),
+  customFields: z
+    .array(
+      z.object({
+        id: z.string(),
+        fieldName: z.string(),
+        fieldValue: z.string(),
+      }),
+    )
+    .max(MAX_CUSTOM_FIELDS),
+  arrowPickingUpRoleFromMultipleReactions: z.boolean().optional(),
+});
+
+type IFormData = z.infer<typeof schema>;
 
 // https://github.com/skyra-project/discord-components
 const EmbedEditor: React.FC<Props> = () => {
@@ -55,6 +71,7 @@ const EmbedEditor: React.FC<Props> = () => {
       color: "#fff",
       mainMessage: "",
       headerMessage: "",
+      footerMessage: "",
       titleMessage: "",
       embedMainMessage: "",
       featuredImage: "",
@@ -65,7 +82,9 @@ const EmbedEditor: React.FC<Props> = () => {
           fieldValue: "",
         },
       ],
+      arrowPickingUpRoleFromMultipleReactions: true,
     },
+    validate: zodResolver(schema),
   });
 
   const handleSubmit = (values: typeof form.values) => {
@@ -81,7 +100,7 @@ const EmbedEditor: React.FC<Props> = () => {
           <Text>1. Create a message</Text>
           <TextInput
             width={500}
-            placeholder="Write your message here!"
+            placeholder="Write your message here! This will appear above the embed."
             {...form.getInputProps("mainMessage")}
           />
         </Stack>
@@ -97,8 +116,8 @@ const EmbedEditor: React.FC<Props> = () => {
             className={classes.segmented}
             data={[
               { label: "Emoji", value: "emoji" },
-              { label: "Button", value: "button" },
-              { label: "Dropdown", value: "dropdown" },
+              { label: "Button", value: "button", disabled: true },
+              { label: "Dropdown", value: "dropdown", disabled: true },
             ]}
           />
         </Stack>
@@ -134,13 +153,31 @@ const EmbedEditor: React.FC<Props> = () => {
               style={{ borderLeftColor: form.getValues().color }}
             >
               <Stack className={classes.mainEmbedEditorArea}>
-                <Group>
-                  <Avatar radius="xl" />
+                <Flex className={classes.headerFooterFlexWrapper}>
+                  <FileButton
+                    onChange={(f) => {
+                      if (f) {
+                        setFiles([f]);
+                      }
+                    }}
+                    accept="image/png,image/jpeg"
+                  >
+                    {(props) => (
+                      <Avatar
+                        styles={{ root: { cursor: "pointer" } }}
+                        radius="xl"
+                        {...props}
+                      />
+                    )}
+                  </FileButton>
+
                   <TextInput
                     placeholder="Header"
+                    className={classes.headerFooterTextInput}
                     {...form.getInputProps("headerMessage")}
                   />
-                </Group>
+                </Flex>
+
                 <Group className={classes.titleAndMainContentArea}>
                   <Stack className={classes.titleAndMainText}>
                     <TextInput
@@ -150,6 +187,7 @@ const EmbedEditor: React.FC<Props> = () => {
                     <Textarea
                       placeholder="Main content"
                       maxRows={9}
+                      minRows={3}
                       autosize
                       {...form.getInputProps("embedMainMessage")}
                     />
@@ -175,7 +213,7 @@ const EmbedEditor: React.FC<Props> = () => {
                             (f) =>
                               new File([f], `temp-${f.name}`, {
                                 type: f.type,
-                              })
+                              }),
                           );
                         }}
                         onClientUploadComplete={(res) => {
@@ -200,29 +238,41 @@ const EmbedEditor: React.FC<Props> = () => {
                   <Fieldset key={n.id} legend={`Custom field ${i + 1}`}>
                     <TextInput placeholder="Field name" />
                     <TextInput placeholder="Field value" mt="md" />
+                    <Button
+                      leftSection={<IconTrashFilled size={14} />}
+                      color={vars.colors.red[9]}
+                      mt="md"
+                      onClick={() => {
+                        form.removeListItem("customFields", i);
+                      }}
+                    >
+                      Delete field
+                    </Button>
                   </Fieldset>
                 ))}
-                <Button
-                  leftSection={<IconPlus size={14} />}
-                  variant="default"
-                  disabled={cFields.length >= MAX_CUSTOM_FIELDS}
-                  onClick={() => {
-                    if (form.values.customFields.length >= MAX_CUSTOM_FIELDS)
-                      return;
+                {!(cFields.length >= MAX_CUSTOM_FIELDS) && (
+                  <Button
+                    leftSection={<IconPlus size={14} />}
+                    variant="default"
+                    disabled={cFields.length >= MAX_CUSTOM_FIELDS}
+                    onClick={() => {
+                      if (form.values.customFields.length >= MAX_CUSTOM_FIELDS)
+                        return;
 
-                    form.insertListItem("customFields", {
-                      id: uuidv4(),
-                      fieldName: "",
-                      fieldValue: "",
-                    });
-                  }}
-                >
-                  Add new field
-                </Button>
+                      form.insertListItem("customFields", {
+                        id: uuidv4(),
+                        fieldName: "",
+                        fieldValue: "",
+                      });
+                    }}
+                  >
+                    Add new field
+                  </Button>
+                )}
 
                 <Divider variant="dotted" my="md" />
 
-                <Group>
+                <Flex className={classes.headerFooterFlexWrapper}>
                   <FileButton
                     onChange={(f) => {
                       if (f) {
@@ -240,8 +290,12 @@ const EmbedEditor: React.FC<Props> = () => {
                     )}
                   </FileButton>
 
-                  <TextInput placeholder="Footer" />
-                </Group>
+                  <TextInput
+                    placeholder="Footer"
+                    className={classes.headerFooterTextInput}
+                    {...form.getInputProps("footerMessage")}
+                  />
+                </Flex>
               </Stack>
             </Group>
 
