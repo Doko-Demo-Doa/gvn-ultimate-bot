@@ -218,7 +218,7 @@ const EmbedEditor: React.FC<Props> = () => {
                         }}
                         onClientUploadComplete={(res) => {
                           // Do something with the response
-                          setMainImageUrl(res[0].url);
+                          setMainImageUrl(res[0].ufsUrl);
                         }}
                         onUploadError={(error: Error) => {
                           // Do something with the error.
