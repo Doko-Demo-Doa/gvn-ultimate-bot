@@ -59,7 +59,6 @@ func NewDiscordRoleReactionEmbedService(repo discordrepos.DiscordRoleReactionEmb
 	}
 }
 
-// ListEmbeds implements DiscordRoleReactionEmbedService.
 func (d *discordRoleReactionEmbedService) ListEmbeds() ([]*models.DiscordRoleReactionEmbed, error) {
 	return d.Repo.ListRoleReactionEmbeds()
 }

@@ -9,9 +9,9 @@ import (
 type DiscordRoleRepo interface {
 	GetByID(id uint) (*models.DiscordRole, error)
 	GetByNativeID(nativeId string) (*models.DiscordRole, error)
-	AssignRole(user models.DiscordUser, toRole models.DiscordRole) (*models.DiscordUserRole, error)
-	UnassignRole(user models.DiscordUser, fromRole models.DiscordRole) (*models.DiscordUserRole, error) // For history
-	CreateRole(role *models.DiscordRole) (*models.DiscordRole, error)                                   // Actually upsert
+	AssignRole(user *models.DiscordUser, toRole models.DiscordRole) (*models.DiscordUserRole, error)
+	UnassignRole(user *models.DiscordUser, fromRole models.DiscordRole) (*models.DiscordUserRole, error) // For history
+	CreateRole(role *models.DiscordRole) (*models.DiscordRole, error)                                    // Actually upsert
 	EditRole(role *models.DiscordRole) (*models.DiscordRole, error)
 	ListRoles() ([]*models.DiscordRole, error)
 }
@@ -27,12 +27,12 @@ func NewDiscordRoleRepo(db *gorm.DB) DiscordRoleRepo {
 }
 
 // AssignRole implements DiscordRoleRepo
-func (*discordRoleRepo) AssignRole(user models.DiscordUser, toRole models.DiscordRole) (*models.DiscordUserRole, error) {
+func (*discordRoleRepo) AssignRole(user *models.DiscordUser, toRole models.DiscordRole) (*models.DiscordUserRole, error) {
 	panic("unimplemented")
 }
 
 // UnassignRole implements DiscordRoleRepo
-func (*discordRoleRepo) UnassignRole(user models.DiscordUser, fromRole models.DiscordRole) (*models.DiscordUserRole, error) {
+func (*discordRoleRepo) UnassignRole(user *models.DiscordUser, fromRole models.DiscordRole) (*models.DiscordUserRole, error) {
 	panic("unimplemented")
 }
 
