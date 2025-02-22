@@ -47,7 +47,7 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 
 	// Sync the roles into database
 	// Will be disabled when enough data is provided
-	StartRoleSync(s, ds)
+	// StartRoleSync(s, ds)
 
 	// Individual modules
 	availableModules, err := ms.ListModules()

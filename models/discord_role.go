@@ -9,7 +9,7 @@ import (
 type DiscordRole struct {
 	gorm.Model
 	ID           uint
-	NativeId     string     `gorm:"NOT NULL;size:255"`
+	NativeId     string     `gorm:"NOT NULL;unique;size:255"`
 	Name         string     `gorm:"NOT NULL;size:255"`
 	Mentionable  uint       `gorm:"NOT NULL"`
 	Hoist        uint       `gorm:"NOT NULL"`

@@ -26,11 +26,10 @@ func (jsonField *JSONB) Scan(value interface{}) error {
 
 type DiscordRoleReactionEmbed struct {
 	gorm.Model
-	NativeMessageId string `gorm:"NOT NULL;size:255"`
+	NativeMessageId string `gorm:"NOT NULL;unique;size:255"`
 	Name            string `gorm:"NOT NULL;size:128"`
 	Payload         JSONB  `gorm:"NOT NULL;type:jsonb"` // All the data from the embed
 	Tags            string `gorm:"size:512"`
-	IsDeleted       uint   `gorm:"NOT NULL;DEFAULT:0"`
 	Version         uint   `gorm:"NOT NULL;DEFAULT:1"`
 }
 

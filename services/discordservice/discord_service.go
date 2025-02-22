@@ -67,7 +67,11 @@ func (d *discordRoleReactionEmbedService) ListEmbeds() ([]*models.DiscordRoleRea
 }
 
 func (d *discordRoleReactionEmbedService) UpsertEmbed(m *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error) {
-	return d.RoleReactionRepo.Upsert(m)
+	data, err := d.RoleReactionRepo.GetByNativeID(m.NativeMessageId)
+	if err != nil || data == nil {
+		return d.RoleReactionRepo.Create(m)
+	}
+	return d.RoleReactionRepo.Edit(m.ID, m)
 }
 
 func (d *discordRoleReactionEmbedService) GetSingleEmbed(id uint) (*models.DiscordRoleReactionEmbed, error) {

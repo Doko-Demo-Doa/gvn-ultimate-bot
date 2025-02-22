@@ -50,7 +50,7 @@ func Run() {
 	}
 
 	// WARNING: Remember to run this the first time to create tables
-	db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.DiscordRole{}, &models.AppModule{})
+	db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{})
 
 	// Setup common
 	rds := randomstring.NewRandomString()
@@ -118,12 +118,12 @@ func Run() {
 
 	// Discord-related APIs
 	discord := api.Group("/discord")
-
 	discord.GET("/role/list", discordRoleCtl.ListDiscordRoles)
 	discord.POST("/role/create", discordRoleCtl.CreateDiscordRole)
 
 	discord.GET("/role-reaction/list", discordRoleCtl.ListDiscordRoleReactions)
-	discord.GET("/role-reaction/create", discordRoleCtl.ListDiscordRoleReactions)
+	discord.GET("/role-reaction/:id", discordRoleCtl.GetDiscordRoleReaction)
+	discord.POST("/role-reaction/upsert", discordRoleCtl.UpsertDiscordRoleReaction)
 
 	// Module-related
 	module := api.Group("/module")
