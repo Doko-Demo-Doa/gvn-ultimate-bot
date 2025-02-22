@@ -22,11 +22,11 @@ type DiscordRoleInput struct {
 }
 
 type DiscordRoleReactionEmbedInput struct {
-	RoleID  uint   `json:"role_id"`
-	Name    string `json:"name"`
-	Payload string `json:"payload"`
-	Tags    string `json:"tags"`
-	Version uint   `json:"version"`
+	NativeMessageId string `json:"native_message_id"`
+	Name            string `json:"name"`
+	Payload         string `json:"payload"`
+	Tags            string `json:"tags"`
+	Version         uint   `json:"version"`
 }
 
 type DiscordController interface {
@@ -94,16 +94,12 @@ func (ctl *discordController) inputToDiscordRole(input DiscordRoleInput) models.
 }
 
 func (ctl *discordController) inputToDiscordRoleReactionEmbed(input DiscordRoleReactionEmbedInput) models.DiscordRoleReactionEmbed {
-
 	data := models.DiscordRoleReactionEmbed{
-		Name:    input.Name,
-		Tags:    input.Tags,
-		Version: input.Version,
-	}
-
-	err := data.Payload.Scan(input.Payload)
-	if err != nil {
-		return data
+		NativeMessageId: input.NativeMessageId,
+		Name:            input.Name,
+		Tags:            input.Tags,
+		Version:         input.Version,
+		Payload:         input.Payload,
 	}
 
 	return data
