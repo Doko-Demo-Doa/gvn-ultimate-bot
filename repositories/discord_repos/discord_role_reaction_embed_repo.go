@@ -12,6 +12,8 @@ type DiscordRoleReactionEmbedRepo interface {
 	Create(role *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error) // Actually upsert
 	Edit(id uint, role *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error)
 	ListRoleReactionEmbeds() ([]*models.DiscordRoleReactionEmbed, error)
+	Delete(id uint) error
+	Upsert(payload *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error)
 }
 
 type discordRoleReactionEmbedRepo struct {
@@ -44,6 +46,14 @@ func (dr *discordRoleReactionEmbedRepo) Edit(id uint, payload *models.DiscordRol
 
 	dr.db.Save(&r)
 	return &r, nil
+}
+
+func (dr *discordRoleReactionEmbedRepo) Delete(id uint) error {
+	return dr.db.Where("id = ?", id).Delete(&models.DiscordRoleReactionEmbed{}).Error
+}
+
+func (dr *discordRoleReactionEmbedRepo) Upsert(payload *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error) {
+	return dr.Create(payload)
 }
 
 func (dr *discordRoleReactionEmbedRepo) GetByID(id uint) (*models.DiscordRoleReactionEmbed, error) {

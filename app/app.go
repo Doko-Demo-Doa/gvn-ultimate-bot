@@ -62,12 +62,14 @@ func Run() {
 
 	pwdRepo := passwordreset.NewPasswordResetRepo(db)
 	discordRepo := discordrepos.NewDiscordRoleRepo(db)
+	discordRoleReactionEmbedRepo := discordrepos.NewDiscordRoleReactionEmbedRepo(db)
 
 	// Setup services
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	moduleService := moduleservice.NewModuleService(moduleRepo)
 	authService := authservice.NewAuthService(config.JWTSecret)
-	discordRoleService := discordservice.NewDiscordRoleService(discordRepo)
+	discordRoleService := discordservice.NewDiscordRoleService(discordRepo, discordRoleReactionEmbedRepo)
+	discordRoleReactionEmbedService := discordservice.NewDiscordRoleReactionEmbedService(discordRoleReactionEmbedRepo)
 
 	// Seeding modules
 	mModules, _ := moduleService.ListModules()
@@ -86,7 +88,7 @@ func Run() {
 	// Setup controllers
 	userCtrl := controllers.NewUserController(userService, authService)
 	moduleCtl := controllers.NewModuleController(moduleService)
-	discordRoleCtl := controllers.NewDiscordController(discordRoleService)
+	discordRoleCtl := controllers.NewDiscordController(discordRoleService, discordRoleReactionEmbedService)
 
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
@@ -119,6 +121,9 @@ func Run() {
 
 	discord.GET("/role/list", discordRoleCtl.ListDiscordRoles)
 	discord.POST("/role/create", discordRoleCtl.CreateDiscordRole)
+
+	discord.GET("/role-reaction/list", discordRoleCtl.ListDiscordRoleReactions)
+	discord.GET("/role-reaction/create", discordRoleCtl.ListDiscordRoleReactions)
 
 	// Module-related
 	module := api.Group("/module")
