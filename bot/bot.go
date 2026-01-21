@@ -15,12 +15,14 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	AppID     = discord.AppID(mustSnowflakeEnv("DISCORD_APP_ID"))
+	GuildID   = discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
+	BotToken  = os.Getenv("DISCORD_TOKEN")
+	IsWorking = false
+)
+
 func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.ModuleService) {
-	var (
-		AppID    = discord.AppID(mustSnowflakeEnv("DISCORD_APP_ID"))
-		GuildID  = discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
-		BotToken = os.Getenv("DISCORD_TOKEN")
-	)
 
 	s := state.New("Bot " + BotToken)
 	s.AddIntents(gateway.IntentGuilds)
@@ -47,7 +49,10 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 
 	// Sync the roles into database
 	// Will be disabled when enough data is provided
-	// StartRoleSync(s, ds)
+	StartRoleSync(s, ds)
+
+	// Mark the bot as "working"
+	IsWorking = true
 
 	// Individual modules
 	availableModules, err := ms.ListModules()
@@ -58,7 +63,7 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 				RegisterPinModule(s)
 			}
 			if module.ModuleName == "grant_role_module" {
-				RegisterRoleReactModule(s)
+				RegisterRoleReactModule(s, ds)
 			}
 			// TODO: Wip
 			if module.ModuleName == "grant_role_command" {

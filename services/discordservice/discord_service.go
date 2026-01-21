@@ -13,7 +13,7 @@ type DiscordService interface {
 	EditRole(*models.DiscordRole) (*models.DiscordRole, error)
 
 	// This is actually just mark the role as "deleted" (IsDeleted = 1), not actually delete it
-	// UnassignRole(id uint) (*models.DiscordRole, error)
+	UnassignRole(nativeUserId string, roleId uint) (*models.DiscordRole, error)
 }
 
 type discordService struct {
@@ -40,9 +40,10 @@ func (dr *discordService) ListRoles() ([]*models.DiscordRole, error) {
 	return dr.RoleRepo.ListRoles()
 }
 
-// func (dr *discordService) UnassignRole(id uint) (*models.DiscordRole, error) {
-// 	return dr.RoleRepo.UnassignRole(id)
-// }
+func (dr *discordService) UnassignRole(nativeUserId string, roleId uint) (*models.DiscordRole, error) {
+	panic("unimplemented")
+	// return dr.RoleRepo.UnassignRole(nativeUserId, roleId)
+}
 
 // ################# For DiscordRoleReactionEmbed #################
 
