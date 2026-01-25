@@ -1,4 +1,4 @@
-FROM golang:1.23.1
+FROM golang
 
 ENV LOG_LEVEL=info
 ENV GIN_MODE release
