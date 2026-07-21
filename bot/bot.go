@@ -51,6 +51,9 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 	// Will be disabled when enough data is provided
 	StartRoleSync(s, ds)
 
+	// Start background scheduler to remove expired timed roles
+	StartRoleExpirationScheduler(s, ds)
+
 	// Mark the bot as "working"
 	IsWorking = true
 
@@ -67,7 +70,7 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 			}
 			// TODO: Wip
 			if module.ModuleName == "grant_role_command" {
-				RegisterGrantRoleModule(s)
+				RegisterGrantRoleModule(s, ds)
 			}
 		}
 	}

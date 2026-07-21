@@ -1,7 +1,12 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { customApiClient } from "~/datasource/rest/api-client";
 import type { IModuleConfigInput } from "~/types/payload";
-import type { BackendResponseType, IBackendModuleType } from "~/types/types";
+import type {
+	BackendResponseType,
+	IBackendModuleType,
+	IDiscordRole,
+	IDiscordUserRoleAssignment,
+} from "~/types/types";
 
 export const ModuleActivationStatus = {
 	ENABLED: 1,
@@ -52,6 +57,43 @@ export function useModuleConfigMutation() {
 				new_config: JSON.stringify(params.new_config),
 			};
 			const resp = await customApiClient.post("/module/update-config", payload);
+			return resp;
+		},
+	});
+}
+
+// ################# Discord Role APIs #################
+
+export function useDiscordRoles() {
+	return useQuery({
+		queryKey: ["discord-roles"],
+		queryFn: async () => {
+			const resp: BackendResponseType<IDiscordRole[]> =
+				await customApiClient.get("/discord/role/list", {});
+			return resp;
+		},
+	});
+}
+
+export function useRoleAssignments() {
+	return useQuery({
+		queryKey: ["discord-role-assignments"],
+		queryFn: async () => {
+			const resp: BackendResponseType<IDiscordUserRoleAssignment[]> =
+				await customApiClient.get("/discord/role/assignments", {});
+			return resp;
+		},
+	});
+}
+
+export function useAssignRoleMutation() {
+	return useMutation({
+		mutationFn: async (params: {
+			user_native_id: string;
+			role_native_id: string;
+			duration: string;
+		}) => {
+			const resp = await customApiClient.post("/discord/role/assign", params);
 			return resp;
 		},
 	});

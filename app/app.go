@@ -50,7 +50,7 @@ func Run() {
 	}
 
 	// WARNING: Remember to run this the first time to create tables
-	db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{})
+	db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{}, &models.DiscordUserRole{})
 
 	// Setup common
 	rds := randomstring.NewRandomString()
@@ -63,12 +63,13 @@ func Run() {
 	pwdRepo := passwordreset.NewPasswordResetRepo(db)
 	discordRepo := discordrepos.NewDiscordRoleRepo(db)
 	discordRoleReactionEmbedRepo := discordrepos.NewDiscordRoleReactionEmbedRepo(db)
+	discordUserRoleRepo := discordrepos.NewDiscordUserRoleRepo(db)
 
 	// Setup services
 	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	moduleService := moduleservice.NewModuleService(moduleRepo)
 	authService := authservice.NewAuthService(config.JWTSecret)
-	discordRoleService := discordservice.NewDiscordRoleService(discordRepo, discordRoleReactionEmbedRepo)
+	discordRoleService := discordservice.NewDiscordRoleService(discordRepo, discordRoleReactionEmbedRepo, discordUserRoleRepo)
 	discordRoleReactionEmbedService := discordservice.NewDiscordRoleReactionEmbedService(discordRoleReactionEmbedRepo)
 
 	// Seeding modules
@@ -120,6 +121,8 @@ func Run() {
 	discord := api.Group("/discord")
 	discord.GET("/role/list", discordRoleCtl.ListDiscordRoles)
 	discord.POST("/role/create", discordRoleCtl.CreateDiscordRole)
+	discord.POST("/role/assign", discordRoleCtl.AssignRoleToUser)
+	discord.GET("/role/assignments", discordRoleCtl.ListActiveRoleAssignments)
 
 	discord.GET("/role-reaction/list", discordRoleCtl.ListDiscordRoleReactions)
 	discord.GET("/role-reaction/:id", discordRoleCtl.GetDiscordRoleReaction)

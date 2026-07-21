@@ -21,6 +21,12 @@ type DiscordRoleInput struct {
 	ImplicitType uint `json:"implicit_type"`
 }
 
+type AssignRoleInput struct {
+	UserNativeID string `json:"user_native_id" binding:"required"`
+	RoleNativeID string `json:"role_native_id" binding:"required"`
+	Duration     string `json:"duration"` // e.g. "30m", "2h", "7d"
+}
+
 type DiscordRoleReactionEmbedInput struct {
 	NativeMessageId string `json:"native_message_id"`
 	Name            string `json:"name"`
@@ -32,6 +38,9 @@ type DiscordRoleReactionEmbedInput struct {
 type DiscordController interface {
 	ListDiscordRoles(*gin.Context)
 	CreateDiscordRole(*gin.Context)
+
+	AssignRoleToUser(*gin.Context)
+	ListActiveRoleAssignments(*gin.Context)
 
 	ListDiscordRoleReactions(*gin.Context)
 	GetDiscordRoleReaction(*gin.Context)
@@ -78,6 +87,44 @@ func (ctl *discordController) CreateDiscordRole(c *gin.Context) {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 	}
 
+	HTTPRes(c, http.StatusOK, "ok", data)
+}
+
+func (ctl *discordController) AssignRoleToUser(c *gin.Context) {
+	var input AssignRoleInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	// Default: permanent
+	var duration time.Duration
+	if input.Duration != "" {
+		// Try to parse duration. We support simple Go duration strings.
+		// For days/weeks the frontend should convert to hours.
+		d, err := time.ParseDuration(input.Duration)
+		if err != nil {
+			HTTPRes(c, http.StatusBadRequest, "Invalid duration format", nil)
+			return
+		}
+		duration = d
+	}
+
+	assignment, err := ctl.ds.AssignRoleToUser(input.UserNativeID, input.RoleNativeID, duration)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	HTTPRes(c, http.StatusOK, "ok", assignment)
+}
+
+func (ctl *discordController) ListActiveRoleAssignments(c *gin.Context) {
+	data, err := ctl.ds.GetExpiredRoleAssignments()
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
 	HTTPRes(c, http.StatusOK, "ok", data)
 }
 

@@ -3,28 +3,38 @@ package discordservice
 import (
 	"doko/gvn-ultimate-bot/models"
 	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
+	"time"
 )
 
 type DiscordService interface {
 	// ################# For DiscordRole #################
-	// Listing the roles as DiscordRole model array
 	ListRoles() ([]*models.DiscordRole, error)
 	CreateRole(*models.DiscordRole) (*models.DiscordRole, error)
 	EditRole(*models.DiscordRole) (*models.DiscordRole, error)
-
-	// This is actually just mark the role as "deleted" (IsDeleted = 1), not actually delete it
 	UnassignRole(nativeUserId string, roleId uint) (*models.DiscordRole, error)
+
+	// ################# For DiscordUserRole (timed assignments) #################
+	AssignRoleToUser(userNativeID string, roleNativeID string, duration time.Duration) (*models.DiscordUserRole, error)
+	GetExpiredRoleAssignments() ([]*models.DiscordUserRole, error)
+	RevokeRoleAssignment(assignmentID uint) error
+	GetActiveAssignmentsForUser(nativeUserID string) ([]*models.DiscordUserRole, error)
 }
 
 type discordService struct {
 	RoleRepo              discordrepos.DiscordRoleRepo
 	RoleReactionEmbedRepo discordrepos.DiscordRoleReactionEmbedRepo
+	UserRoleRepo          discordrepos.DiscordUserRoleRepo
 }
 
-func NewDiscordRoleService(repo discordrepos.DiscordRoleRepo, embedRepo discordrepos.DiscordRoleReactionEmbedRepo) DiscordService {
+func NewDiscordRoleService(
+	repo discordrepos.DiscordRoleRepo,
+	embedRepo discordrepos.DiscordRoleReactionEmbedRepo,
+	userRoleRepo discordrepos.DiscordUserRoleRepo,
+) DiscordService {
 	return &discordService{
 		RoleRepo:              repo,
 		RoleReactionEmbedRepo: embedRepo,
+		UserRoleRepo:          userRoleRepo,
 	}
 }
 
@@ -42,7 +52,32 @@ func (dr *discordService) ListRoles() ([]*models.DiscordRole, error) {
 
 func (dr *discordService) UnassignRole(nativeUserId string, roleId uint) (*models.DiscordRole, error) {
 	panic("unimplemented")
-	// return dr.RoleRepo.UnassignRole(nativeUserId, roleId)
+}
+
+func (dr *discordService) AssignRoleToUser(userNativeID string, roleNativeID string, duration time.Duration) (*models.DiscordUserRole, error) {
+	now := time.Now()
+	expiration := now.Add(duration)
+
+	assignment := &models.DiscordUserRole{
+		UserNativeID:   userNativeID,
+		RoleNativeID:   roleNativeID,
+		GrantedDate:    now,
+		ExpirationDate: expiration,
+	}
+
+	return dr.UserRoleRepo.CreateAssignment(assignment)
+}
+
+func (dr *discordService) GetExpiredRoleAssignments() ([]*models.DiscordUserRole, error) {
+	return dr.UserRoleRepo.GetExpiredAssignments()
+}
+
+func (dr *discordService) RevokeRoleAssignment(assignmentID uint) error {
+	return dr.UserRoleRepo.RevokeAssignment(assignmentID)
+}
+
+func (dr *discordService) GetActiveAssignmentsForUser(nativeUserID string) ([]*models.DiscordUserRole, error) {
+	return dr.UserRoleRepo.GetActiveAssignmentsByUser(nativeUserID)
 }
 
 // ################# For DiscordRoleReactionEmbed #################

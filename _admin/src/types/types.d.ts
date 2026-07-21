@@ -78,6 +78,24 @@ export type IBackendModuleType = {
   CustomConfig: string;
 };
 
+export type IDiscordRole = {
+  ID: number;
+  NativeId: string;
+  Name: string;
+  Mentionable: number;
+  Hoist: number;
+  Color: number;
+  ImplicitType: number;
+};
+
+export type IDiscordUserRoleAssignment = {
+  ID: number;
+  UserNativeID: string;
+  RoleNativeID: string;
+  GrantedDate: string;
+  ExpirationDate: string;
+};
+
 export interface IReactionRoleMessagePayload {
   guildId: string;
   channelId: string;
