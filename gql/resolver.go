@@ -1,5 +1,7 @@
 package gql
 
+// THIS CODE WILL BE UPDATED WITH SCHEMA CHANGES. PREVIOUS IMPLEMENTATION FOR SCHEMA CHANGES WILL BE KEPT IN THE COMMENT SECTION. IMPLEMENTATION FOR UNCHANGED SCHEMA WILL BE KEPT.
+
 import (
 	"doko/gvn-ultimate-bot/gql/gen"
 	"doko/gvn-ultimate-bot/services/authservice"
@@ -11,14 +13,13 @@ type Resolver struct {
 	AuthService authservice.AuthService
 }
 
-func (r *Resolver) Mutation() gen.MutationResolver {
-	return &mutationResolver{r}
-}
+// Mutation returns gen.MutationResolver implementation.
+func (r *Resolver) Mutation() gen.MutationResolver { return &mutationResolver{r} }
 
-func (r *Resolver) Query() gen.QueryResolver {
-	return &queryResolver{r}
-}
+// Query returns gen.QueryResolver implementation.
+func (r *Resolver) Query() gen.QueryResolver { return &queryResolver{r} }
 
-type queryResolver struct{ *Resolver }
-
-type mutationResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)
