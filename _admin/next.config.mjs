@@ -8,6 +8,7 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["@mantine/core", "@mantine/hooks"],
   },
+  turbopack: {},
 };
 
 export default withVanillaExtract(nextConfig);
