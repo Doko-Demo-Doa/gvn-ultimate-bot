@@ -20,13 +20,12 @@ import {
   TextInput,
   Textarea,
 } from "@mantine/core";
-import { useForm } from "@mantine/form";
+import { useForm, schemaResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { IconPlus, IconSun, IconTrashFilled } from "@tabler/icons-react";
-import { zodResolver } from "mantine-form-zod-resolver";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { z } from "zod";
+import { z } from "zod/v4";
 import * as classes from "~/components/embed-editor/embed-editor.css";
 import { vars } from "~/theme";
 import { UploadDropzone } from "~/utils/uploadthing";
@@ -84,7 +83,7 @@ const EmbedEditor: React.FC<Props> = () => {
       ],
       arrowPickingUpRoleFromMultipleReactions: true,
     },
-    validate: zodResolver(schema),
+    validate: schemaResolver(schema, { sync: true }),
   });
 
   const handleSubmit = (values: typeof form.values) => {
