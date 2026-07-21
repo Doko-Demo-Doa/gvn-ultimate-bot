@@ -11,7 +11,7 @@ import (
 	modulerepo "doko/gvn-ultimate-bot/repositories/module_repo"
 	"doko/gvn-ultimate-bot/repositories/passwordreset"
 	"doko/gvn-ultimate-bot/repositories/userrepo"
-
+	"doko/gvn-ultimate-bot/scheduler"
 	"doko/gvn-ultimate-bot/seeds"
 	"doko/gvn-ultimate-bot/services/authservice"
 	"doko/gvn-ultimate-bot/services/discordservice"
@@ -19,8 +19,12 @@ import (
 	"doko/gvn-ultimate-bot/services/userservice"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
@@ -44,7 +48,6 @@ func Run() {
 	db, err := gorm.Open(config.Postgres.GetPostgresConfigInfo(), &gorm.Config{
 		SkipDefaultTransaction: true,
 	})
-
 	if err != nil {
 		panic(err)
 	}
@@ -72,6 +75,16 @@ func Run() {
 	discordRoleService := discordservice.NewDiscordRoleService(discordRepo, discordRoleReactionEmbedRepo, discordUserRoleRepo)
 	discordRoleReactionEmbedService := discordservice.NewDiscordRoleReactionEmbedService(discordRoleReactionEmbedRepo)
 
+	// Setup Discord state (shared between bot and scheduler)
+	s := state.New("Bot " + os.Getenv("DISCORD_TOKEN"))
+	s.AddIntents(gateway.IntentGuilds)
+	s.AddIntents(gateway.IntentGuildMessages)
+	s.AddIntents(gateway.IntentGuildMessageReactions)
+
+	// Setup scheduler
+	guildID := discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
+	roleScheduler := scheduler.NewRoleScheduler(s, discordRoleService, guildID)
+
 	// Seeding modules
 	mModules, _ := moduleService.ListModules()
 	if len(mModules) <= 0 {
@@ -89,7 +102,7 @@ func Run() {
 	// Setup controllers
 	userCtrl := controllers.NewUserController(userService, authService)
 	moduleCtl := controllers.NewModuleController(moduleService)
-	discordRoleCtl := controllers.NewDiscordController(discordRoleService, discordRoleReactionEmbedService)
+	discordRoleCtl := controllers.NewDiscordController(discordRoleService, discordRoleReactionEmbedService, roleScheduler)
 
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
@@ -100,7 +113,6 @@ func Run() {
 		c.String(http.StatusOK, "ping")
 	})
 
-	// router.GET("/graphql", gql.Pl)
 	api := router.Group("/api")
 
 	api.POST("/register", userCtrl.Register)
@@ -109,11 +121,9 @@ func Run() {
 	api.POST("/reset-password", userCtrl.ResetPassword)
 
 	user := api.Group("/users")
-
 	user.GET("/:id", userCtrl.GetByID)
 
 	account := api.Group("/account")
-	// account.Use(middlewares)
 	account.GET("/profile", userCtrl.GetProfile)
 	account.PUT("/profile", userCtrl.Update)
 
@@ -122,7 +132,8 @@ func Run() {
 	discord.GET("/role/list", discordRoleCtl.ListDiscordRoles)
 	discord.POST("/role/create", discordRoleCtl.CreateDiscordRole)
 	discord.POST("/role/assign", discordRoleCtl.AssignRoleToUser)
-	discord.GET("/role/assignments", discordRoleCtl.ListActiveRoleAssignments)
+	discord.DELETE("/role/assign/:id", discordRoleCtl.RevokeRoleFromUser)
+	discord.GET("/role/assignments", discordRoleCtl.ListRoleAssignments)
 
 	discord.GET("/role-reaction/list", discordRoleCtl.ListDiscordRoleReactions)
 	discord.GET("/role-reaction/:id", discordRoleCtl.GetDiscordRoleReaction)
@@ -139,7 +150,6 @@ func Run() {
 	port := fmt.Sprintf(":%s", config.Port)
 
 	wg := new(sync.WaitGroup)
-
 	wg.Add(2)
 
 	go func() {
@@ -148,8 +158,7 @@ func Run() {
 	}()
 
 	go func() {
-		// Bot setup
-		bot.Bootstrap(db, discordRoleService, moduleService)
+		bot.Bootstrap(s, discordRoleService, moduleService, roleScheduler)
 		wg.Done()
 	}()
 
@@ -170,4 +179,12 @@ func CORSMiddleware() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func mustSnowflakeEnv(env string) discord.Snowflake {
+	s, err := discord.ParseSnowflake(os.Getenv(env))
+	if err != nil {
+		panic(fmt.Sprintf("Invalid snowflake for $%s: %v", env, err))
+	}
+	return s
 }

@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"doko/gvn-ultimate-bot/scheduler"
 	"doko/gvn-ultimate-bot/services/discordservice"
 	"doko/gvn-ultimate-bot/services/moduleservice"
 	"fmt"
@@ -10,9 +11,7 @@ import (
 	"os/signal"
 
 	"github.com/diamondburned/arikawa/v3/discord"
-	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
-	"gorm.io/gorm"
 )
 
 var (
@@ -22,13 +21,7 @@ var (
 	IsWorking = false
 )
 
-func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.ModuleService) {
-
-	s := state.New("Bot " + BotToken)
-	s.AddIntents(gateway.IntentGuilds)
-	s.AddIntents(gateway.IntentGuildMessages)
-	s.AddIntents(gateway.IntentGuildMessageReactions)
-
+func Bootstrap(s *state.State, ds discordservice.DiscordService, ms moduleservice.ModuleService, rs *scheduler.RoleScheduler) {
 	// Reset all commands
 	commands, err := s.GuildCommands(AppID, GuildID)
 	if err != nil {
@@ -48,11 +41,10 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 	log.Println("App ID", app.ID)
 
 	// Sync the roles into database
-	// Will be disabled when enough data is provided
 	StartRoleSync(s, ds)
 
 	// Start background scheduler to remove expired timed roles
-	StartRoleExpirationScheduler(s, ds)
+	rs.Start()
 
 	// Mark the bot as "working"
 	IsWorking = true
@@ -68,9 +60,8 @@ func Bootstrap(db *gorm.DB, ds discordservice.DiscordService, ms moduleservice.M
 			if module.ModuleName == "grant_role_module" {
 				RegisterRoleReactModule(s, ds)
 			}
-			// TODO: Wip
 			if module.ModuleName == "grant_role_command" {
-				RegisterGrantRoleModule(s, ds)
+				RegisterGrantRoleModule(s, rs)
 			}
 		}
 	}

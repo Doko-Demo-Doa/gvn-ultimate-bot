@@ -10,7 +10,9 @@ import (
 type DiscordUserRoleRepo interface {
 	CreateAssignment(assignment *models.DiscordUserRole) (*models.DiscordUserRole, error)
 	GetExpiredAssignments() ([]*models.DiscordUserRole, error)
+	GetAllActiveAssignments() ([]*models.DiscordUserRole, error)
 	GetActiveAssignmentsByUser(nativeUserID string) ([]*models.DiscordUserRole, error)
+	GetByID(id uint) (*models.DiscordUserRole, error)
 	RevokeAssignment(id uint) error
 }
 
@@ -41,6 +43,18 @@ func (r *discordUserRoleRepo) GetExpiredAssignments() ([]*models.DiscordUserRole
 	return assignments, nil
 }
 
+func (r *discordUserRoleRepo) GetAllActiveAssignments() ([]*models.DiscordUserRole, error) {
+	var assignments []*models.DiscordUserRole
+	now := time.Now()
+	if err := r.db.
+		Where("expiration_date > ?", now).
+		Where("deleted_at IS NULL").
+		Find(&assignments).Error; err != nil {
+		return nil, err
+	}
+	return assignments, nil
+}
+
 func (r *discordUserRoleRepo) GetActiveAssignmentsByUser(nativeUserID string) ([]*models.DiscordUserRole, error) {
 	var assignments []*models.DiscordUserRole
 	now := time.Now()
@@ -52,6 +66,14 @@ func (r *discordUserRoleRepo) GetActiveAssignmentsByUser(nativeUserID string) ([
 		return nil, err
 	}
 	return assignments, nil
+}
+
+func (r *discordUserRoleRepo) GetByID(id uint) (*models.DiscordUserRole, error) {
+	var a models.DiscordUserRole
+	if err := r.db.First(&a, id).Error; err != nil {
+		return nil, err
+	}
+	return &a, nil
 }
 
 func (r *discordUserRoleRepo) RevokeAssignment(id uint) error {

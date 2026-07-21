@@ -16,7 +16,9 @@ type DiscordService interface {
 	// ################# For DiscordUserRole (timed assignments) #################
 	AssignRoleToUser(userNativeID string, roleNativeID string, duration time.Duration) (*models.DiscordUserRole, error)
 	GetExpiredRoleAssignments() ([]*models.DiscordUserRole, error)
+	GetAllActiveAssignments() ([]*models.DiscordUserRole, error)
 	RevokeRoleAssignment(assignmentID uint) error
+	GetAssignmentByID(id uint) (*models.DiscordUserRole, error)
 	GetActiveAssignmentsForUser(nativeUserID string) ([]*models.DiscordUserRole, error)
 }
 
@@ -72,8 +74,16 @@ func (dr *discordService) GetExpiredRoleAssignments() ([]*models.DiscordUserRole
 	return dr.UserRoleRepo.GetExpiredAssignments()
 }
 
+func (dr *discordService) GetAllActiveAssignments() ([]*models.DiscordUserRole, error) {
+	return dr.UserRoleRepo.GetAllActiveAssignments()
+}
+
 func (dr *discordService) RevokeRoleAssignment(assignmentID uint) error {
 	return dr.UserRoleRepo.RevokeAssignment(assignmentID)
+}
+
+func (dr *discordService) GetAssignmentByID(id uint) (*models.DiscordUserRole, error) {
+	return dr.UserRoleRepo.GetByID(id)
 }
 
 func (dr *discordService) GetActiveAssignmentsForUser(nativeUserID string) ([]*models.DiscordUserRole, error) {

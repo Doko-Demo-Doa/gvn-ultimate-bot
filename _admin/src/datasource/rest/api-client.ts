@@ -92,6 +92,18 @@ export class CustomApiClient {
       url: `${this.baseUrl}${url}`,
     });
   };
+
+  delete = async (url: string) => {
+    return _fetch({
+      headers: {
+        ...this.headers,
+        Accept: "application/ld+json",
+        "Content-Type": "application/json",
+      },
+      method: "DELETE",
+      url: `${this.baseUrl}${url}`,
+    });
+  };
 }
 
 export const customApiClient = new CustomApiClient();

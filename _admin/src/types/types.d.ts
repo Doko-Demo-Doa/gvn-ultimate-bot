@@ -94,6 +94,8 @@ export type IDiscordUserRoleAssignment = {
   RoleNativeID: string;
   GrantedDate: string;
   ExpirationDate: string;
+  Status: "active" | "expired";
+  TimeRemaining: string;
 };
 
 export interface IReactionRoleMessagePayload {

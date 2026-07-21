@@ -1,7 +1,7 @@
 package bot
 
 import (
-	"doko/gvn-ultimate-bot/services/discordservice"
+	"doko/gvn-ultimate-bot/scheduler"
 	"fmt"
 	"log"
 	"time"
@@ -19,7 +19,7 @@ var (
 	grantRoleDuration = "duration"
 )
 
-func RegisterGrantRoleModule(s *state.State, ds discordservice.DiscordService) {
+func RegisterGrantRoleModule(s *state.State, rs *scheduler.RoleScheduler) {
 	var (
 		AppID   = discord.AppID(mustSnowflakeEnv("DISCORD_APP_ID"))
 		GuildID = discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
@@ -30,7 +30,7 @@ func RegisterGrantRoleModule(s *state.State, ds discordservice.DiscordService) {
 		case *discord.CommandInteraction:
 			switch data.Name {
 			case "grant-role":
-				handleGrantRole(s, ds, e, data, GuildID)
+				handleGrantRole(s, rs, e, data)
 			case "quick-generate-role":
 				handleQuickGenerateRole(s, e, data, GuildID)
 			case "vkbp":
@@ -115,7 +115,7 @@ func RegisterGrantRoleModule(s *state.State, ds discordservice.DiscordService) {
 	}
 }
 
-func handleGrantRole(s *state.State, ds discordservice.DiscordService, e *gateway.InteractionCreateEvent, data *discord.CommandInteraction, guildID discord.GuildID) {
+func handleGrantRole(s *state.State, rs *scheduler.RoleScheduler, e *gateway.InteractionCreateEvent, data *discord.CommandInteraction) {
 	targetOpt := data.Options.Find(grantRoleTarget)
 	roleOpt := data.Options.Find(grantRoleName)
 	durationOpt := data.Options.Find(grantRoleDuration)
@@ -159,19 +159,10 @@ func handleGrantRole(s *state.State, ds discordservice.DiscordService, e *gatewa
 		durationText = durationOpt.String()
 	}
 
-	// Add role on Discord
-	if err := s.AddRole(guildID, userID, roleID, api.AddRoleData{}); err != nil {
-		respondError(s, e, fmt.Sprintf("Không thể gán role trên Discord: %s", err.Error()))
+	// Grant through scheduler (handles Discord API + DB + heap)
+	if err := rs.GrantRole(userID.String(), roleID.String(), duration); err != nil {
+		respondError(s, e, fmt.Sprintf("Không thể gán role: %s", err.Error()))
 		return
-	}
-
-	// Track in database (even for permanent, so we have history)
-	if duration > 0 {
-		_, err = ds.AssignRoleToUser(userID.String(), roleID.String(), duration)
-		if err != nil {
-			log.Println("[grant-role] failed to track assignment in DB:", err)
-			// Non-fatal: role is already granted on Discord
-		}
 	}
 
 	embed := discord.Embed{

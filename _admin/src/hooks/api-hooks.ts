@@ -98,3 +98,12 @@ export function useAssignRoleMutation() {
 		},
 	});
 }
+
+export function useRevokeRoleMutation() {
+	return useMutation({
+		mutationFn: async (id: number) => {
+			const resp = await customApiClient.delete(`/discord/role/assign/${id}`);
+			return resp;
+		},
+	});
+}

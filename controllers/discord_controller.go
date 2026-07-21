@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"doko/gvn-ultimate-bot/models"
+	"doko/gvn-ultimate-bot/scheduler"
 	"doko/gvn-ultimate-bot/services/discordservice"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,7 +19,6 @@ type DiscordRoleInput struct {
 	Hoist       uint      `json:"hoist"`
 	Color       uint      `json:"color"`
 	Expiry      time.Time `json:"expiry"`
-	// Use this to indicate what it is in the Admin UI. Maybe it's Discord primodial role, can't be modified (like, "@everyone")
 	ImplicitType uint `json:"implicit_type"`
 }
 
@@ -25,6 +26,16 @@ type AssignRoleInput struct {
 	UserNativeID string `json:"user_native_id" binding:"required"`
 	RoleNativeID string `json:"role_native_id" binding:"required"`
 	Duration     string `json:"duration"` // e.g. "30m", "2h", "7d"
+}
+
+type RoleAssignmentResponse struct {
+	ID             uint      `json:"id"`
+	UserNativeID   string    `json:"user_native_id"`
+	RoleNativeID   string    `json:"role_native_id"`
+	GrantedDate    time.Time `json:"granted_date"`
+	ExpirationDate time.Time `json:"expiration_date"`
+	Status         string    `json:"status"`
+	TimeRemaining  string    `json:"time_remaining"`
 }
 
 type DiscordRoleReactionEmbedInput struct {
@@ -40,7 +51,8 @@ type DiscordController interface {
 	CreateDiscordRole(*gin.Context)
 
 	AssignRoleToUser(*gin.Context)
-	ListActiveRoleAssignments(*gin.Context)
+	RevokeRoleFromUser(*gin.Context)
+	ListRoleAssignments(*gin.Context)
 
 	ListDiscordRoleReactions(*gin.Context)
 	GetDiscordRoleReaction(*gin.Context)
@@ -48,17 +60,20 @@ type DiscordController interface {
 }
 
 type discordController struct {
-	ds  discordservice.DiscordService
-	dre discordservice.DiscordRoleReactionEmbedService
+	ds        discordservice.DiscordService
+	dre       discordservice.DiscordRoleReactionEmbedService
+	scheduler *scheduler.RoleScheduler
 }
 
 func NewDiscordController(
 	ds discordservice.DiscordService,
 	dre discordservice.DiscordRoleReactionEmbedService,
+	sch *scheduler.RoleScheduler,
 ) DiscordController {
 	return &discordController{
-		ds:  ds,
-		dre: dre,
+		ds:        ds,
+		dre:       dre,
+		scheduler: sch,
 	}
 }
 
@@ -68,14 +83,13 @@ func (ctl *discordController) ListDiscordRoles(c *gin.Context) {
 	data, err := ctl.ds.ListRoles()
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
 	}
-
 	HTTPRes(c, http.StatusOK, "ok", data)
 }
 
 func (ctl *discordController) CreateDiscordRole(c *gin.Context) {
 	var dRoleInput DiscordRoleInput
-
 	if err := c.ShouldBindJSON(&dRoleInput); err != nil {
 		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
 		return
@@ -85,8 +99,8 @@ func (ctl *discordController) CreateDiscordRole(c *gin.Context) {
 	data, err := ctl.ds.CreateRole(&dRole)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
 	}
-
 	HTTPRes(c, http.StatusOK, "ok", data)
 }
 
@@ -97,11 +111,8 @@ func (ctl *discordController) AssignRoleToUser(c *gin.Context) {
 		return
 	}
 
-	// Default: permanent
 	var duration time.Duration
 	if input.Duration != "" {
-		// Try to parse duration. We support simple Go duration strings.
-		// For days/weeks the frontend should convert to hours.
 		d, err := time.ParseDuration(input.Duration)
 		if err != nil {
 			HTTPRes(c, http.StatusBadRequest, "Invalid duration format", nil)
@@ -110,22 +121,100 @@ func (ctl *discordController) AssignRoleToUser(c *gin.Context) {
 		duration = d
 	}
 
-	assignment, err := ctl.ds.AssignRoleToUser(input.UserNativeID, input.RoleNativeID, duration)
-	if err != nil {
+	if err := ctl.scheduler.GrantRole(input.UserNativeID, input.RoleNativeID, duration); err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
 
-	HTTPRes(c, http.StatusOK, "ok", assignment)
+	HTTPRes(c, http.StatusOK, "ok", nil)
 }
 
-func (ctl *discordController) ListActiveRoleAssignments(c *gin.Context) {
-	data, err := ctl.ds.GetExpiredRoleAssignments()
+func (ctl *discordController) RevokeRoleFromUser(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		HTTPRes(c, http.StatusBadRequest, "Invalid assignment ID", nil)
+		return
+	}
+
+	if err := ctl.scheduler.RevokeRole(uint(id)); err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	HTTPRes(c, http.StatusOK, "ok", nil)
+}
+
+func (ctl *discordController) ListRoleAssignments(c *gin.Context) {
+	all, err := ctl.ds.GetAllActiveAssignments()
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-	HTTPRes(c, http.StatusOK, "ok", data)
+
+	// Also fetch expired ones for completeness
+	expired, err := ctl.ds.GetExpiredRoleAssignments()
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	all = append(all, expired...)
+
+	now := time.Now()
+	resp := make([]RoleAssignmentResponse, 0, len(all))
+	for _, a := range all {
+		status := "active"
+		remaining := ""
+		if a.ExpirationDate.Before(now) || a.ExpirationDate.Equal(now) {
+			status = "expired"
+			remaining = "0s"
+		} else {
+			remaining = humanDuration(time.Until(a.ExpirationDate))
+		}
+		resp = append(resp, RoleAssignmentResponse{
+			ID:             a.ID,
+			UserNativeID:   a.UserNativeID,
+			RoleNativeID:   a.RoleNativeID,
+			GrantedDate:    a.GrantedDate,
+			ExpirationDate: a.ExpirationDate,
+			Status:         status,
+			TimeRemaining:  remaining,
+		})
+	}
+
+	HTTPRes(c, http.StatusOK, "ok", resp)
+}
+
+func humanDuration(d time.Duration) string {
+	if d < 0 {
+		return "0s"
+	}
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	if d < time.Hour {
+		m := int(d.Minutes())
+		s := int(d.Seconds()) % 60
+		if s > 0 {
+			return fmt.Sprintf("%dm %ds", m, s)
+		}
+		return fmt.Sprintf("%dm", m)
+	}
+	if d < 24*time.Hour {
+		h := int(d.Hours())
+		m := int(d.Minutes()) % 60
+		if m > 0 {
+			return fmt.Sprintf("%dh %dm", h, m)
+		}
+		return fmt.Sprintf("%dh", h)
+	}
+	days := int(d.Hours()) / 24
+	h := int(d.Hours()) % 24
+	if h > 0 {
+		return fmt.Sprintf("%dd %dh", days, h)
+	}
+	return fmt.Sprintf("%dd", days)
 }
 
 func (ctl *discordController) inputToDiscordRole(input DiscordRoleInput) models.DiscordRole {
@@ -141,15 +230,13 @@ func (ctl *discordController) inputToDiscordRole(input DiscordRoleInput) models.
 }
 
 func (ctl *discordController) inputToDiscordRoleReactionEmbed(input DiscordRoleReactionEmbedInput) models.DiscordRoleReactionEmbed {
-	data := models.DiscordRoleReactionEmbed{
+	return models.DiscordRoleReactionEmbed{
 		NativeMessageId: input.NativeMessageId,
 		Name:            input.Name,
 		Tags:            input.Tags,
 		Version:         input.Version,
 		Payload:         input.Payload,
 	}
-
-	return data
 }
 
 /* Role-reaction related */
@@ -157,14 +244,13 @@ func (ctl *discordController) ListDiscordRoleReactions(c *gin.Context) {
 	data, err := ctl.dre.ListEmbeds()
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
 	}
-
 	HTTPRes(c, http.StatusOK, "ok", data)
 }
 
 func (ctl *discordController) CreateDiscordRoleReactions(c *gin.Context) {
 	var dRoleInput DiscordRoleReactionEmbedInput
-
 	if err := c.ShouldBindJSON(&dRoleInput); err != nil {
 		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
 		return
@@ -174,30 +260,29 @@ func (ctl *discordController) CreateDiscordRoleReactions(c *gin.Context) {
 	data, err := ctl.dre.UpsertEmbed(&dRoleReactionEmbed)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
 	}
-
 	HTTPRes(c, http.StatusOK, "ok", data)
 }
 
 func (ctl *discordController) GetDiscordRoleReaction(c *gin.Context) {
 	roleReactionId := c.Param("id")
-	mId, errUint := (strconv.ParseUint(roleReactionId, 10, 32))
-
+	mId, errUint := strconv.ParseUint(roleReactionId, 10, 32)
 	if errUint != nil {
 		HTTPRes(c, http.StatusBadRequest, "Invalid role reaction ID", nil)
+		return
 	}
 
 	data, err := ctl.dre.GetSingleEmbed(uint(mId))
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
 	}
-
 	HTTPRes(c, http.StatusOK, "ok", data)
 }
 
 func (ctl *discordController) UpsertDiscordRoleReaction(c *gin.Context) {
 	var dRoleReactionEmbedInput DiscordRoleReactionEmbedInput
-
 	if err := c.ShouldBindJSON(&dRoleReactionEmbedInput); err != nil {
 		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
 		return
@@ -209,7 +294,5 @@ func (ctl *discordController) UpsertDiscordRoleReaction(c *gin.Context) {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
-
 	HTTPRes(c, http.StatusOK, "ok", data)
-
 }
