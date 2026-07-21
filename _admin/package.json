@@ -2,6 +2,7 @@
   "name": "gvn-ultimate-bot-admin",
   "description": "Admin dashboard for GVN Ultimate Bot",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.15.1",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
