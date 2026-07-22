@@ -12,6 +12,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/state"
+	"github.com/diamondburned/arikawa/v3/utils/json/option"
 )
 
 type DiscordService interface {
@@ -105,6 +106,8 @@ type DiscordRoleReactionEmbedService interface {
 	UpsertEmbed(*models.DiscordRoleReactionEmbed, *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
 	GetSingleEmbed(id uint) (*models.DiscordRoleReactionEmbed, error)
 	GetEmbedByNativeMessageID(nativeMessageID string) (*models.DiscordRoleReactionEmbed, error)
+	DeleteEmbed(id uint) error
+	EditEmbed(nativeMessageID string, payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
 	PublishEmbed(*models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
 }
 
@@ -152,6 +155,97 @@ func (d *discordRoleReactionEmbedService) GetSingleEmbed(id uint) (*models.Disco
 
 func (d *discordRoleReactionEmbedService) GetEmbedByNativeMessageID(nativeMessageID string) (*models.DiscordRoleReactionEmbed, error) {
 	return d.RoleReactionRepo.GetByNativeID(nativeMessageID)
+}
+
+func (d *discordRoleReactionEmbedService) DeleteEmbed(id uint) error {
+	embed, err := d.RoleReactionRepo.GetByID(id)
+	if err != nil || embed == nil {
+		return fmt.Errorf("embed not found: %w", err)
+	}
+
+	payload, err := embed.ParsedPayload()
+	if err == nil && payload != nil && payload.ChannelID != "" && embed.NativeMessageId != "" {
+		channelID, err := discord.ParseSnowflake(payload.ChannelID)
+		if err == nil {
+			msgID, parseErr := discord.ParseSnowflake(embed.NativeMessageId)
+			if parseErr == nil {
+				if delErr := d.state.DeleteMessage(discord.ChannelID(channelID), discord.MessageID(msgID), api.AuditLogReason("")); delErr != nil {
+					log.Printf("[delete_embed] failed to delete Discord message %s: %v", embed.NativeMessageId, delErr)
+				}
+			}
+		}
+	}
+
+	return d.RoleReactionRepo.Delete(id)
+}
+
+// EditEmbed updates the Discord message content / components / embed and
+// persists the new configuration in the database.
+func (d *discordRoleReactionEmbedService) EditEmbed(nativeMessageID string, payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error) {
+	if payload == nil {
+		return nil, errors.New("payload is required")
+	}
+	if err := payload.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid payload: %w", err)
+	}
+
+	channelID, err := discord.ParseSnowflake(payload.ChannelID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid channel_id: %w", err)
+	}
+
+	msgID, err := discord.ParseSnowflake(nativeMessageID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid native_message_id: %w", err)
+	}
+
+	embed, components, err := buildDiscordMessage(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	var editData api.EditMessageData
+	editData.Content = option.NewNullableString(payload.Message)
+	if embed != nil {
+		editData.Embeds = embed
+	}
+	if components != nil {
+		editData.Components = components
+	}
+
+	if _, err := d.state.EditMessageComplex(discord.ChannelID(channelID), discord.MessageID(msgID), editData); err != nil {
+		return nil, fmt.Errorf("failed to edit message: %w", err)
+	}
+
+	// Clear old emoji reactions and re-add current ones.
+	if err := d.state.DeleteAllReactions(discord.ChannelID(channelID), discord.MessageID(msgID)); err != nil {
+		log.Printf("[edit_embed] failed to clear reactions on message %s: %v", nativeMessageID, err)
+	}
+	for _, it := range payload.Interactions {
+		if it.Type == models.InteractionTypeEmoji && it.Emoji != "" {
+			if err := d.state.React(discord.ChannelID(channelID), discord.MessageID(msgID), discord.APIEmoji(it.Emoji)); err != nil {
+				log.Printf("[edit_embed] failed to add reaction %s: %v", it.Emoji, err)
+			}
+		}
+	}
+
+	payloadJSON, err := payload.ToJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	embedModel := &models.DiscordRoleReactionEmbed{
+		NativeMessageId: nativeMessageID,
+		Name:            payload.Message,
+		Payload:         payloadJSON,
+		Mode:            string(payload.Mode),
+	}
+
+	data, err := d.RoleReactionRepo.GetByNativeID(nativeMessageID)
+	if err != nil || data == nil {
+		return d.RoleReactionRepo.Create(embedModel)
+	}
+	return d.RoleReactionRepo.Update(nativeMessageID, embedModel)
 }
 
 // PublishEmbed sends the composed message to Discord, stores the configuration

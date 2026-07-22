@@ -139,6 +139,7 @@ func Run() {
 	discord.GET("/role-reaction/:id", discordRoleCtl.GetDiscordRoleReaction)
 	discord.POST("/role-reaction/upsert", discordRoleCtl.UpsertDiscordRoleReaction)
 	discord.POST("/role-reaction/publish", discordRoleCtl.PublishDiscordRoleReaction)
+	discord.DELETE("/role-reaction/:id", discordRoleCtl.DeleteDiscordRoleReaction)
 
 	// Module-related
 	module := api.Group("/module")

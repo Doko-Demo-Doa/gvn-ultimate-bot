@@ -56,3 +56,12 @@ export function usePublishReactionRoleEmbed() {
 		},
 	});
 }
+
+export function useDeleteReactionRoleEmbed() {
+	return useMutation({
+		mutationFn: async (id: number) => {
+			const resp = await customApiClient.delete(`/discord/role-reaction/${id}`);
+			return resp;
+		},
+	});
+}

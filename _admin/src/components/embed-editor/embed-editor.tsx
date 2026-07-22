@@ -40,6 +40,7 @@ interface Props {
   roles: IDiscordRole[];
   onPublish: (payload: IReactionRoleMessagePayload) => void;
   isPublishing: boolean;
+  initialPayload?: IReactionRoleMessagePayload;
 }
 
 const MAX_CUSTOM_FIELDS = 5;
@@ -88,14 +89,9 @@ const schema = z.object({
 
 type IFormData = z.infer<typeof schema>;
 
-// https://github.com/skyra-project/discord-components
-const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing }) => {
-  const [value, setValue] = useState("emoji");
-  const [mainImageUrl, setMainImageUrl] = useState("");
-
-  const form = useForm<IFormData>({
-    mode: "uncontrolled",
-    initialValues: {
+function payloadToFormData(payload?: IReactionRoleMessagePayload): IFormData {
+  if (!payload) {
+    return {
       channel_id: "",
       mode: "default",
       color: "#5865F2",
@@ -105,15 +101,60 @@ const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing }) => {
       titleMessage: "",
       embedMainMessage: "",
       featuredImage: "",
-      customFields: [
-        {
-          id: uuidv4(),
-          fieldName: "",
-          fieldValue: "",
-        },
-      ],
+      customFields: [{ id: uuidv4(), fieldName: "", fieldValue: "" }],
       interactions: [],
-    },
+    };
+  }
+  const colorHex = payload.embed?.color
+    ? `#${payload.embed.color.toString(16).padStart(6, "0")}`
+    : "#5865F2";
+  return {
+    channel_id: payload.channel_id || "",
+    mode: payload.mode || "default",
+    color: colorHex,
+    mainMessage: payload.message || "",
+    headerMessage: payload.embed?.author || "",
+    footerMessage: payload.embed?.footer || "",
+    titleMessage: payload.embed?.title || "",
+    embedMainMessage: payload.embed?.description || "",
+    featuredImage: payload.embed?.image_url || "",
+    customFields:
+      payload.embed?.fields && payload.embed.fields.length > 0
+        ? payload.embed.fields.map((f) => ({
+            id: uuidv4(),
+            fieldName: f.name,
+            fieldValue: f.value,
+          }))
+        : [{ id: uuidv4(), fieldName: "", fieldValue: "" }],
+    interactions: (payload.interactions || []).map((it) => ({
+      id: it.id,
+      type: it.type,
+      emoji: it.emoji || undefined,
+      label: it.label || undefined,
+      style: it.style || undefined,
+      role_native_id: it.role_native_id || undefined,
+      placeholder: it.placeholder || undefined,
+      options: it.options
+        ? it.options.map((opt) => ({
+            id: opt.id,
+            label: opt.label,
+            emoji: opt.emoji || undefined,
+            description: opt.description || undefined,
+            role_native_id: opt.role_native_id,
+          }))
+        : undefined,
+    })),
+  };
+}
+
+// https://github.com/skyra-project/discord-components
+const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing, initialPayload }) => {
+  const [value, setValue] = useState("emoji");
+  const [mainImageUrl, setMainImageUrl] = useState(initialPayload?.embed?.image_url || "");
+
+  const form = useForm<IFormData>({
+    mode: "uncontrolled",
+    initialValues: payloadToFormData(initialPayload),
     validate: schemaResolver(schema, { sync: true }),
   });
 

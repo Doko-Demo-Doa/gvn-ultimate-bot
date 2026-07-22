@@ -63,6 +63,7 @@ type DiscordController interface {
 	GetDiscordRoleReaction(*gin.Context)
 	UpsertDiscordRoleReaction(*gin.Context)
 	PublishDiscordRoleReaction(*gin.Context)
+	DeleteDiscordRoleReaction(*gin.Context)
 }
 
 type discordController struct {
@@ -313,7 +314,25 @@ func (ctl *discordController) UpsertDiscordRoleReaction(c *gin.Context) {
 		return
 	}
 
-	dRoleReactionEmbed, payload, err := ctl.inputToDiscordRoleReactionEmbed(dRoleReactionEmbedInput)
+	_, payload, err := ctl.inputToDiscordRoleReactionEmbed(dRoleReactionEmbedInput)
+	if err != nil {
+		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	// If native_message_id is provided, edit the existing Discord message.
+	if dRoleReactionEmbedInput.NativeMessageId != "" {
+		data, err := ctl.dre.EditEmbed(dRoleReactionEmbedInput.NativeMessageId, payload)
+		if err != nil {
+			HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+			return
+		}
+		HTTPRes(c, http.StatusOK, "ok", data)
+		return
+	}
+
+	// Otherwise fall back to plain DB upsert.
+	dRoleReactionEmbed, _, err := ctl.inputToDiscordRoleReactionEmbed(dRoleReactionEmbedInput)
 	if err != nil {
 		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
 		return
@@ -341,4 +360,18 @@ func (ctl *discordController) PublishDiscordRoleReaction(c *gin.Context) {
 		return
 	}
 	HTTPRes(c, http.StatusOK, "ok", data)
+}
+
+func (ctl *discordController) DeleteDiscordRoleReaction(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		HTTPRes(c, http.StatusBadRequest, "Invalid role reaction ID", nil)
+		return
+	}
+	if err := ctl.dre.DeleteEmbed(uint(id)); err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	HTTPRes(c, http.StatusOK, "ok", nil)
 }
