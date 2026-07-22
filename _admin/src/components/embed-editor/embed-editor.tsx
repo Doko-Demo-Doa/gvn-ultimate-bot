@@ -152,6 +152,33 @@ function payloadToFormData(payload?: IReactionRoleMessagePayload): IFormData {
 }
 
 // https://github.com/skyra-project/discord-components
+const emojiSelectData = (emojis: IDiscordEmoji[]) => [
+  { value: "", label: "-- Không có emoji --", disabled: true },
+  ...emojis.map((e) => ({
+    value: e.api_name,
+    label: `:${e.name}:`,
+    image_url: e.image_url,
+  })),
+];
+
+function renderEmojiOption({ option }: { option: any }) {
+  return (
+    <Group gap="xs">
+      {option.image_url && (
+        // biome-ignore lint/performance/noImgElement: small Discord CDN emoji thumbnails in a dropdown; next/Image adds complexity with no benefit here
+        <img
+          src={option.image_url}
+          alt={option.label}
+          width={20}
+          height={20}
+          style={{ objectFit: "contain", display: "inline-block" }}
+        />
+      )}
+      <span>{option.label}</span>
+    </Group>
+  );
+}
+
 const EmbedEditor: React.FC<Props> = ({
   roles,
   channels,
@@ -333,17 +360,8 @@ const EmbedEditor: React.FC<Props> = ({
                         placeholder="Chọn emoji..."
                         searchable
                         style={{ width: 200 }}
-                        data={[
-                          {
-                            value: "",
-                            label: "-- Không có emoji --",
-                            disabled: true,
-                          },
-                          ...emojis.map((e) => ({
-                            value: e.api_name,
-                            label: `:${e.name}:`,
-                          })),
-                        ]}
+                        data={emojiSelectData(emojis)}
+                        renderOption={renderEmojiOption}
                         {...form.getInputProps(`interactions.${i}.emoji`)}
                       />
                       {it.type === "button" && (
@@ -402,17 +420,8 @@ const EmbedEditor: React.FC<Props> = ({
                               placeholder="Emoji"
                               searchable
                               style={{ width: 160 }}
-                              data={[
-                                {
-                                  value: "",
-                                  label: "-- Không --",
-                                  disabled: true,
-                                },
-                                ...emojis.map((e) => ({
-                                  value: e.api_name,
-                                  label: `:${e.name}:`,
-                                })),
-                              ]}
+                              data={emojiSelectData(emojis)}
+                              renderOption={renderEmojiOption}
                               {...form.getInputProps(
                                 `interactions.${i}.options.${optIndex}.emoji`,
                               )}
