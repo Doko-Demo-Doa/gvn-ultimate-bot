@@ -108,6 +108,14 @@ export type IDiscordChannel = {
   position: number;
 };
 
+export type IDiscordEmoji = {
+  id: string;
+  name: string;
+  animated: boolean;
+  image_url: string;
+  api_name: string;
+};
+
 export type IDiscordRoleReactionEmbed = {
   ID: number;
   NativeMessageId: string;

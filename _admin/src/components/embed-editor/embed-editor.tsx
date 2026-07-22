@@ -32,6 +32,7 @@ import * as classes from "~/components/embed-editor/embed-editor.css";
 import { vars } from "~/theme";
 import type {
   IDiscordChannel,
+  IDiscordEmoji,
   IDiscordRole,
   IReactionRoleMessagePayload,
 } from "~/types/types";
@@ -40,6 +41,7 @@ import { UploadDropzone } from "~/utils/uploadthing";
 interface Props {
   roles: IDiscordRole[];
   channels: IDiscordChannel[];
+  emojis: IDiscordEmoji[];
   onPublish: (payload: IReactionRoleMessagePayload) => void;
   isPublishing: boolean;
   initialPayload?: IReactionRoleMessagePayload;
@@ -153,6 +155,7 @@ function payloadToFormData(payload?: IReactionRoleMessagePayload): IFormData {
 const EmbedEditor: React.FC<Props> = ({
   roles,
   channels,
+  emojis,
   onPublish,
   isPublishing,
   initialPayload,
@@ -325,10 +328,22 @@ const EmbedEditor: React.FC<Props> = ({
                 {(it.type === "emoji" || it.type === "button") && (
                   <>
                     <Group>
-                      <TextInput
+                      <Select
                         label="Emoji"
-                        placeholder=":thumbsup: or 🔥"
-                        style={{ width: 120 }}
+                        placeholder="Chọn emoji..."
+                        searchable
+                        style={{ width: 200 }}
+                        data={[
+                          {
+                            value: "",
+                            label: "-- Không có emoji --",
+                            disabled: true,
+                          },
+                          ...emojis.map((e) => ({
+                            value: e.api_name,
+                            label: `:${e.name}:`,
+                          })),
+                        ]}
                         {...form.getInputProps(`interactions.${i}.emoji`)}
                       />
                       {it.type === "button" && (
@@ -383,9 +398,21 @@ const EmbedEditor: React.FC<Props> = ({
                                 `interactions.${i}.options.${optIndex}.label`,
                               )}
                             />
-                            <TextInput
+                            <Select
                               placeholder="Emoji"
-                              style={{ width: 80 }}
+                              searchable
+                              style={{ width: 160 }}
+                              data={[
+                                {
+                                  value: "",
+                                  label: "-- Không --",
+                                  disabled: true,
+                                },
+                                ...emojis.map((e) => ({
+                                  value: e.api_name,
+                                  label: `:${e.name}:`,
+                                })),
+                              ]}
                               {...form.getInputProps(
                                 `interactions.${i}.options.${optIndex}.emoji`,
                               )}

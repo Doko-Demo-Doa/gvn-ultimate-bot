@@ -108,6 +108,14 @@ type ChannelInfo struct {
 	Position int    `json:"position"`
 }
 
+type EmojiInfo struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Animated  bool   `json:"animated"`
+	ImageURL  string `json:"image_url"`
+	APIName   string `json:"api_name"`
+}
+
 type DiscordRoleReactionEmbedService interface {
 	ListEmbeds() ([]*models.DiscordRoleReactionEmbed, error)
 	UpsertEmbed(*models.DiscordRoleReactionEmbed, *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
@@ -117,6 +125,7 @@ type DiscordRoleReactionEmbedService interface {
 	EditEmbed(nativeMessageID string, payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
 	PublishEmbed(*models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
 	ListChannels() ([]ChannelInfo, error)
+	ListEmojis() ([]EmojiInfo, error)
 }
 
 type discordRoleReactionEmbedService struct {
@@ -153,6 +162,33 @@ func (d *discordRoleReactionEmbedService) ListChannels() ([]ChannelInfo, error) 
 				Position: ch.Position,
 			})
 		}
+	}
+	return result, nil
+}
+
+func (d *discordRoleReactionEmbedService) ListEmojis() ([]EmojiInfo, error) {
+	emojis, err := d.state.Emojis(d.guildID)
+	if err != nil {
+		return nil, err
+	}
+	var result []EmojiInfo
+	for _, em := range emojis {
+		// Only custom emojis (ID != 0)
+		if em.ID == 0 {
+			continue
+		}
+		ext := "png"
+		if em.Animated {
+			ext = "gif"
+		}
+		apiName := em.Name + ":" + em.ID.String()
+		result = append(result, EmojiInfo{
+			ID:       em.ID.String(),
+			Name:     em.Name,
+			Animated: em.Animated,
+			ImageURL: fmt.Sprintf("https://cdn.discordapp.com/emojis/%s.%s", em.ID.String(), ext),
+			APIName:  apiName,
+		})
 	}
 	return result, nil
 }

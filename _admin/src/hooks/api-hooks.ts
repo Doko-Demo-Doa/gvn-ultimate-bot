@@ -5,6 +5,7 @@ import type {
   BackendResponseType,
   IBackendModuleType,
   IDiscordChannel,
+  IDiscordEmoji,
   IDiscordRole,
   IDiscordUserRoleAssignment,
 } from "~/types/types";
@@ -82,6 +83,17 @@ export function useDiscordChannels() {
     queryFn: async () => {
       const resp: BackendResponseType<IDiscordChannel[]> =
         await customApiClient.get("/discord/channels", {});
+      return resp;
+    },
+  });
+}
+
+export function useDiscordEmojis() {
+  return useQuery({
+    queryKey: ["discord-emojis"],
+    queryFn: async () => {
+      const resp: BackendResponseType<IDiscordEmoji[]> =
+        await customApiClient.get("/discord/emojis", {});
       return resp;
     },
   });
