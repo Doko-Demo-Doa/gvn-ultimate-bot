@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 const baseUrl = process.env.BACKEND_BASE_URL;
 
@@ -10,7 +10,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const payload: { enabled: ModuleActivationStatusType } =
           JSON.parse(body);
 
-        const r = await fetch(baseUrl + "/switchers/pin", {
+        const r = await fetch(`${baseUrl}/switchers/pin`, {
           method: "POST",
           body: JSON.stringify(payload),
         });
@@ -26,7 +26,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     case "GET":
       try {
-        const r = await fetch(baseUrl + "/switchers/pin");
+        const r = await fetch(`${baseUrl}/switchers/pin`);
         const respJson: ModuleActivationStatusType = await r.json();
 
         res.status(r.status).json(respJson);

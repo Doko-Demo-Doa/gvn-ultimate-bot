@@ -15,11 +15,12 @@ type IRequestBody = {
 
 import { Resend } from "resend";
 import ForgotPasswordEmailComponent from "~/app/_components/forgot-pw-email.component";
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<IResponseData>
+  res: NextApiResponse<IResponseData>,
 ) {
   const body: IRequestBody = req.body;
 
@@ -28,15 +29,23 @@ export default async function handler(
   }
 
   const resp = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/forgot-password`
+    `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/forgot-password`,
   );
   const data: IResponseData = await resp.json();
+
+  const token = data.data?.token;
+  if (!token) {
+    return res.status(500).json({
+      code: 500,
+      message: "Failed to generate reset token",
+    });
+  }
 
   await resend.emails.send({
     from: "Admin <info@aniviet.com>",
     to: body.email,
     subject: "Reset your password",
-    react: <ForgotPasswordEmailComponent token={data.data?.token!} />,
+    react: <ForgotPasswordEmailComponent token={token} />,
   });
 
   if (req.method !== "POST") {

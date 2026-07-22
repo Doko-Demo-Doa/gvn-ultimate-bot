@@ -24,6 +24,7 @@ declare global {
 }
 
 declare module "next" {
+  // biome-ignore lint/complexity/noBannedTypes: Next.js built-in type signature
   type NextLayoutComponentType<P = {}> = NextComponentType<
     NextPageContext,
     any,
@@ -32,6 +33,7 @@ declare module "next" {
     getLayout?: (page: ReactNode) => ReactNode;
   };
 
+  // biome-ignore lint/complexity/noBannedTypes: Next.js built-in type signature
   type NextLayoutPage<P = {}, IP = P> = NextComponentType<
     NextPageContext,
     IP,
@@ -42,6 +44,7 @@ declare module "next" {
 }
 
 declare module "next/app" {
+  // biome-ignore lint/complexity/noBannedTypes: Next.js built-in type signature
   type AppLayoutProps<P = {}> = AppProps & {
     Component: NextLayoutComponentType;
   };

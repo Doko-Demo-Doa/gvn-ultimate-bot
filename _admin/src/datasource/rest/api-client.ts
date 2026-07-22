@@ -61,7 +61,7 @@ export class CustomApiClient {
         {
           ...query,
         },
-        { addQueryPrefix: true, arrayFormat: "brackets", encode: false }
+        { addQueryPrefix: true, arrayFormat: "brackets", encode: false },
       )}`,
     });
   };

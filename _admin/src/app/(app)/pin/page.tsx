@@ -1,18 +1,18 @@
 "use client";
 
 import { Button, Group, Loader, NumberInput, Stack, Text } from "@mantine/core";
-import { useRef } from "react";
 import { notifications } from "@mantine/notifications";
+import { useRef } from "react";
 import { useAppModule, useModuleConfigMutation } from "~/hooks/api-hooks";
 import MasterLayout from "~/layouts/master-layout";
-import { IPinModuleConfig } from "~/types/payload";
+import type { IPinModuleConfig } from "~/types/payload";
 
 const PIN_ID = 1;
 
 function tryParse(input: string) {
   try {
     return JSON.parse(input) as IPinModuleConfig;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }

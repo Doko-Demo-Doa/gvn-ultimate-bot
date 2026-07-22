@@ -19,10 +19,10 @@ import {
   Space,
   Stack,
   Text,
-  TextInput,
   Textarea,
+  TextInput,
 } from "@mantine/core";
-import { useForm, schemaResolver } from "@mantine/form";
+import { schemaResolver, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { IconPlus, IconSun, IconTrashFilled } from "@tabler/icons-react";
 import { useState } from "react";
@@ -30,12 +30,12 @@ import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import * as classes from "~/components/embed-editor/embed-editor.css";
 import { vars } from "~/theme";
-import { UploadDropzone } from "~/utils/uploadthing";
 import type {
   IDiscordChannel,
   IDiscordRole,
   IReactionRoleMessagePayload,
 } from "~/types/types";
+import { UploadDropzone } from "~/utils/uploadthing";
 
 interface Props {
   roles: IDiscordRole[];

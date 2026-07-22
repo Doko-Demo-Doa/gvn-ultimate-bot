@@ -35,38 +35,36 @@ const MasterLayout: React.FC<Props> = ({ children }) => {
   const [opened] = useDisclosure();
 
   return (
-    <>
-      <AppShell
-        header={{ height: 60 }}
-        navbar={{
-          width: 300,
-          breakpoint: "sm",
-          collapsed: { mobile: !opened },
-        }}
-        padding="md"
-      >
-        <AppShell.Header>
-          <Group className={classes.header} justify="space-between">
-            <Title order={3}>DautoVN Bot CP</Title>
-            <Group px="md">
-              <Show when="signed-out">
-                <SignInButton />
-                <SignUpButton />
-              </Show>
-              <Show when="signed-in">
-                <UserButton />
-              </Show>
-            </Group>
+    <AppShell
+      header={{ height: 60 }}
+      navbar={{
+        width: 300,
+        breakpoint: "sm",
+        collapsed: { mobile: !opened },
+      }}
+      padding="md"
+    >
+      <AppShell.Header>
+        <Group className={classes.header} justify="space-between">
+          <Title order={3}>DautoVN Bot CP</Title>
+          <Group px="md">
+            <Show when="signed-out">
+              <SignInButton />
+              <SignUpButton />
+            </Show>
+            <Show when="signed-in">
+              <UserButton />
+            </Show>
           </Group>
-        </AppShell.Header>
+        </Group>
+      </AppShell.Header>
 
-        <AppShell.Navbar px="lg" py="lg">
-          <MainLinks />
-        </AppShell.Navbar>
+      <AppShell.Navbar px="lg" py="lg">
+        <MainLinks />
+      </AppShell.Navbar>
 
-        <AppShell.Main>{children}</AppShell.Main>
-      </AppShell>
-    </>
+      <AppShell.Main>{children}</AppShell.Main>
+    </AppShell>
   );
 };
 
