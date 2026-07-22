@@ -30,25 +30,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <html lang="en" {...mantineHtmlProps}>
-        <head>
-          <ColorSchemeScript />
-          <link rel="shortcut icon" href="/favicon.svg" />
-          <meta
-            name="viewport"
-            content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"
-          />
-        </head>
-        <body>
+    <html lang="en" {...mantineHtmlProps}>
+      <head>
+        <ColorSchemeScript />
+        <link rel="shortcut icon" href="/favicon.svg" />
+        <meta
+          name="viewport"
+          content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"
+        />
+      </head>
+      <body>
+        <ClerkProvider>
           <Providers>
             <MantineProvider defaultColorScheme="dark" theme={theme}>
               {children}
               <Notifications />
             </MantineProvider>
           </Providers>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }
