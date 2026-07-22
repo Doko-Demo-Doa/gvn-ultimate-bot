@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { AppShell, Group, Loader, NavLink, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
@@ -53,7 +48,7 @@ const MasterLayout: React.FC<Props> = ({ children }) => {
         <AppShell.Header>
           <Group className={classes.header} justify="space-between">
             <Title order={3}>DautoVN Bot CP</Title>
-            <Group>
+            <Group px="md">
               <Show when="signed-out">
                 <SignInButton />
                 <SignUpButton />
