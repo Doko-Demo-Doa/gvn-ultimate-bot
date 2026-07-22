@@ -3,7 +3,15 @@ package discordservice
 import (
 	"doko/gvn-ultimate-bot/models"
 	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
 	"time"
+
+	"github.com/diamondburned/arikawa/v3/api"
+	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/state"
 )
 
 type DiscordService interface {
@@ -94,17 +102,23 @@ func (dr *discordService) GetActiveAssignmentsForUser(nativeUserID string) ([]*m
 
 type DiscordRoleReactionEmbedService interface {
 	ListEmbeds() ([]*models.DiscordRoleReactionEmbed, error)
-	UpsertEmbed(*models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error)
+	UpsertEmbed(*models.DiscordRoleReactionEmbed, *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
 	GetSingleEmbed(id uint) (*models.DiscordRoleReactionEmbed, error)
+	GetEmbedByNativeMessageID(nativeMessageID string) (*models.DiscordRoleReactionEmbed, error)
+	PublishEmbed(*models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
 }
 
 type discordRoleReactionEmbedService struct {
 	RoleReactionRepo discordrepos.DiscordRoleReactionEmbedRepo
+	state            *state.State
+	guildID          discord.GuildID
 }
 
-func NewDiscordRoleReactionEmbedService(repo discordrepos.DiscordRoleReactionEmbedRepo) DiscordRoleReactionEmbedService {
+func NewDiscordRoleReactionEmbedService(repo discordrepos.DiscordRoleReactionEmbedRepo, s *state.State, guildID discord.GuildID) DiscordRoleReactionEmbedService {
 	return &discordRoleReactionEmbedService{
 		RoleReactionRepo: repo,
+		state:            s,
+		guildID:          guildID,
 	}
 }
 
@@ -112,7 +126,19 @@ func (d *discordRoleReactionEmbedService) ListEmbeds() ([]*models.DiscordRoleRea
 	return d.RoleReactionRepo.ListRoleReactionEmbeds()
 }
 
-func (d *discordRoleReactionEmbedService) UpsertEmbed(m *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error) {
+func (d *discordRoleReactionEmbedService) UpsertEmbed(m *models.DiscordRoleReactionEmbed, payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error) {
+	if payload != nil {
+		if err := payload.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid payload: %w", err)
+		}
+		jsonStr, err := payload.ToJSON()
+		if err != nil {
+			return nil, err
+		}
+		m.Payload = jsonStr
+		m.Mode = string(payload.Mode)
+	}
+
 	data, err := d.RoleReactionRepo.GetByNativeID(m.NativeMessageId)
 	if err != nil || data == nil {
 		return d.RoleReactionRepo.Create(m)
@@ -122,4 +148,167 @@ func (d *discordRoleReactionEmbedService) UpsertEmbed(m *models.DiscordRoleReact
 
 func (d *discordRoleReactionEmbedService) GetSingleEmbed(id uint) (*models.DiscordRoleReactionEmbed, error) {
 	return d.RoleReactionRepo.GetByID(id)
+}
+
+func (d *discordRoleReactionEmbedService) GetEmbedByNativeMessageID(nativeMessageID string) (*models.DiscordRoleReactionEmbed, error) {
+	return d.RoleReactionRepo.GetByNativeID(nativeMessageID)
+}
+
+// PublishEmbed sends the composed message to Discord, stores the configuration
+// in the database keyed by the returned native message id, and adds emoji
+// reactions for emoji interactions.
+func (d *discordRoleReactionEmbedService) PublishEmbed(payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error) {
+	if payload == nil {
+		return nil, errors.New("payload is required")
+	}
+	if err := payload.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid payload: %w", err)
+	}
+
+	channelID, err := discord.ParseSnowflake(payload.ChannelID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid channel_id: %w", err)
+	}
+
+	embed, components, err := buildDiscordMessage(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	var msgData api.SendMessageData
+	msgData.Content = payload.Message
+	if embed != nil {
+		msgData.Embeds = *embed
+	}
+	if components != nil {
+		msgData.Components = *components
+	}
+	msg, err := d.state.SendMessageComplex(discord.ChannelID(channelID), msgData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send message: %w", err)
+	}
+
+	// Add emoji reactions for emoji interactions.
+	for _, it := range payload.Interactions {
+		if it.Type == models.InteractionTypeEmoji && it.Emoji != "" {
+			if err := d.state.React(discord.ChannelID(channelID), msg.ID, discord.APIEmoji(it.Emoji)); err != nil {
+				log.Printf("[publish_embed] failed to add reaction %s: %v", it.Emoji, err)
+			}
+		}
+	}
+
+	payloadJSON, err := payload.ToJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	embedModel := &models.DiscordRoleReactionEmbed{
+		NativeMessageId: msg.ID.String(),
+		Name:            payload.Message,
+		Payload:         payloadJSON,
+		Mode:            string(payload.Mode),
+		Version:         1,
+	}
+
+	return d.UpsertEmbed(embedModel, nil)
+}
+
+func buildDiscordMessage(payload *models.ReactionRoleMessagePayload) (*[]discord.Embed, *discord.ContainerComponents, error) {
+	var embeds *[]discord.Embed
+	if payload.Embed != nil {
+		e := discord.Embed{
+			Title:       payload.Embed.Title,
+			Description: payload.Embed.Description,
+			Color:       discord.Color(payload.Embed.Color),
+		}
+		if payload.Embed.ImageURL != "" {
+			e.Image = &discord.EmbedImage{URL: payload.Embed.ImageURL}
+		}
+		if payload.Embed.ThumbnailURL != "" {
+			e.Thumbnail = &discord.EmbedThumbnail{URL: payload.Embed.ThumbnailURL}
+		}
+		if payload.Embed.Footer != "" {
+			e.Footer = &discord.EmbedFooter{Text: payload.Embed.Footer}
+		}
+		if payload.Embed.Author != "" {
+			e.Author = &discord.EmbedAuthor{Name: payload.Embed.Author}
+		}
+		for _, f := range payload.Embed.Fields {
+			e.Fields = append(e.Fields, discord.EmbedField{
+				Name:   f.Name,
+				Value:  f.Value,
+				Inline: f.Inline,
+			})
+		}
+		embeds = &[]discord.Embed{e}
+	}
+
+	var rows discord.ContainerComponents
+	for _, it := range payload.Interactions {
+		switch it.Type {
+		case models.InteractionTypeButton:
+			btn := discord.ButtonComponent{
+				Label:    it.Label,
+				CustomID: discord.ComponentID(it.ID),
+				Style:    buttonStyleToDiscord(it.Style),
+			}
+			if it.Emoji != "" {
+				btn.Emoji = &discord.ComponentEmoji{Name: it.Emoji}
+			}
+			rows = append(rows, &discord.ActionRowComponent{&btn})
+		case models.InteractionTypeDropdown:
+			var opts []discord.SelectOption
+			for _, opt := range it.Options {
+				o := discord.SelectOption{
+					Label: opt.Label,
+					Value: opt.ID,
+				}
+				if opt.Description != "" {
+					o.Description = opt.Description
+				}
+				if opt.Emoji != "" {
+					o.Emoji = &discord.ComponentEmoji{Name: opt.Emoji}
+				}
+				opts = append(opts, o)
+			}
+			selectMenu := discord.StringSelectComponent{
+				CustomID:    discord.ComponentID(it.ID),
+				Placeholder: it.Placeholder,
+				Options:     opts,
+			}
+			rows = append(rows, &discord.ActionRowComponent{&selectMenu})
+		}
+	}
+
+	if len(rows) == 0 {
+		return embeds, nil, nil
+	}
+	return embeds, &rows, nil
+}
+
+func buttonStyleToDiscord(s models.ButtonStyle) discord.ButtonComponentStyle {
+	switch s {
+	case models.ButtonStylePrimary:
+		return discord.PrimaryButtonStyle()
+	case models.ButtonStyleSuccess:
+		return discord.SuccessButtonStyle()
+	case models.ButtonStyleDanger:
+		return discord.DangerButtonStyle()
+	default:
+		return discord.SecondaryButtonStyle()
+	}
+}
+
+// PrettyPrintPayload is a small helper used by controllers/tests to return a
+// readable version of the stored JSON payload.
+func PrettyPrintPayload(payload string) (string, error) {
+	var raw map[string]interface{}
+	if err := json.Unmarshal([]byte(payload), &raw); err != nil {
+		return "", err
+	}
+	b, err := json.MarshalIndent(raw, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }

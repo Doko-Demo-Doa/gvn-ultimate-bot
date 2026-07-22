@@ -145,6 +145,27 @@ func (rs *RoleScheduler) GrantRole(userNativeID string, roleNativeID string, dur
 	return nil
 }
 
+// AddRole assigns a Discord role to a user permanently (no DB tracking).
+// Used by reaction-role modules where persistence is handled by Discord itself.
+func (rs *RoleScheduler) AddRole(userNativeID string, roleNativeID string) error {
+	userID := parseSnowflake(userNativeID)
+	roleID := parseSnowflakeRole(roleNativeID)
+	if userID == 0 || roleID == 0 {
+		return nil
+	}
+	return rs.state.AddRole(rs.guildID, userID, roleID, api.AddRoleData{})
+}
+
+// RemoveRole removes a Discord role from a user permanently (no DB tracking).
+func (rs *RoleScheduler) RemoveRole(userNativeID string, roleNativeID string) error {
+	userID := parseSnowflake(userNativeID)
+	roleID := parseSnowflakeRole(roleNativeID)
+	if userID == 0 || roleID == 0 {
+		return nil
+	}
+	return rs.state.RemoveRole(rs.guildID, userID, roleID, api.AuditLogReason(""))
+}
+
 // RevokeRole performs an early/manual revocation of a timed role assignment.
 func (rs *RoleScheduler) RevokeRole(assignmentID uint) error {
 	// Fetch the assignment to know who/what to revoke

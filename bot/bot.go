@@ -21,7 +21,7 @@ var (
 	IsWorking = false
 )
 
-func Bootstrap(s *state.State, ds discordservice.DiscordService, ms moduleservice.ModuleService, rs *scheduler.RoleScheduler) {
+func Bootstrap(s *state.State, ds discordservice.DiscordService, dre discordservice.DiscordRoleReactionEmbedService, ms moduleservice.ModuleService, rs *scheduler.RoleScheduler) {
 	// Reset all commands
 	commands, err := s.GuildCommands(AppID, GuildID)
 	if err != nil {
@@ -58,7 +58,7 @@ func Bootstrap(s *state.State, ds discordservice.DiscordService, ms moduleservic
 				RegisterPinModule(s)
 			}
 			if module.ModuleName == "grant_role_module" {
-				RegisterRoleReactModule(s, ds)
+				RegisterRoleReactModule(s, ds, dre, rs, GuildID)
 			}
 			if module.ModuleName == "grant_role_command" {
 				RegisterGrantRoleModule(s, rs)

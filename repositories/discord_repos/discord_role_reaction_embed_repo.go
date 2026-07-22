@@ -2,6 +2,7 @@ package discordrepos
 
 import (
 	"doko/gvn-ultimate-bot/models"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -9,7 +10,7 @@ import (
 type DiscordRoleReactionEmbedRepo interface {
 	GetByID(id uint) (*models.DiscordRoleReactionEmbed, error)
 	GetByNativeID(nativeId string) (*models.DiscordRoleReactionEmbed, error)
-	Create(role *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error) // Actually upsert
+	Create(role *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error)
 	Update(nativeMessageId string, role *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error)
 	Upsert(role *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error)
 	ListRoleReactionEmbeds() ([]*models.DiscordRoleReactionEmbed, error)
@@ -28,11 +29,20 @@ func NewDiscordRoleReactionEmbedRepo(db *gorm.DB) DiscordRoleReactionEmbedRepo {
 
 func (dr *discordRoleReactionEmbedRepo) Create(payload *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error) {
 	var r models.DiscordRoleReactionEmbed
-	dr.db.FirstOrInit(&r, payload)
 	if err := dr.db.Where(&models.DiscordRoleReactionEmbed{NativeMessageId: payload.NativeMessageId}).FirstOrCreate(&r).Error; err != nil {
 		return &r, err
 	}
 
+	// Apply the incoming values on top of the found-or-created record.
+	r.Name = payload.Name
+	r.Payload = payload.Payload
+	r.Mode = payload.Mode
+	r.Tags = payload.Tags
+	r.Version = payload.Version
+
+	if err := dr.db.Save(&r).Error; err != nil {
+		return &r, err
+	}
 	return &r, nil
 }
 
@@ -46,16 +56,35 @@ func (dr *discordRoleReactionEmbedRepo) Update(nativeMessageId string, payload *
 
 	r.Name = payload.Name
 	r.NativeMessageId = payload.NativeMessageId
+	r.Payload = payload.Payload
+	r.Mode = payload.Mode
 	r.Tags = payload.Tags
 	r.Version = payload.Version
-	r.Payload = payload.Payload
 
-	dr.db.Save(&r)
+	if err := dr.db.Save(&r).Error; err != nil {
+		return nil, err
+	}
 	return &r, nil
 }
 
 func (dr *discordRoleReactionEmbedRepo) Upsert(role *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error) {
-	panic("unimplemented")
+	var r models.DiscordRoleReactionEmbed
+	result := dr.db.Where(&models.DiscordRoleReactionEmbed{NativeMessageId: role.NativeMessageId}).First(&r)
+	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, result.Error
+	}
+
+	r.Name = role.Name
+	r.NativeMessageId = role.NativeMessageId
+	r.Payload = role.Payload
+	r.Mode = role.Mode
+	r.Tags = role.Tags
+	r.Version = role.Version
+
+	if err := dr.db.Save(&r).Error; err != nil {
+		return nil, err
+	}
+	return &r, nil
 }
 
 func (dr *discordRoleReactionEmbedRepo) Delete(id uint) error {
@@ -63,22 +92,20 @@ func (dr *discordRoleReactionEmbedRepo) Delete(id uint) error {
 }
 
 func (dr *discordRoleReactionEmbedRepo) GetByID(id uint) (*models.DiscordRoleReactionEmbed, error) {
-	var module *models.DiscordRoleReactionEmbed
-	if err := dr.db.Where("id = ?", id).First(&module).Error; err == nil {
-		return module, err
+	var module models.DiscordRoleReactionEmbed
+	if err := dr.db.Where("id = ?", id).First(&module).Error; err != nil {
+		return nil, err
 	}
-
-	return nil, nil
+	return &module, nil
 }
 
 func (dr *discordRoleReactionEmbedRepo) GetByNativeID(nativeMessageId string) (*models.DiscordRoleReactionEmbed, error) {
-	var embed *models.DiscordRoleReactionEmbed
+	var embed models.DiscordRoleReactionEmbed
 	err := dr.db.Where("native_message_id = ?", nativeMessageId).First(&embed).Error
 	if err != nil {
 		return nil, err
 	}
-
-	return embed, nil
+	return &embed, nil
 }
 
 func (dr *discordRoleReactionEmbedRepo) ListRoleReactionEmbeds() ([]*models.DiscordRoleReactionEmbed, error) {

@@ -68,13 +68,6 @@ func Run() {
 	discordRoleReactionEmbedRepo := discordrepos.NewDiscordRoleReactionEmbedRepo(db)
 	discordUserRoleRepo := discordrepos.NewDiscordUserRoleRepo(db)
 
-	// Setup services
-	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
-	moduleService := moduleservice.NewModuleService(moduleRepo)
-	authService := authservice.NewAuthService(config.JWTSecret)
-	discordRoleService := discordservice.NewDiscordRoleService(discordRepo, discordRoleReactionEmbedRepo, discordUserRoleRepo)
-	discordRoleReactionEmbedService := discordservice.NewDiscordRoleReactionEmbedService(discordRoleReactionEmbedRepo)
-
 	// Setup Discord state (shared between bot and scheduler)
 	s := state.New("Bot " + os.Getenv("DISCORD_TOKEN"))
 	s.AddIntents(gateway.IntentGuilds)
@@ -83,6 +76,13 @@ func Run() {
 
 	// Setup scheduler
 	guildID := discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
+
+	// Setup services
+	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
+	moduleService := moduleservice.NewModuleService(moduleRepo)
+	authService := authservice.NewAuthService(config.JWTSecret)
+	discordRoleService := discordservice.NewDiscordRoleService(discordRepo, discordRoleReactionEmbedRepo, discordUserRoleRepo)
+	discordRoleReactionEmbedService := discordservice.NewDiscordRoleReactionEmbedService(discordRoleReactionEmbedRepo, s, guildID)
 	roleScheduler := scheduler.NewRoleScheduler(s, discordRoleService, guildID)
 
 	// Seeding modules
@@ -138,6 +138,7 @@ func Run() {
 	discord.GET("/role-reaction/list", discordRoleCtl.ListDiscordRoleReactions)
 	discord.GET("/role-reaction/:id", discordRoleCtl.GetDiscordRoleReaction)
 	discord.POST("/role-reaction/upsert", discordRoleCtl.UpsertDiscordRoleReaction)
+	discord.POST("/role-reaction/publish", discordRoleCtl.PublishDiscordRoleReaction)
 
 	// Module-related
 	module := api.Group("/module")
@@ -158,7 +159,7 @@ func Run() {
 	}()
 
 	go func() {
-		bot.Bootstrap(s, discordRoleService, moduleService, roleScheduler)
+		bot.Bootstrap(s, discordRoleService, discordRoleReactionEmbedService, moduleService, roleScheduler)
 		wg.Done()
 	}()
 

@@ -98,16 +98,61 @@ export type IDiscordUserRoleAssignment = {
   TimeRemaining: string;
 };
 
-export interface IReactionRoleMessagePayload {
-  guildId: string;
-  channelId: string;
-  messageId: string;
-  detail: {
-    message: string;
-    embedTitle: string;
-    embedDescription: string;
-  };
-}
+export type IDiscordRoleReactionEmbed = {
+  ID: number;
+  NativeMessageId: string;
+  Name: string;
+  Payload: string;
+  Mode: string;
+  Tags: string;
+  Version: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+};
+
+export type IReactionRoleMessagePayload = {
+  channel_id: string;
+  message?: string;
+  mode?: "default" | "reverse";
+  embed?: IReactionRoleEmbed;
+  interactions: IReactionInteraction[];
+};
+
+export type IReactionRoleEmbed = {
+  title?: string;
+  description?: string;
+  color?: number;
+  image_url?: string;
+  thumbnail_url?: string;
+  footer?: string;
+  author?: string;
+  fields?: IReactionEmbedField[];
+};
+
+export type IReactionEmbedField = {
+  name: string;
+  value: string;
+  inline?: boolean;
+};
+
+export type IReactionInteraction = {
+  id: string;
+  type: "emoji" | "button" | "dropdown";
+  emoji?: string;
+  label?: string;
+  style?: "primary" | "secondary" | "success" | "danger";
+  role_native_id?: string;
+  placeholder?: string;
+  options?: IDropdownOption[];
+};
+
+export type IDropdownOption = {
+  id: string;
+  label: string;
+  emoji?: string;
+  description?: string;
+  role_native_id: string;
+};
 
 declare namespace NodeJS {
   interface ProcessEnv {

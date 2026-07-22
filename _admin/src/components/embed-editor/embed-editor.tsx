@@ -12,6 +12,7 @@ import {
   Flex,
   Group,
   Image,
+  NativeSelect,
   Popover,
   SegmentedControl,
   Space,
@@ -22,21 +23,50 @@ import {
 } from "@mantine/core";
 import { useForm, schemaResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
-import { IconPlus, IconSun, IconTrashFilled } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconSun,
+  IconTrashFilled,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import * as classes from "~/components/embed-editor/embed-editor.css";
 import { vars } from "~/theme";
 import { UploadDropzone } from "~/utils/uploadthing";
+import type { IDiscordRole, IReactionRoleMessagePayload } from "~/types/types";
 
 interface Props {
-  messageId: string;
+  roles: IDiscordRole[];
+  onPublish: (payload: IReactionRoleMessagePayload) => void;
+  isPublishing: boolean;
 }
 
 const MAX_CUSTOM_FIELDS = 5;
+const MAX_INTERACTIONS = 10;
+
+const dropdownOptionSchema = z.object({
+  id: z.string(),
+  label: z.string().min(1, "Label is required"),
+  emoji: z.string().optional(),
+  description: z.string().optional(),
+  role_native_id: z.string().min(1, "Role is required"),
+});
+
+const interactionSchema = z.object({
+  id: z.string(),
+  type: z.enum(["emoji", "button", "dropdown"]),
+  emoji: z.string().optional(),
+  label: z.string().optional(),
+  style: z.enum(["primary", "secondary", "success", "danger"]).optional(),
+  role_native_id: z.string().optional(),
+  placeholder: z.string().optional(),
+  options: z.array(dropdownOptionSchema).optional(),
+});
 
 const schema = z.object({
+  channel_id: z.string().min(1, "Channel ID is required"),
+  mode: z.enum(["default", "reverse"]).default("default"),
   color: z.string().optional(),
   mainMessage: z.string().optional(),
   headerMessage: z.string().optional(),
@@ -53,21 +83,22 @@ const schema = z.object({
       }),
     )
     .max(MAX_CUSTOM_FIELDS),
-  arrowPickingUpRoleFromMultipleReactions: z.boolean().optional(),
+  interactions: z.array(interactionSchema).max(MAX_INTERACTIONS),
 });
 
 type IFormData = z.infer<typeof schema>;
 
 // https://github.com/skyra-project/discord-components
-const EmbedEditor: React.FC<Props> = () => {
+const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing }) => {
   const [value, setValue] = useState("emoji");
-  const [files, setFiles] = useState<File[]>([]);
   const [mainImageUrl, setMainImageUrl] = useState("");
 
   const form = useForm<IFormData>({
     mode: "uncontrolled",
     initialValues: {
-      color: "#fff",
+      channel_id: "",
+      mode: "default",
+      color: "#5865F2",
       mainMessage: "",
       headerMessage: "",
       footerMessage: "",
@@ -81,24 +112,117 @@ const EmbedEditor: React.FC<Props> = () => {
           fieldValue: "",
         },
       ],
-      arrowPickingUpRoleFromMultipleReactions: true,
+      interactions: [],
     },
     validate: schemaResolver(schema, { sync: true }),
   });
 
   const handleSubmit = (values: typeof form.values) => {
-    console.log(values);
+    const payload: IReactionRoleMessagePayload = {
+      channel_id: values.channel_id,
+      message: values.mainMessage || undefined,
+      mode: values.mode,
+      embed: values.titleMessage || values.embedMainMessage || values.headerMessage || values.footerMessage || values.featuredImage || values.customFields.length > 0
+        ? {
+            title: values.titleMessage || undefined,
+            description: values.embedMainMessage || undefined,
+            color: parseInt((values.color || "#5865F2").replace("#", ""), 16) || 0x5865F2,
+            image_url: values.featuredImage || undefined,
+            footer: values.footerMessage || undefined,
+            author: values.headerMessage || undefined,
+            fields: values.customFields
+              .filter((f) => f.fieldName && f.fieldValue)
+              .map((f) => ({
+                name: f.fieldName,
+                value: f.fieldValue,
+                inline: false,
+              })),
+          }
+        : undefined,
+      interactions: values.interactions.map((it) => ({
+        id: it.id,
+        type: it.type,
+        emoji: it.emoji || undefined,
+        label: it.label || undefined,
+        style: it.style || undefined,
+        role_native_id: it.role_native_id || undefined,
+        placeholder: it.placeholder || undefined,
+        options: it.options || undefined,
+      })),
+    };
+
+    onPublish(payload);
   };
 
   const cFields = form.getValues().customFields;
+  const interactions = form.getValues().interactions;
+
+  const addInteraction = (type_: "emoji" | "button" | "dropdown") => {
+    if (interactions.length >= MAX_INTERACTIONS) return;
+    const base = {
+      id: uuidv4(),
+      type: type_,
+    } as const;
+    if (type_ === "emoji" || type_ === "button") {
+      form.insertListItem("interactions", {
+        ...base,
+        emoji: "",
+        label: "",
+        style: "secondary",
+        role_native_id: "",
+      });
+    } else {
+      form.insertListItem("interactions", {
+        ...base,
+        placeholder: "Chọn một role...",
+        options: [
+          {
+            id: uuidv4(),
+            label: "",
+            role_native_id: "",
+          },
+        ],
+      });
+    }
+  };
+
+  const removeInteraction = (index: number) => {
+    form.removeListItem("interactions", index);
+  };
+
+  const roleSelectData = [
+    { value: "", label: "-- Chọn role --", disabled: true },
+    ...roles.map((r) => ({
+      value: r.NativeId,
+      label: r.Name,
+    })),
+  ];
 
   return (
     <form onSubmit={form.onSubmit((values) => handleSubmit(values))}>
       <Stack className="embed-editor-wrapper">
-        <Stack>
-          <Text>1. Create a message</Text>
+        <Group>
           <TextInput
-            width={500}
+            label="Channel ID"
+            placeholder="Discord channel ID (e.g. 123456789012345678)"
+            style={{ flexGrow: 1 }}
+            {...form.getInputProps("channel_id")}
+          />
+          <NativeSelect
+            label="Chế độ"
+            data={[
+              { value: "default", label: "Default (cấp role khi tương tác)" },
+              { value: "reverse", label: "Reverse (xóa role khi tương tác)" },
+            ]}
+            {...form.getInputProps("mode")}
+          />
+        </Group>
+
+        <Divider variant="dotted" my="md" />
+
+        <Stack>
+          <Text>1. Message content (optional)</Text>
+          <TextInput
             placeholder="Write your message here! This will appear above the embed."
             {...form.getInputProps("mainMessage")}
           />
@@ -107,7 +231,7 @@ const EmbedEditor: React.FC<Props> = () => {
         <Space h="lg" />
 
         <Stack>
-          <Text>2. Add reactions</Text>
+          <Text>2. Add interactions</Text>
 
           <SegmentedControl
             value={value}
@@ -115,11 +239,151 @@ const EmbedEditor: React.FC<Props> = () => {
             className={classes.segmented}
             data={[
               { label: "Emoji", value: "emoji" },
-              { label: "Button", value: "button", disabled: true },
-              { label: "Dropdown", value: "dropdown", disabled: true },
+              { label: "Button", value: "button" },
+              { label: "Dropdown", value: "dropdown" },
             ]}
           />
+
+          <Group>
+            <Button
+              size="xs"
+              variant="light"
+              onClick={() => addInteraction(value as any)}
+              disabled={interactions.length >= MAX_INTERACTIONS}
+              leftSection={<IconPlus size={14} />}
+            >
+              Thêm {value}
+            </Button>
+          </Group>
+
+          {interactions.map((it, i) => (
+            <Fieldset key={it.id} legend={`${it.type.toUpperCase()} ${i + 1}`}>
+              <Stack>
+                {(it.type === "emoji" || it.type === "button") && (
+                  <>
+                    <Group>
+                      <TextInput
+                        label="Emoji"
+                        placeholder=":thumbsup: or 🔥"
+                        style={{ width: 120 }}
+                        {...form.getInputProps(`interactions.${i}.emoji`)}
+                      />
+                      {it.type === "button" && (
+                        <TextInput
+                          label="Label"
+                          placeholder="Nút bấm"
+                          style={{ flexGrow: 1 }}
+                          {...form.getInputProps(`interactions.${i}.label`)}
+                        />
+                      )}
+                    </Group>
+                    {it.type === "button" && (
+                      <NativeSelect
+                        label="Style"
+                        data={[
+                          { value: "primary", label: "Primary (blurple)" },
+                          { value: "secondary", label: "Secondary (grey)" },
+                          { value: "success", label: "Success (green)" },
+                          { value: "danger", label: "Danger (red)" },
+                        ]}
+                        {...form.getInputProps(`interactions.${i}.style`)}
+                      />
+                    )}
+                    <NativeSelect
+                      label="Role"
+                      data={roleSelectData}
+                      {...form.getInputProps(`interactions.${i}.role_native_id`)}
+                    />
+                  </>
+                )}
+
+                {it.type === "dropdown" && (
+                  <>
+                    <TextInput
+                      label="Placeholder"
+                      placeholder="Chọn một role..."
+                      {...form.getInputProps(`interactions.${i}.placeholder`)}
+                    />
+                    <Text size="sm" fw={500}>
+                      Options
+                    </Text>
+                    {it.options?.map((opt, optIndex) => (
+                      <Group key={opt.id} align="flex-start">
+                        <Stack gap={4} style={{ flexGrow: 1 }}>
+                          <Group>
+                            <TextInput
+                              placeholder="Label"
+                              style={{ flexGrow: 1 }}
+                              {...form.getInputProps(
+                                `interactions.${i}.options.${optIndex}.label`,
+                              )}
+                            />
+                            <TextInput
+                              placeholder="Emoji"
+                              style={{ width: 80 }}
+                              {...form.getInputProps(
+                                `interactions.${i}.options.${optIndex}.emoji`,
+                              )}
+                            />
+                          </Group>
+                          <TextInput
+                            placeholder="Description"
+                            {...form.getInputProps(
+                              `interactions.${i}.options.${optIndex}.description`,
+                            )}
+                          />
+                          <NativeSelect
+                            data={roleSelectData}
+                            {...form.getInputProps(
+                              `interactions.${i}.options.${optIndex}.role_native_id`,
+                            )}
+                          />
+                        </Stack>
+                        <Button
+                          size="xs"
+                          color="red"
+                          variant="subtle"
+                          onClick={() => {
+                            const current = form.getValues().interactions[i].options || [];
+                            const next = current.filter((_, idx) => idx !== optIndex);
+                            form.setFieldValue(`interactions.${i}.options`, next);
+                          }}
+                        >
+                          <IconTrashFilled size={14} />
+                        </Button>
+                      </Group>
+                    ))}
+                    <Button
+                      size="xs"
+                      variant="default"
+                      leftSection={<IconPlus size={14} />}
+                      onClick={() => {
+                        const current = form.getValues().interactions[i].options || [];
+                        form.setFieldValue(`interactions.${i}.options`, [
+                          ...current,
+                          { id: uuidv4(), label: "", role_native_id: "" },
+                        ]);
+                      }}
+                    >
+                      Thêm option
+                    </Button>
+                  </>
+                )}
+
+                <Button
+                  size="xs"
+                  color="red"
+                  leftSection={<IconTrashFilled size={14} />}
+                  onClick={() => removeInteraction(i)}
+                >
+                  Xóa interaction
+                </Button>
+              </Stack>
+            </Fieldset>
+          ))}
         </Stack>
+
+        <Space h="lg" />
 
         <Group align="stretch" className="main-area">
           <Stack>
@@ -156,7 +420,7 @@ const EmbedEditor: React.FC<Props> = () => {
                   <FileButton
                     onChange={(f) => {
                       if (f) {
-                        setFiles([f]);
+                        console.log(f);
                       }
                     }}
                     accept="image/png,image/jpeg"
@@ -207,7 +471,6 @@ const EmbedEditor: React.FC<Props> = () => {
                         config={{ mode: "auto" }}
                         content={{ allowedContent: "image/png,image/jpeg" }}
                         onBeforeUploadBegin={(files) => {
-                          // Preprocess files before uploading (e.g. rename them)
                           return files.map(
                             (f) =>
                               new File([f], `temp-${f.name}`, {
@@ -216,11 +479,10 @@ const EmbedEditor: React.FC<Props> = () => {
                           );
                         }}
                         onClientUploadComplete={(res) => {
-                          // Do something with the response
                           setMainImageUrl(res[0].ufsUrl);
+                          form.setFieldValue("featuredImage", res[0].ufsUrl);
                         }}
                         onUploadError={(error: Error) => {
-                          // Do something with the error.
                           console.log("Error Uploadthing: ", error);
                           notifications.show({
                             color: "red",
@@ -235,8 +497,15 @@ const EmbedEditor: React.FC<Props> = () => {
 
                 {cFields.map((n, i) => (
                   <Fieldset key={n.id} legend={`Custom field ${i + 1}`}>
-                    <TextInput placeholder="Field name" />
-                    <TextInput placeholder="Field value" mt="md" />
+                    <TextInput
+                      placeholder="Field name"
+                      {...form.getInputProps(`customFields.${i}.fieldName`)}
+                    />
+                    <TextInput
+                      placeholder="Field value"
+                      mt="md"
+                      {...form.getInputProps(`customFields.${i}.fieldValue`)}
+                    />
                     <Button
                       leftSection={<IconTrashFilled size={14} />}
                       color={vars.colors.red[9]}
@@ -275,7 +544,7 @@ const EmbedEditor: React.FC<Props> = () => {
                   <FileButton
                     onChange={(f) => {
                       if (f) {
-                        setFiles([f]);
+                        console.log(f);
                       }
                     }}
                     accept="image/png,image/jpeg"
@@ -298,8 +567,13 @@ const EmbedEditor: React.FC<Props> = () => {
               </Stack>
             </Group>
 
-            <Button variant="gradient" type="submit">
-              Save
+            <Button
+              variant="gradient"
+              type="submit"
+              loading={isPublishing}
+              disabled={interactions.length === 0 || !form.values.channel_id}
+            >
+              Publish to Discord
             </Button>
           </Stack>
         </Group>

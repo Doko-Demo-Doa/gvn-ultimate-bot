@@ -13,13 +13,13 @@ import (
 )
 
 type DiscordRoleInput struct {
-	Name        string    `json:"name"`
-	NativeID    string    `json:"native_id"`
-	Mentionable uint      `json:"mentionable"`
-	Hoist       uint      `json:"hoist"`
-	Color       uint      `json:"color"`
-	Expiry      time.Time `json:"expiry"`
-	ImplicitType uint `json:"implicit_type"`
+	Name         string    `json:"name"`
+	NativeID     string    `json:"native_id"`
+	Mentionable  uint      `json:"mentionable"`
+	Hoist        uint      `json:"hoist"`
+	Color        uint      `json:"color"`
+	Expiry       time.Time `json:"expiry"`
+	ImplicitType uint      `json:"implicit_type"`
 }
 
 type AssignRoleInput struct {
@@ -39,11 +39,16 @@ type RoleAssignmentResponse struct {
 }
 
 type DiscordRoleReactionEmbedInput struct {
-	NativeMessageId string `json:"native_message_id"`
-	Name            string `json:"name"`
-	Payload         string `json:"payload"`
-	Tags            string `json:"tags"`
-	Version         uint   `json:"version"`
+	NativeMessageId string                          `json:"native_message_id"`
+	Name            string                          `json:"name"`
+	Payload         models.ReactionRoleMessagePayload `json:"payload"`
+	Mode            string                          `json:"mode"`
+	Tags            string                          `json:"tags"`
+	Version         uint                            `json:"version"`
+}
+
+type PublishReactionRoleInput struct {
+	Payload models.ReactionRoleMessagePayload `json:"payload" binding:"required"`
 }
 
 type DiscordController interface {
@@ -57,6 +62,7 @@ type DiscordController interface {
 	ListDiscordRoleReactions(*gin.Context)
 	GetDiscordRoleReaction(*gin.Context)
 	UpsertDiscordRoleReaction(*gin.Context)
+	PublishDiscordRoleReaction(*gin.Context)
 }
 
 type discordController struct {
@@ -229,14 +235,29 @@ func (ctl *discordController) inputToDiscordRole(input DiscordRoleInput) models.
 	}
 }
 
-func (ctl *discordController) inputToDiscordRoleReactionEmbed(input DiscordRoleReactionEmbedInput) models.DiscordRoleReactionEmbed {
-	return models.DiscordRoleReactionEmbed{
+func (ctl *discordController) inputToDiscordRoleReactionEmbed(input DiscordRoleReactionEmbedInput) (*models.DiscordRoleReactionEmbed, *models.ReactionRoleMessagePayload, error) {
+	payload := input.Payload
+	if input.Mode != "" {
+		payload.Mode = models.ReactionMode(input.Mode)
+	}
+	if payload.Mode == "" {
+		payload.Mode = models.ReactionModeDefault
+	}
+	if err := payload.Validate(); err != nil {
+		return nil, nil, err
+	}
+	payloadJSON, err := payload.ToJSON()
+	if err != nil {
+		return nil, nil, err
+	}
+	return &models.DiscordRoleReactionEmbed{
 		NativeMessageId: input.NativeMessageId,
 		Name:            input.Name,
+		Payload:         payloadJSON,
+		Mode:            string(payload.Mode),
 		Tags:            input.Tags,
 		Version:         input.Version,
-		Payload:         input.Payload,
-	}
+	}, &payload, nil
 }
 
 /* Role-reaction related */
@@ -256,8 +277,12 @@ func (ctl *discordController) CreateDiscordRoleReactions(c *gin.Context) {
 		return
 	}
 
-	dRoleReactionEmbed := ctl.inputToDiscordRoleReactionEmbed(dRoleInput)
-	data, err := ctl.dre.UpsertEmbed(&dRoleReactionEmbed)
+	dRoleReactionEmbed, payload, err := ctl.inputToDiscordRoleReactionEmbed(dRoleInput)
+	if err != nil {
+		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+	data, err := ctl.dre.UpsertEmbed(dRoleReactionEmbed, payload)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 		return
@@ -288,8 +313,29 @@ func (ctl *discordController) UpsertDiscordRoleReaction(c *gin.Context) {
 		return
 	}
 
-	dRoleReactionEmbed := ctl.inputToDiscordRoleReactionEmbed(dRoleReactionEmbedInput)
-	data, err := ctl.dre.UpsertEmbed(&dRoleReactionEmbed)
+	dRoleReactionEmbed, payload, err := ctl.inputToDiscordRoleReactionEmbed(dRoleReactionEmbedInput)
+	if err != nil {
+		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+	data, err := ctl.dre.UpsertEmbed(dRoleReactionEmbed, payload)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	HTTPRes(c, http.StatusOK, "ok", data)
+}
+
+func (ctl *discordController) PublishDiscordRoleReaction(c *gin.Context) {
+	var input PublishReactionRoleInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+	if input.Payload.Mode == "" {
+		input.Payload.Mode = models.ReactionModeDefault
+	}
+	data, err := ctl.dre.PublishEmbed(&input.Payload)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 		return
