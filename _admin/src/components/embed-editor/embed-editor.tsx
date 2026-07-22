@@ -15,6 +15,7 @@ import {
   NativeSelect,
   Popover,
   SegmentedControl,
+  Select,
   Space,
   Stack,
   Text,
@@ -23,21 +24,22 @@ import {
 } from "@mantine/core";
 import { useForm, schemaResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
-import {
-  IconPlus,
-  IconSun,
-  IconTrashFilled,
-} from "@tabler/icons-react";
+import { IconPlus, IconSun, IconTrashFilled } from "@tabler/icons-react";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import * as classes from "~/components/embed-editor/embed-editor.css";
 import { vars } from "~/theme";
 import { UploadDropzone } from "~/utils/uploadthing";
-import type { IDiscordRole, IReactionRoleMessagePayload } from "~/types/types";
+import type {
+  IDiscordChannel,
+  IDiscordRole,
+  IReactionRoleMessagePayload,
+} from "~/types/types";
 
 interface Props {
   roles: IDiscordRole[];
+  channels: IDiscordChannel[];
   onPublish: (payload: IReactionRoleMessagePayload) => void;
   isPublishing: boolean;
   initialPayload?: IReactionRoleMessagePayload;
@@ -148,9 +150,17 @@ function payloadToFormData(payload?: IReactionRoleMessagePayload): IFormData {
 }
 
 // https://github.com/skyra-project/discord-components
-const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing, initialPayload }) => {
+const EmbedEditor: React.FC<Props> = ({
+  roles,
+  channels,
+  onPublish,
+  isPublishing,
+  initialPayload,
+}) => {
   const [value, setValue] = useState("emoji");
-  const [mainImageUrl, setMainImageUrl] = useState(initialPayload?.embed?.image_url || "");
+  const [mainImageUrl, setMainImageUrl] = useState(
+    initialPayload?.embed?.image_url || "",
+  );
 
   const form = useForm<IFormData>({
     mode: "uncontrolled",
@@ -163,23 +173,31 @@ const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing, initialP
       channel_id: values.channel_id,
       message: values.mainMessage || undefined,
       mode: values.mode,
-      embed: values.titleMessage || values.embedMainMessage || values.headerMessage || values.footerMessage || values.featuredImage || values.customFields.length > 0
-        ? {
-            title: values.titleMessage || undefined,
-            description: values.embedMainMessage || undefined,
-            color: parseInt((values.color || "#5865F2").replace("#", ""), 16) || 0x5865F2,
-            image_url: values.featuredImage || undefined,
-            footer: values.footerMessage || undefined,
-            author: values.headerMessage || undefined,
-            fields: values.customFields
-              .filter((f) => f.fieldName && f.fieldValue)
-              .map((f) => ({
-                name: f.fieldName,
-                value: f.fieldValue,
-                inline: false,
-              })),
-          }
-        : undefined,
+      embed:
+        values.titleMessage ||
+        values.embedMainMessage ||
+        values.headerMessage ||
+        values.footerMessage ||
+        values.featuredImage ||
+        values.customFields.length > 0
+          ? {
+              title: values.titleMessage || undefined,
+              description: values.embedMainMessage || undefined,
+              color:
+                parseInt((values.color || "#5865F2").replace("#", ""), 16) ||
+                0x5865f2,
+              image_url: values.featuredImage || undefined,
+              footer: values.footerMessage || undefined,
+              author: values.headerMessage || undefined,
+              fields: values.customFields
+                .filter((f) => f.fieldName && f.fieldValue)
+                .map((f) => ({
+                  name: f.fieldName,
+                  value: f.fieldValue,
+                  inline: false,
+                })),
+            }
+          : undefined,
       interactions: values.interactions.map((it) => ({
         id: it.id,
         type: it.type,
@@ -243,10 +261,14 @@ const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing, initialP
     <form onSubmit={form.onSubmit((values) => handleSubmit(values))}>
       <Stack className="embed-editor-wrapper">
         <Group>
-          <TextInput
-            label="Channel ID"
-            placeholder="Discord channel ID (e.g. 123456789012345678)"
-            style={{ flexGrow: 1 }}
+          <Select
+            label="Discord channel"
+            placeholder="Chọn channel..."
+            searchable
+            data={channels.map((ch) => ({
+              value: ch.id,
+              label: `#${ch.name}`,
+            }))}
             {...form.getInputProps("channel_id")}
           />
           <NativeSelect
@@ -333,7 +355,9 @@ const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing, initialP
                     <NativeSelect
                       label="Role"
                       data={roleSelectData}
-                      {...form.getInputProps(`interactions.${i}.role_native_id`)}
+                      {...form.getInputProps(
+                        `interactions.${i}.role_native_id`,
+                      )}
                     />
                   </>
                 )}
@@ -385,9 +409,15 @@ const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing, initialP
                           color="red"
                           variant="subtle"
                           onClick={() => {
-                            const current = form.getValues().interactions[i].options || [];
-                            const next = current.filter((_, idx) => idx !== optIndex);
-                            form.setFieldValue(`interactions.${i}.options`, next);
+                            const current =
+                              form.getValues().interactions[i].options || [];
+                            const next = current.filter(
+                              (_, idx) => idx !== optIndex,
+                            );
+                            form.setFieldValue(
+                              `interactions.${i}.options`,
+                              next,
+                            );
                           }}
                         >
                           <IconTrashFilled size={14} />
@@ -399,7 +429,8 @@ const EmbedEditor: React.FC<Props> = ({ roles, onPublish, isPublishing, initialP
                       variant="default"
                       leftSection={<IconPlus size={14} />}
                       onClick={() => {
-                        const current = form.getValues().interactions[i].options || [];
+                        const current =
+                          form.getValues().interactions[i].options || [];
                         form.setFieldValue(`interactions.${i}.options`, [
                           ...current,
                           { id: uuidv4(), label: "", role_native_id: "" },

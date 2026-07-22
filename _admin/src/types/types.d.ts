@@ -98,6 +98,13 @@ export type IDiscordUserRoleAssignment = {
   TimeRemaining: string;
 };
 
+export type IDiscordChannel = {
+  id: string;
+  name: string;
+  type: number;
+  position: number;
+};
+
 export type IDiscordRoleReactionEmbed = {
   ID: number;
   NativeMessageId: string;

@@ -101,6 +101,13 @@ func (dr *discordService) GetActiveAssignmentsForUser(nativeUserID string) ([]*m
 
 // ################# For DiscordRoleReactionEmbed #################
 
+type ChannelInfo struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Type     uint   `json:"type"`
+	Position int    `json:"position"`
+}
+
 type DiscordRoleReactionEmbedService interface {
 	ListEmbeds() ([]*models.DiscordRoleReactionEmbed, error)
 	UpsertEmbed(*models.DiscordRoleReactionEmbed, *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
@@ -109,6 +116,7 @@ type DiscordRoleReactionEmbedService interface {
 	DeleteEmbed(id uint) error
 	EditEmbed(nativeMessageID string, payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
 	PublishEmbed(*models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
+	ListChannels() ([]ChannelInfo, error)
 }
 
 type discordRoleReactionEmbedService struct {
@@ -127,6 +135,26 @@ func NewDiscordRoleReactionEmbedService(repo discordrepos.DiscordRoleReactionEmb
 
 func (d *discordRoleReactionEmbedService) ListEmbeds() ([]*models.DiscordRoleReactionEmbed, error) {
 	return d.RoleReactionRepo.ListRoleReactionEmbeds()
+}
+
+func (d *discordRoleReactionEmbedService) ListChannels() ([]ChannelInfo, error) {
+	channels, err := d.state.Channels(d.guildID)
+	if err != nil {
+		return nil, err
+	}
+	var result []ChannelInfo
+	for _, ch := range channels {
+		// Only include text channels (Type 0) and announcement channels (Type 5)
+		if ch.Type == discord.GuildText || ch.Type == discord.GuildNews {
+			result = append(result, ChannelInfo{
+				ID:       ch.ID.String(),
+				Name:     ch.Name,
+				Type:     uint(ch.Type),
+				Position: ch.Position,
+			})
+		}
+	}
+	return result, nil
 }
 
 func (d *discordRoleReactionEmbedService) UpsertEmbed(m *models.DiscordRoleReactionEmbed, payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error) {

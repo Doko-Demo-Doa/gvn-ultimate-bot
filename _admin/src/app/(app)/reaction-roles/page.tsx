@@ -16,7 +16,7 @@ import { notifications } from "@mantine/notifications";
 import { IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useState } from "react";
 import EmbedEditor from "~/components/embed-editor/embed-editor";
-import { useDiscordRoles } from "~/hooks/api-hooks";
+import { useDiscordChannels, useDiscordRoles } from "~/hooks/api-hooks";
 import {
   useDeleteReactionRoleEmbed,
   usePublishReactionRoleEmbed,
@@ -32,6 +32,7 @@ import MasterLayout from "~/layouts/master-layout";
 export default function ReactionRolesPage() {
   const { data: embedsData, isLoading, refetch } = useReactionRoleEmbeds();
   const { data: rolesData } = useDiscordRoles();
+  const { data: channelsData } = useDiscordChannels();
   const { mutateAsync: publish, isPending: isPublishing } =
     usePublishReactionRoleEmbed();
   const { mutateAsync: upsert, isPending: isUpserting } =
@@ -44,6 +45,7 @@ export default function ReactionRolesPage() {
 
   const embeds = embedsData?.data ?? [];
   const roles = rolesData?.data ?? [];
+  const channels = channelsData?.data ?? [];
 
   async function handlePublish(values: IReactionRoleMessagePayload) {
     try {
@@ -215,6 +217,7 @@ export default function ReactionRolesPage() {
       >
         <EmbedEditor
           roles={roles}
+          channels={channels}
           onPublish={editingEmbed ? handleEditSave : handlePublish}
           isPublishing={editingEmbed ? isUpserting : isPublishing}
           initialPayload={editPayload}

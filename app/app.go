@@ -129,6 +129,7 @@ func Run() {
 
 	// Discord-related APIs
 	discord := api.Group("/discord")
+	discord.GET("/channels", discordRoleCtl.ListDiscordChannels)
 	discord.GET("/role/list", discordRoleCtl.ListDiscordRoles)
 	discord.POST("/role/create", discordRoleCtl.CreateDiscordRole)
 	discord.POST("/role/assign", discordRoleCtl.AssignRoleToUser)

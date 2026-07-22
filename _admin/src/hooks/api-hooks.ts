@@ -4,6 +4,7 @@ import type { IModuleConfigInput } from "~/types/payload";
 import type {
 	BackendResponseType,
 	IBackendModuleType,
+	IDiscordChannel,
 	IDiscordRole,
 	IDiscordUserRoleAssignment,
 } from "~/types/types";
@@ -70,6 +71,17 @@ export function useDiscordRoles() {
 		queryFn: async () => {
 			const resp: BackendResponseType<IDiscordRole[]> =
 				await customApiClient.get("/discord/role/list", {});
+			return resp;
+		},
+	});
+}
+
+export function useDiscordChannels() {
+	return useQuery({
+		queryKey: ["discord-channels"],
+		queryFn: async () => {
+			const resp: BackendResponseType<IDiscordChannel[]> =
+				await customApiClient.get("/discord/channels", {});
 			return resp;
 		},
 	});

@@ -64,6 +64,8 @@ type DiscordController interface {
 	UpsertDiscordRoleReaction(*gin.Context)
 	PublishDiscordRoleReaction(*gin.Context)
 	DeleteDiscordRoleReaction(*gin.Context)
+
+	ListDiscordChannels(*gin.Context)
 }
 
 type discordController struct {
@@ -374,4 +376,13 @@ func (ctl *discordController) DeleteDiscordRoleReaction(c *gin.Context) {
 		return
 	}
 	HTTPRes(c, http.StatusOK, "ok", nil)
+}
+
+func (ctl *discordController) ListDiscordChannels(c *gin.Context) {
+	data, err := ctl.dre.ListChannels()
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	HTTPRes(c, http.StatusOK, "ok", data)
 }
