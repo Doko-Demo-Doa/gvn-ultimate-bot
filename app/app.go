@@ -2,21 +2,16 @@ package app
 
 import (
 	"doko/gvn-ultimate-bot/bot"
-	"doko/gvn-ultimate-bot/common/hmachash"
-	"doko/gvn-ultimate-bot/common/randomstring"
 	"doko/gvn-ultimate-bot/configs"
 	"doko/gvn-ultimate-bot/controllers"
 	"doko/gvn-ultimate-bot/models"
 	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
 	modulerepo "doko/gvn-ultimate-bot/repositories/module_repo"
-	"doko/gvn-ultimate-bot/repositories/passwordreset"
-	"doko/gvn-ultimate-bot/repositories/userrepo"
 	"doko/gvn-ultimate-bot/scheduler"
 	"doko/gvn-ultimate-bot/seeds"
-	"doko/gvn-ultimate-bot/services/authservice"
+	"doko/gvn-ultimate-bot/services/adminaccessservice"
 	"doko/gvn-ultimate-bot/services/discordservice"
 	"doko/gvn-ultimate-bot/services/moduleservice"
-	"doko/gvn-ultimate-bot/services/userservice"
 	"fmt"
 	"net/http"
 	"os"
@@ -53,20 +48,15 @@ func Run() {
 	}
 
 	// WARNING: Remember to run this the first time to create tables
-	db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{}, &models.DiscordUserRole{})
-
-	// Setup common
-	rds := randomstring.NewRandomString()
-	hm := hmachash.NewHMAC(config.HMACKey)
+	db.AutoMigrate(&models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{}, &models.DiscordUserRole{}, &models.AdminWhitelistedRole{})
 
 	// Setup repo
-	userRepo := userrepo.NewUserRepo(db)
 	moduleRepo := modulerepo.NewAppModuleRepo(db)
 
-	pwdRepo := passwordreset.NewPasswordResetRepo(db)
 	discordRepo := discordrepos.NewDiscordRoleRepo(db)
 	discordRoleReactionEmbedRepo := discordrepos.NewDiscordRoleReactionEmbedRepo(db)
 	discordUserRoleRepo := discordrepos.NewDiscordUserRoleRepo(db)
+	adminWhitelistedRoleRepo := discordrepos.NewAdminWhitelistedRoleRepo(db)
 
 	// Setup Discord state (shared between bot and scheduler)
 	s := state.New("Bot " + os.Getenv("DISCORD_TOKEN"))
@@ -78,12 +68,11 @@ func Run() {
 	guildID := discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
 
 	// Setup services
-	userService := userservice.NewUserService(userRepo, pwdRepo, rds, hm, config.Pepper)
 	moduleService := moduleservice.NewModuleService(moduleRepo)
-	authService := authservice.NewAuthService(config.JWTSecret)
 	discordRoleService := discordservice.NewDiscordRoleService(discordRepo, discordRoleReactionEmbedRepo, discordUserRoleRepo)
 	discordRoleReactionEmbedService := discordservice.NewDiscordRoleReactionEmbedService(discordRoleReactionEmbedRepo, s, guildID)
 	roleScheduler := scheduler.NewRoleScheduler(s, discordRoleService, guildID)
+	adminAccessService := adminaccessservice.NewAdminAccessService(adminWhitelistedRoleRepo, s, guildID)
 
 	// Seeding modules
 	mModules, _ := moduleService.ListModules()
@@ -91,18 +80,10 @@ func Run() {
 		seeds.SeedModules(moduleService)
 	}
 
-	// Seeding users
-	mUsers, _ := userService.ListUsers()
-	if len(mUsers) <= 0 {
-		seeds.SeedUsers(userService)
-	}
-
-	pwdRepo.GetOneByToken("")
-
 	// Setup controllers
-	userCtrl := controllers.NewUserController(userService, authService)
 	moduleCtl := controllers.NewModuleController(moduleService)
 	discordRoleCtl := controllers.NewDiscordController(discordRoleService, discordRoleReactionEmbedService, roleScheduler)
+	adminAccessCtl := controllers.NewAdminAccessController(adminAccessService)
 
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
@@ -114,18 +95,6 @@ func Run() {
 	})
 
 	api := router.Group("/api")
-
-	api.POST("/register", userCtrl.Register)
-	api.POST("/login", userCtrl.Login)
-	api.POST("/forgot-password", userCtrl.ForgotPassword)
-	api.POST("/reset-password", userCtrl.ResetPassword)
-
-	user := api.Group("/users")
-	user.GET("/:id", userCtrl.GetByID)
-
-	account := api.Group("/account")
-	account.GET("/profile", userCtrl.GetProfile)
-	account.PUT("/profile", userCtrl.Update)
 
 	// Discord-related APIs
 	discord := api.Group("/discord")
@@ -142,6 +111,13 @@ func Run() {
 	discord.POST("/role-reaction/upsert", discordRoleCtl.UpsertDiscordRoleReaction)
 	discord.POST("/role-reaction/publish", discordRoleCtl.PublishDiscordRoleReaction)
 	discord.DELETE("/role-reaction/:id", discordRoleCtl.DeleteDiscordRoleReaction)
+
+	// Admin dashboard access control (Discord role whitelist)
+	admin := api.Group("/admin")
+	admin.GET("/access-check", adminAccessCtl.CheckAccess)
+	admin.GET("/whitelisted-roles", adminAccessCtl.ListWhitelistedRoles)
+	admin.POST("/whitelisted-roles", adminAccessCtl.UpsertWhitelistedRole)
+	admin.DELETE("/whitelisted-roles/:id", adminAccessCtl.DeleteWhitelistedRole)
 
 	// Module-related
 	module := api.Group("/module")
