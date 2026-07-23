@@ -24,11 +24,17 @@ import {
 } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
-import { IconPlus, IconSun, IconTrashFilled } from "@tabler/icons-react";
+import {
+  IconPhotoUp,
+  IconPlus,
+  IconSun,
+  IconTrashFilled,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import * as classes from "~/components/embed-editor/embed-editor.css";
+import { useEmbedImageUpload } from "~/hooks/use-embed-image-upload";
 import { vars } from "~/theme";
 import type {
   IDiscordChannel,
@@ -36,7 +42,6 @@ import type {
   IDiscordRole,
   IReactionRoleMessagePayload,
 } from "~/types/types";
-import { UploadDropzone } from "~/utils/uploadthing";
 
 interface Props {
   roles: IDiscordRole[];
@@ -191,6 +196,7 @@ const EmbedEditor: React.FC<Props> = ({
   const [mainImageUrl, setMainImageUrl] = useState(
     initialPayload?.embed?.image_url || "",
   );
+  const uploadFeaturedImage = useEmbedImageUpload();
 
   const form = useForm<IFormData>({
     mode: "uncontrolled",
@@ -277,6 +283,31 @@ const EmbedEditor: React.FC<Props> = ({
 
   const removeInteraction = (index: number) => {
     form.removeListItem("interactions", index);
+  };
+
+  const handleFeaturedImageUpload = async (file: File | null) => {
+    if (!file) return;
+
+    try {
+      const uploadedUrl = await uploadFeaturedImage.mutateAsync(file);
+
+      setMainImageUrl(uploadedUrl);
+      form.setFieldValue("featuredImage", uploadedUrl);
+
+      notifications.show({
+        color: "green",
+        title: "Uploaded",
+        message: "Image inserted into the embed.",
+      });
+    } catch (error) {
+      console.log("Error UploadThing: ", error);
+      notifications.show({
+        color: "red",
+        title: "Lỗi",
+        message:
+          error instanceof Error ? error.message : "Không thể upload file này",
+      });
+    }
   };
 
   const roleSelectData = [
@@ -573,33 +604,23 @@ const EmbedEditor: React.FC<Props> = ({
                         src={mainImageUrl}
                       />
                     )}
-                    <Box className={classes.uploadBoxWrapper}>
-                      <UploadDropzone
-                        endpoint="imageUploader"
-                        config={{ mode: "auto" }}
-                        content={{ allowedContent: "image/png,image/jpeg" }}
-                        onBeforeUploadBegin={(files) => {
-                          return files.map(
-                            (f) =>
-                              new File([f], `temp-${f.name}`, {
-                                type: f.type,
-                              }),
-                          );
-                        }}
-                        onClientUploadComplete={(res) => {
-                          setMainImageUrl(res[0].ufsUrl);
-                          form.setFieldValue("featuredImage", res[0].ufsUrl);
-                        }}
-                        onUploadError={(error: Error) => {
-                          console.log("Error Uploadthing: ", error);
-                          notifications.show({
-                            color: "red",
-                            title: "Lỗi",
-                            message: "Không thể upload file này",
-                          });
-                        }}
-                      />
-                    </Box>
+                    <FileButton
+                      onChange={handleFeaturedImageUpload}
+                      accept="image/png,image/jpeg,image/webp"
+                    >
+                      {(props) => (
+                        <Box className={classes.uploadBoxWrapper}>
+                          <Button
+                            {...props}
+                            loading={uploadFeaturedImage.isUploading}
+                            leftSection={<IconPhotoUp size={16} />}
+                            variant={mainImageUrl ? "filled" : "light"}
+                          >
+                            {mainImageUrl ? "Replace image" : "Upload image"}
+                          </Button>
+                        </Box>
+                      )}
+                    </FileButton>
                   </AspectRatio>
                 </Group>
 
