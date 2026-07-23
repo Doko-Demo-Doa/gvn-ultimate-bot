@@ -1,8 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 
 export async function GET(_request: Request) {
-  const { userId } = await auth();
-  if (!userId) {
+  const { isAuthenticated } = await auth();
+  if (!isAuthenticated) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

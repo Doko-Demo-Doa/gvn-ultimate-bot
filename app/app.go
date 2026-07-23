@@ -61,6 +61,7 @@ func Run() {
 	// Setup Discord state (shared between bot and scheduler)
 	s := state.New("Bot " + os.Getenv("DISCORD_TOKEN"))
 	s.AddIntents(gateway.IntentGuilds)
+	s.AddIntents(gateway.IntentGuildMembers)
 	s.AddIntents(gateway.IntentGuildMessages)
 	s.AddIntents(gateway.IntentGuildMessageReactions)
 

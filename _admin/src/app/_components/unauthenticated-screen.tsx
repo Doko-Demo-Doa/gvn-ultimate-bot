@@ -1,5 +1,5 @@
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
-import { Button, Group, Stack, Text, Title } from "@mantine/core";
+import { Group, Stack, Text, Title } from "@mantine/core";
+import DiscordAuthButton from "~/components/auth/discord-auth-button";
 
 export default function UnauthenticatedScreen() {
   return (
@@ -10,14 +10,11 @@ export default function UnauthenticatedScreen() {
       style={{ minHeight: "100vh" }}
     >
       <Title order={2}>DautoVN Bot CP</Title>
-      <Text c="dimmed">Sign in to access the admin dashboard.</Text>
+      <Text c="dimmed">
+        Continue with Discord to access the admin dashboard.
+      </Text>
       <Group>
-        <SignInButton>
-          <Button variant="default">Sign in</Button>
-        </SignInButton>
-        <SignUpButton>
-          <Button>Sign up</Button>
-        </SignUpButton>
+        <DiscordAuthButton />
       </Group>
     </Stack>
   );

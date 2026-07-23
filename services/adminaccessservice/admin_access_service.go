@@ -5,6 +5,7 @@ import (
 	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
 	"doko/gvn-ultimate-bot/statics"
 	"fmt"
+	"log"
 
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/state"
@@ -66,10 +67,12 @@ func (a *adminAccessService) CheckAccess(discordUserNativeID string) (*AccessChe
 
 	member, err := a.state.Member(a.guildID, discord.UserID(userID))
 	if err != nil {
+		log.Printf("admin access denied: failed to fetch Discord member guild_id=%s user_id=%s error=%v", a.guildID, discordUserNativeID, err)
 		return &AccessCheckResult{Allowed: false}, nil
 	}
 
 	if len(member.RoleIDs) == 0 {
+		log.Printf("admin access denied: Discord member has no roles guild_id=%s user_id=%s", a.guildID, discordUserNativeID)
 		return &AccessCheckResult{Allowed: false}, nil
 	}
 
@@ -84,6 +87,7 @@ func (a *adminAccessService) CheckAccess(discordUserNativeID string) (*AccessChe
 	}
 
 	if len(whitelisted) == 0 {
+		log.Printf("admin access denied: no whitelisted role matched guild_id=%s user_id=%s member_roles=%v", a.guildID, discordUserNativeID, memberRoleNativeIDs)
 		return &AccessCheckResult{Allowed: false}, nil
 	}
 

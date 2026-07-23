@@ -1,16 +1,19 @@
-import { SignUp } from "@clerk/nextjs";
+import { Stack, Text, Title } from "@mantine/core";
+import DiscordAuthButton from "~/components/auth/discord-auth-button";
 
 export default function SignUpPage() {
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+    <Stack
+      align="center"
+      justify="center"
+      gap="md"
+      style={{ minHeight: "100vh" }}
     >
-      <SignUp />
-    </div>
+      <Title order={2}>DautoVN Bot CP</Title>
+      <Text c="dimmed">
+        Continue with Discord to access the admin dashboard.
+      </Text>
+      <DiscordAuthButton />
+    </Stack>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { Show, UserButton } from "@clerk/nextjs";
 import { AppShell, Group, Loader, NavLink, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
@@ -14,6 +14,7 @@ import Link from "next/link";
 
 import { usePathname } from "next/navigation";
 import { BotModuleConst } from "~/common/bot-module-const";
+import DiscordAuthButton from "~/components/auth/discord-auth-button";
 import { customApiClient } from "~/datasource/rest/api-client";
 import { useAppModules } from "~/hooks/api-hooks";
 import * as classes from "./master-layout.css";
@@ -49,8 +50,7 @@ const MasterLayout: React.FC<Props> = ({ children }) => {
           <Title order={3}>DautoVN Bot CP</Title>
           <Group px="md">
             <Show when="signed-out">
-              <SignInButton />
-              <SignUpButton />
+              <DiscordAuthButton size="xs" />
             </Show>
             <Show when="signed-in">
               <UserButton />
