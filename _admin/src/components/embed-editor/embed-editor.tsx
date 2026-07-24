@@ -790,7 +790,7 @@ const EmbedEditor: React.FC<Props> = ({
               loading={isPublishing}
               disabled={interactions.length === 0 || !form.values.channel_id}
             >
-              Publish to Discord
+              {initialPayload ? "Save changes" : "Publish to Discord"}
             </Button>
           </Stack>
         </Group>
