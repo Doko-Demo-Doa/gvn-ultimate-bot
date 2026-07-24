@@ -116,6 +116,13 @@ export type IDiscordEmoji = {
   api_name: string;
 };
 
+export type IDiscordMember = {
+  native_id: string;
+  username: string;
+  nickname: string;
+  avatar: string;
+};
+
 export type IDiscordRoleReactionEmbed = {
   ID: number;
   NativeMessageId: string;

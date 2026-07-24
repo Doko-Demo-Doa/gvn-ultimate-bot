@@ -48,7 +48,7 @@ func Run() {
 	}
 
 	// WARNING: Remember to run this the first time to create tables
-	db.AutoMigrate(&models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{}, &models.DiscordUserRole{}, &models.AdminWhitelistedRole{}, &models.DiscordMessageAuditLog{})
+	db.AutoMigrate(&models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{}, &models.DiscordUserRole{}, &models.AdminWhitelistedRole{}, &models.DiscordMessageAuditLog{}, &models.DiscordUser{})
 
 	// Setup repo
 	moduleRepo := modulerepo.NewAppModuleRepo(db)
@@ -101,6 +101,7 @@ func Run() {
 	discord := api.Group("/discord")
 	discord.GET("/channels", discordRoleCtl.ListDiscordChannels)
 	discord.GET("/emojis", discordRoleCtl.ListDiscordEmojis)
+	discord.GET("/members/search", discordRoleCtl.SearchDiscordMembers)
 	discord.GET("/role/list", discordRoleCtl.ListDiscordRoles)
 	discord.POST("/role/create", discordRoleCtl.CreateDiscordRole)
 	discord.POST("/role/assign", discordRoleCtl.AssignRoleToUser)

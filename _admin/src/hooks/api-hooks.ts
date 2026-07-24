@@ -7,6 +7,7 @@ import type {
   IBackendModuleType,
   IDiscordChannel,
   IDiscordEmoji,
+  IDiscordMember,
   IDiscordRole,
   IDiscordUserRoleAssignment,
 } from "~/types/types";
@@ -97,6 +98,18 @@ export function useDiscordEmojis() {
         await customApiClient.get("/discord/emojis", {});
       return resp;
     },
+  });
+}
+
+export function useSearchDiscordMembers(query: string) {
+  return useQuery({
+    queryKey: ["discord-members-search", query],
+    queryFn: async () => {
+      const resp: BackendResponseType<IDiscordMember[]> =
+        await customApiClient.get("/discord/members/search", { q: query });
+      return resp;
+    },
+    enabled: query.length >= 2,
   });
 }
 

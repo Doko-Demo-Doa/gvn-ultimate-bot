@@ -67,6 +67,7 @@ type DiscordController interface {
 
 	ListDiscordChannels(*gin.Context)
 	ListDiscordEmojis(*gin.Context)
+	SearchDiscordMembers(*gin.Context)
 }
 
 type discordController struct {
@@ -390,6 +391,16 @@ func (ctl *discordController) ListDiscordChannels(c *gin.Context) {
 
 func (ctl *discordController) ListDiscordEmojis(c *gin.Context) {
 	data, err := ctl.dre.ListEmojis()
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	HTTPRes(c, http.StatusOK, "ok", data)
+}
+
+func (ctl *discordController) SearchDiscordMembers(c *gin.Context) {
+	query := c.Query("q")
+	data, err := ctl.dre.SearchGuildMembers(query)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 		return

@@ -1,11 +1,13 @@
 "use client";
 
 import {
+  Avatar,
   Badge,
   Button,
   Group,
   Loader,
   NativeSelect,
+  Select,
   Stack,
   Table,
   Text,
@@ -19,8 +21,20 @@ import {
   useDiscordRoles,
   useRevokeRoleMutation,
   useRoleAssignments,
+  useSearchDiscordMembers,
 } from "~/hooks/api-hooks";
 import MasterLayout from "~/layouts/master-layout";
+
+function renderMemberOption({ option }: { option: any }) {
+  return (
+    <Group gap="xs">
+      {option.image_url && (
+        <Avatar src={option.image_url} size={24} radius="xl" />
+      )}
+      <span>{option.label}</span>
+    </Group>
+  );
+}
 
 export default function RoleManagerPage() {
   const { data: rolesData, isLoading: rolesLoading } = useDiscordRoles();
@@ -34,32 +48,44 @@ export default function RoleManagerPage() {
   const { mutateAsync: revokeRole, isPending: isRevoking } =
     useRevokeRoleMutation();
 
-  const [userId, setUserId] = useState("");
+  const [memberSearch, setMemberSearch] = useState("");
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [roleNativeId, setRoleNativeId] = useState("");
   const [durationValue, setDurationValue] = useState("1");
   const [durationUnit, setDurationUnit] = useState("d");
 
+  const { data: membersData, isLoading: membersSearching } =
+    useSearchDiscordMembers(memberSearch);
+
   const roles = rolesData?.data ?? [];
   const assignments = assignmentsData?.data ?? [];
+  const members = membersData?.data ?? [];
 
   const isLoading = rolesLoading || assignmentsLoading;
 
+  const memberSelectData = members.map((m) => ({
+    value: m.native_id,
+    label: m.nickname
+      ? `${m.nickname} (${m.username})`
+      : m.username,
+    image_url: m.avatar,
+  }));
+
   async function handleAssign() {
-    if (!userId || !roleNativeId) {
+    if (!selectedMember || !roleNativeId) {
       notifications.show({
         color: "red",
         title: "Lỗi",
-        message: "Vui lòng nhập User ID và chọn Role",
+        message: "Vui lòng chọn user và role",
       });
       return;
     }
 
-    // Convert duration to Go-parseable format
     const duration = `${durationValue}${durationUnit}`;
 
     try {
       await assignRole({
-        user_native_id: userId,
+        user_native_id: selectedMember,
         role_native_id: roleNativeId,
         duration,
       });
@@ -67,10 +93,11 @@ export default function RoleManagerPage() {
       notifications.show({
         color: "green",
         title: "Thành công",
-        message: `Đã gán role ${getRoleName(roleNativeId)} cho user ${userId} (${duration})`,
+        message: `Đã gán role ${getRoleName(roleNativeId)} cho user (${duration})`,
       });
 
-      // Refresh list
+      setSelectedMember(null);
+      setMemberSearch("");
       void refetch();
     } catch (err: any) {
       notifications.show({
@@ -118,11 +145,19 @@ export default function RoleManagerPage() {
           <>
             <Stack>
               <Title order={4}>Gán role mới</Title>
-              <TextInput
-                label="Discord User ID"
-                placeholder="123456789012345678"
-                value={userId}
-                onChange={(e) => setUserId(e.currentTarget.value)}
+              <Select
+                label="Discord User"
+                placeholder="Tìm kiếm user..."
+                searchable
+                clearable
+                value={selectedMember}
+                onChange={setSelectedMember}
+                onSearchChange={setMemberSearch}
+                searchValue={memberSearch}
+                data={memberSelectData}
+                renderOption={renderMemberOption}
+                rightSection={membersSearching ? <Loader size={16} /> : null}
+                allowDeselect={false}
               />
               <NativeSelect
                 label="Role"

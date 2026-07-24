@@ -116,6 +116,13 @@ type EmojiInfo struct {
 	APIName   string `json:"api_name"`
 }
 
+type MemberInfo struct {
+	NativeId string `json:"native_id"`
+	Username string `json:"username"`
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+}
+
 type DiscordRoleReactionEmbedService interface {
 	ListEmbeds() ([]*models.DiscordRoleReactionEmbed, error)
 	UpsertEmbed(*models.DiscordRoleReactionEmbed, *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
@@ -126,6 +133,7 @@ type DiscordRoleReactionEmbedService interface {
 	PublishEmbed(*models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error)
 	ListChannels() ([]ChannelInfo, error)
 	ListEmojis() ([]EmojiInfo, error)
+	SearchGuildMembers(query string) ([]MemberInfo, error)
 }
 
 type discordRoleReactionEmbedService struct {
@@ -191,6 +199,62 @@ func (d *discordRoleReactionEmbedService) ListEmojis() ([]EmojiInfo, error) {
 		})
 	}
 	return result, nil
+}
+
+func (d *discordRoleReactionEmbedService) SearchGuildMembers(query string) ([]MemberInfo, error) {
+	members, err := d.state.Members(d.guildID)
+	if err != nil {
+		return nil, err
+	}
+	queryLower := query
+	var result []MemberInfo
+	for _, m := range members {
+		name := m.User.Username
+		nick := ""
+		if m.Nick != "" {
+			nick = m.Nick
+		}
+		if query == "" || containsIgnoreCase(name, queryLower) || containsIgnoreCase(nick, queryLower) || m.User.ID.String() == query {
+			result = append(result, MemberInfo{
+				NativeId: m.User.ID.String(),
+				Username: name,
+				Nickname: nick,
+				Avatar:   m.User.AvatarURL(),
+			})
+		}
+		if len(result) >= 25 {
+			break
+		}
+	}
+	return result, nil
+}
+
+func containsIgnoreCase(s, substr string) bool {
+	return len(substr) == 0 || len(s) >= len(substr) &&
+		(s == substr || containsSubstrIgnoreCase(s, substr))
+}
+
+func containsSubstrIgnoreCase(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		match := true
+		for j := 0; j < len(substr); j++ {
+			if toLower(s[i+j]) != toLower(substr[j]) {
+				match = false
+				break
+			}
+		}
+		if match {
+			return true
+		}
+	}
+	return false
+}
+
+func toLower(b byte) byte {
+	if b >= 'A' && b <= 'Z' {
+		return b + ('a' - 'A')
+	}
+	return b
 }
 
 func (d *discordRoleReactionEmbedService) UpsertEmbed(m *models.DiscordRoleReactionEmbed, payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error) {
