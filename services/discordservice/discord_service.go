@@ -3,6 +3,7 @@ package discordservice
 import (
 	"doko/gvn-ultimate-bot/models"
 	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
+	"doko/gvn-ultimate-bot/services/systemservice"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -134,17 +135,33 @@ type DiscordRoleReactionEmbedService interface {
 	ListChannels() ([]ChannelInfo, error)
 	ListEmojis() ([]EmojiInfo, error)
 	SearchGuildMembers(query string) ([]MemberInfo, error)
+	SyncGuildMembers() (*UserSyncResult, error)
+	GetLastUserSync() (*models.SystemEventLog, error)
+}
+
+type UserSyncResult struct {
+	SyncedCount int `json:"synced_count"`
 }
 
 type discordRoleReactionEmbedService struct {
 	RoleReactionRepo discordrepos.DiscordRoleReactionEmbedRepo
+	UserRepo         discordrepos.DiscordUserRepo
+	EventLogService  systemservice.SystemEventLogService
 	state            *state.State
 	guildID          discord.GuildID
 }
 
-func NewDiscordRoleReactionEmbedService(repo discordrepos.DiscordRoleReactionEmbedRepo, s *state.State, guildID discord.GuildID) DiscordRoleReactionEmbedService {
+func NewDiscordRoleReactionEmbedService(
+	repo discordrepos.DiscordRoleReactionEmbedRepo,
+	userRepo discordrepos.DiscordUserRepo,
+	eventLogService systemservice.SystemEventLogService,
+	s *state.State,
+	guildID discord.GuildID,
+) DiscordRoleReactionEmbedService {
 	return &discordRoleReactionEmbedService{
 		RoleReactionRepo: repo,
+		UserRepo:         userRepo,
+		EventLogService:  eventLogService,
 		state:            s,
 		guildID:          guildID,
 	}
@@ -227,6 +244,51 @@ func (d *discordRoleReactionEmbedService) SearchGuildMembers(query string) ([]Me
 		}
 	}
 	return result, nil
+}
+
+// SyncGuildMembers fetches all members of the guild and upserts them into the
+// discord_user table, logging a SystemEventLog entry (USER_SYNC) with the result.
+func (d *discordRoleReactionEmbedService) SyncGuildMembers() (*UserSyncResult, error) {
+	members, err := d.state.Members(d.guildID)
+	if err != nil {
+		d.logUserSync("failure", err.Error(), 0)
+		return nil, err
+	}
+
+	synced := 0
+	for _, m := range members {
+		_, err := d.UserRepo.Upsert(&models.DiscordUser{
+			NativeId:      m.User.ID.String(),
+			Discriminator: m.User.Discriminator,
+			Avatar:        m.User.AvatarURL(),
+			Nickname:      m.Nick,
+		})
+		if err != nil {
+			log.Printf("[sync_guild_members] failed to upsert user %s: %v", m.User.ID.String(), err)
+			continue
+		}
+		synced++
+	}
+
+	d.logUserSync("success", fmt.Sprintf("synced %d/%d members", synced, len(members)), synced)
+	return &UserSyncResult{SyncedCount: synced}, nil
+}
+
+func (d *discordRoleReactionEmbedService) logUserSync(status, message string, syncedCount int) {
+	if d.EventLogService == nil {
+		return
+	}
+	metadata, _ := json.Marshal(map[string]int{"synced_count": syncedCount})
+	if err := d.EventLogService.LogEvent(models.SystemEventTypeUserSync, status, message, string(metadata)); err != nil {
+		log.Printf("[sync_guild_members] failed to write event log: %v", err)
+	}
+}
+
+func (d *discordRoleReactionEmbedService) GetLastUserSync() (*models.SystemEventLog, error) {
+	if d.EventLogService == nil {
+		return nil, nil
+	}
+	return d.EventLogService.GetLatestByEventType(models.SystemEventTypeUserSync)
 }
 
 func containsIgnoreCase(s, substr string) bool {

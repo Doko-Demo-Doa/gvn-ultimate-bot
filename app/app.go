@@ -7,11 +7,13 @@ import (
 	"doko/gvn-ultimate-bot/models"
 	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
 	modulerepo "doko/gvn-ultimate-bot/repositories/module_repo"
+	systemrepos "doko/gvn-ultimate-bot/repositories/system_repos"
 	"doko/gvn-ultimate-bot/scheduler"
 	"doko/gvn-ultimate-bot/seeds"
 	"doko/gvn-ultimate-bot/services/adminaccessservice"
 	"doko/gvn-ultimate-bot/services/discordservice"
 	"doko/gvn-ultimate-bot/services/moduleservice"
+	"doko/gvn-ultimate-bot/services/systemservice"
 	"fmt"
 	"net/http"
 	"os"
@@ -48,7 +50,7 @@ func Run() {
 	}
 
 	// WARNING: Remember to run this the first time to create tables
-	db.AutoMigrate(&models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{}, &models.DiscordUserRole{}, &models.AdminWhitelistedRole{}, &models.DiscordMessageAuditLog{}, &models.DiscordUser{})
+	db.AutoMigrate(&models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{}, &models.DiscordUserRole{}, &models.AdminWhitelistedRole{}, &models.DiscordMessageAuditLog{}, &models.DiscordUser{}, &models.SystemEventLog{})
 
 	// Setup repo
 	moduleRepo := modulerepo.NewAppModuleRepo(db)
@@ -58,6 +60,8 @@ func Run() {
 	discordUserRoleRepo := discordrepos.NewDiscordUserRoleRepo(db)
 	adminWhitelistedRoleRepo := discordrepos.NewAdminWhitelistedRoleRepo(db)
 	discordMessageAuditLogRepo := discordrepos.NewDiscordMessageAuditLogRepo(db)
+	discordUserRepo := discordrepos.NewDiscordUserRepo(db)
+	systemEventLogRepo := systemrepos.NewSystemEventLogRepo(db)
 
 	// Setup Discord state (shared between bot and scheduler)
 	s := state.New("Bot " + os.Getenv("DISCORD_TOKEN"))
@@ -72,7 +76,8 @@ func Run() {
 	// Setup services
 	moduleService := moduleservice.NewModuleService(moduleRepo)
 	discordRoleService := discordservice.NewDiscordRoleService(discordRepo, discordRoleReactionEmbedRepo, discordUserRoleRepo)
-	discordRoleReactionEmbedService := discordservice.NewDiscordRoleReactionEmbedService(discordRoleReactionEmbedRepo, s, guildID)
+	systemEventLogService := systemservice.NewSystemEventLogService(systemEventLogRepo)
+	discordRoleReactionEmbedService := discordservice.NewDiscordRoleReactionEmbedService(discordRoleReactionEmbedRepo, discordUserRepo, systemEventLogService, s, guildID)
 	roleScheduler := scheduler.NewRoleScheduler(s, discordRoleService, guildID)
 	adminAccessService := adminaccessservice.NewAdminAccessService(adminWhitelistedRoleRepo, s, guildID)
 	discordAuditLogService := discordservice.NewDiscordAuditLogService(discordMessageAuditLogRepo)
@@ -102,6 +107,8 @@ func Run() {
 	discord.GET("/channels", discordRoleCtl.ListDiscordChannels)
 	discord.GET("/emojis", discordRoleCtl.ListDiscordEmojis)
 	discord.GET("/members/search", discordRoleCtl.SearchDiscordMembers)
+	discord.POST("/users/sync", discordRoleCtl.SyncDiscordUsers)
+	discord.GET("/users/sync/last", discordRoleCtl.GetLastUserSync)
 	discord.GET("/role/list", discordRoleCtl.ListDiscordRoles)
 	discord.POST("/role/create", discordRoleCtl.CreateDiscordRole)
 	discord.POST("/role/assign", discordRoleCtl.AssignRoleToUser)

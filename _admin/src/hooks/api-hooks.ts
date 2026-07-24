@@ -10,6 +10,8 @@ import type {
   IDiscordMember,
   IDiscordRole,
   IDiscordUserRoleAssignment,
+  ISystemEventLog,
+  IUserSyncResult,
 } from "~/types/types";
 
 export const ModuleActivationStatus = {
@@ -141,6 +143,27 @@ export function useRevokeRoleMutation() {
   return useMutation({
     mutationFn: async (id: number) => {
       const resp = await customApiClient.delete(`/discord/role/assign/${id}`);
+      return resp;
+    },
+  });
+}
+
+export function useSyncDiscordUsers() {
+  return useMutation({
+    mutationFn: async () => {
+      const resp: BackendResponseType<IUserSyncResult> =
+        await customApiClient.post("/discord/users/sync", {});
+      return resp;
+    },
+  });
+}
+
+export function useLastUserSync() {
+  return useQuery({
+    queryKey: ["discord-users-last-sync"],
+    queryFn: async () => {
+      const resp: BackendResponseType<ISystemEventLog> =
+        await customApiClient.get("/discord/users/sync/last", {});
       return resp;
     },
   });

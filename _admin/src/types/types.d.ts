@@ -201,6 +201,20 @@ export type IAuditLogListResponse = {
   offset: number;
 };
 
+export type IUserSyncResult = {
+  synced_count: number;
+};
+
+export type ISystemEventLog = {
+  ID: number;
+  EventType: string;
+  Status: "success" | "failure";
+  Message: string;
+  Metadata: string;
+  CreatedAt: string;
+  UpdatedAt: string;
+} | null;
+
 declare namespace NodeJS {
   interface ProcessEnv {
     DISCORD_GUILD_ID: string;
