@@ -271,6 +271,7 @@ function EmojiSelectField({
         >
           <Popover.Target>
             <Button
+              type="button"
               size="sm"
               variant="light"
               onClick={() => setPopoverOpen(true)}
@@ -453,6 +454,7 @@ const EmbedEditor: React.FC<Props> = ({
 
           <Group>
             <Button
+              type="button"
               size="xs"
               variant="light"
               onClick={() => addInteraction(value as any)}
@@ -553,6 +555,7 @@ const EmbedEditor: React.FC<Props> = ({
                           />
                         </Stack>
                         <Button
+                          type="button"
                           size="xs"
                           color="red"
                           variant="subtle"
@@ -573,6 +576,7 @@ const EmbedEditor: React.FC<Props> = ({
                       </Group>
                     ))}
                     <Button
+                      type="button"
                       size="xs"
                       variant="default"
                       leftSection={<IconPlus size={14} />}
@@ -591,6 +595,7 @@ const EmbedEditor: React.FC<Props> = ({
                 )}
 
                 <Button
+                  type="button"
                   size="xs"
                   color="red"
                   leftSection={<IconTrashFilled size={14} />}
@@ -724,6 +729,7 @@ const EmbedEditor: React.FC<Props> = ({
                       {...form.getInputProps(`customFields.${i}.fieldValue`)}
                     />
                     <Button
+                      type="button"
                       leftSection={<IconTrashFilled size={14} />}
                       color={vars.colors.red[9]}
                       mt="md"
@@ -737,6 +743,7 @@ const EmbedEditor: React.FC<Props> = ({
                 ))}
                 {!(cFields.length >= MAX_CUSTOM_FIELDS) && (
                   <Button
+                    type="button"
                     leftSection={<IconPlus size={14} />}
                     variant="default"
                     disabled={cFields.length >= MAX_CUSTOM_FIELDS}
