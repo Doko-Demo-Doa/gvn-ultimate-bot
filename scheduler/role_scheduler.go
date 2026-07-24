@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"doko/gvn-ultimate-bot/models"
 	"doko/gvn-ultimate-bot/services/discordservice"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -51,12 +52,12 @@ func (h *assignmentHeap) Pop() interface{} {
 
 // RoleScheduler manages timed Discord role assignments using a min-heap + single timer.
 type RoleScheduler struct {
-	mu       sync.Mutex
-	heap     assignmentHeap
-	timer    *time.Timer
-	state    *state.State
-	service  discordservice.DiscordService
-	guildID  discord.GuildID
+	mu      sync.Mutex
+	heap    assignmentHeap
+	timer   *time.Timer
+	state   *state.State
+	service discordservice.DiscordService
+	guildID discord.GuildID
 }
 
 // NewRoleScheduler creates a scheduler (Start must be called before use).
@@ -151,9 +152,15 @@ func (rs *RoleScheduler) AddRole(userNativeID string, roleNativeID string) error
 	userID := parseSnowflake(userNativeID)
 	roleID := parseSnowflakeRole(roleNativeID)
 	if userID == 0 || roleID == 0 {
-		return nil
+		return fmt.Errorf("invalid snowflake user_id=%q role_id=%q", userNativeID, roleNativeID)
 	}
-	return rs.state.AddRole(rs.guildID, userID, roleID, api.AddRoleData{})
+	log.Printf("[scheduler] adding role guild_id=%s user_id=%s role_id=%s", rs.guildID, userNativeID, roleNativeID)
+	if err := rs.state.AddRole(rs.guildID, userID, roleID, api.AddRoleData{}); err != nil {
+		log.Printf("[scheduler] failed adding role guild_id=%s user_id=%s role_id=%s: %v", rs.guildID, userNativeID, roleNativeID, err)
+		return err
+	}
+	log.Printf("[scheduler] added role guild_id=%s user_id=%s role_id=%s", rs.guildID, userNativeID, roleNativeID)
+	return nil
 }
 
 // RemoveRole removes a Discord role from a user permanently (no DB tracking).
@@ -161,9 +168,15 @@ func (rs *RoleScheduler) RemoveRole(userNativeID string, roleNativeID string) er
 	userID := parseSnowflake(userNativeID)
 	roleID := parseSnowflakeRole(roleNativeID)
 	if userID == 0 || roleID == 0 {
-		return nil
+		return fmt.Errorf("invalid snowflake user_id=%q role_id=%q", userNativeID, roleNativeID)
 	}
-	return rs.state.RemoveRole(rs.guildID, userID, roleID, api.AuditLogReason(""))
+	log.Printf("[scheduler] removing role guild_id=%s user_id=%s role_id=%s", rs.guildID, userNativeID, roleNativeID)
+	if err := rs.state.RemoveRole(rs.guildID, userID, roleID, api.AuditLogReason("")); err != nil {
+		log.Printf("[scheduler] failed removing role guild_id=%s user_id=%s role_id=%s: %v", rs.guildID, userNativeID, roleNativeID, err)
+		return err
+	}
+	log.Printf("[scheduler] removed role guild_id=%s user_id=%s role_id=%s", rs.guildID, userNativeID, roleNativeID)
+	return nil
 }
 
 // RevokeRole performs an early/manual revocation of a timed role assignment.
