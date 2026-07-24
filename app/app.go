@@ -77,11 +77,8 @@ func Run() {
 	adminAccessService := adminaccessservice.NewAdminAccessService(adminWhitelistedRoleRepo, s, guildID)
 	discordAuditLogService := discordservice.NewDiscordAuditLogService(discordMessageAuditLogRepo)
 
-	// Seeding modules
-	mModules, _ := moduleService.ListModules()
-	if len(mModules) <= 0 {
-		seeds.SeedModules(moduleService)
-	}
+	// Seeding modules — idempotent, only inserts missing ones
+	seeds.SeedModules(moduleService)
 
 	// Setup controllers
 	moduleCtl := controllers.NewModuleController(moduleService)

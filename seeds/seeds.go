@@ -25,6 +25,9 @@ func SeedModules(ms moduleservice.ModuleService) {
 	}
 
 	for _, model := range modules {
-		ms.CreateModule(model.ModuleName, model.ModuleLabel, model.IsActivated)
+		existing, _ := ms.GetModuleByName(model.ModuleName)
+		if existing == nil {
+			ms.CreateModule(model.ModuleName, model.ModuleLabel, model.IsActivated)
+		}
 	}
 }
