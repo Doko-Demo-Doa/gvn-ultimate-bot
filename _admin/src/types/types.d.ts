@@ -172,6 +172,28 @@ export type IDropdownOption = {
   role_native_id: string;
 };
 
+export type IAuditLogItem = {
+  ID: number;
+  NativeMessageId: string;
+  ChannelId: string;
+  GuildId: string;
+  AuthorId: string;
+  AuthorName: string;
+  Action: "delete" | "edit";
+  BeforeContent: string;
+  AfterContent: string;
+  Attachments: string;
+  CreatedAt: string;
+  UpdatedAt: string;
+};
+
+export type IAuditLogListResponse = {
+  items: IAuditLogItem[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
 declare namespace NodeJS {
   interface ProcessEnv {
     DISCORD_GUILD_ID: string;

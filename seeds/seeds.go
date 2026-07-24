@@ -17,6 +17,11 @@ func SeedModules(ms moduleservice.ModuleService) {
 			ModuleLabel: "Grant Role Module",
 			IsActivated: 1,
 		},
+		{
+			ModuleName:  "message_audit_module",
+			ModuleLabel: "Message Audit Module",
+			IsActivated: 0,
+		},
 	}
 
 	for _, model := range modules {

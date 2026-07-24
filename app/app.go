@@ -48,7 +48,7 @@ func Run() {
 	}
 
 	// WARNING: Remember to run this the first time to create tables
-	db.AutoMigrate(&models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{}, &models.DiscordUserRole{}, &models.AdminWhitelistedRole{})
+	db.AutoMigrate(&models.DiscordRole{}, &models.DiscordRoleReactionEmbed{}, &models.AppModule{}, &models.DiscordUserRole{}, &models.AdminWhitelistedRole{}, &models.DiscordMessageAuditLog{})
 
 	// Setup repo
 	moduleRepo := modulerepo.NewAppModuleRepo(db)
@@ -57,6 +57,7 @@ func Run() {
 	discordRoleReactionEmbedRepo := discordrepos.NewDiscordRoleReactionEmbedRepo(db)
 	discordUserRoleRepo := discordrepos.NewDiscordUserRoleRepo(db)
 	adminWhitelistedRoleRepo := discordrepos.NewAdminWhitelistedRoleRepo(db)
+	discordMessageAuditLogRepo := discordrepos.NewDiscordMessageAuditLogRepo(db)
 
 	// Setup Discord state (shared between bot and scheduler)
 	s := state.New("Bot " + os.Getenv("DISCORD_TOKEN"))
@@ -74,6 +75,7 @@ func Run() {
 	discordRoleReactionEmbedService := discordservice.NewDiscordRoleReactionEmbedService(discordRoleReactionEmbedRepo, s, guildID)
 	roleScheduler := scheduler.NewRoleScheduler(s, discordRoleService, guildID)
 	adminAccessService := adminaccessservice.NewAdminAccessService(adminWhitelistedRoleRepo, s, guildID)
+	discordAuditLogService := discordservice.NewDiscordAuditLogService(discordMessageAuditLogRepo)
 
 	// Seeding modules
 	mModules, _ := moduleService.ListModules()
@@ -85,6 +87,7 @@ func Run() {
 	moduleCtl := controllers.NewModuleController(moduleService)
 	discordRoleCtl := controllers.NewDiscordController(discordRoleService, discordRoleReactionEmbedService, roleScheduler)
 	adminAccessCtl := controllers.NewAdminAccessController(adminAccessService)
+	discordAuditLogCtl := controllers.NewDiscordAuditLogController(discordAuditLogService)
 
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
@@ -113,6 +116,10 @@ func Run() {
 	discord.POST("/role-reaction/publish", discordRoleCtl.PublishDiscordRoleReaction)
 	discord.DELETE("/role-reaction/:id", discordRoleCtl.DeleteDiscordRoleReaction)
 
+	// Message audit log
+	discord.GET("/audit-logs", discordAuditLogCtl.ListAuditLogs)
+	discord.DELETE("/audit-logs", discordAuditLogCtl.ClearAuditLogs)
+
 	// Admin dashboard access control (Discord role whitelist)
 	admin := api.Group("/admin")
 	admin.GET("/access-check", adminAccessCtl.CheckAccess)
@@ -139,7 +146,7 @@ func Run() {
 	}()
 
 	go func() {
-		bot.Bootstrap(s, discordRoleService, discordRoleReactionEmbedService, moduleService, roleScheduler)
+		bot.Bootstrap(s, discordRoleService, discordRoleReactionEmbedService, moduleService, roleScheduler, discordAuditLogService)
 		wg.Done()
 	}()
 

@@ -3,6 +3,7 @@ import { customApiClient } from "~/datasource/rest/api-client";
 import type { IModuleConfigInput } from "~/types/payload";
 import type {
   BackendResponseType,
+  IAuditLogListResponse,
   IBackendModuleType,
   IDiscordChannel,
   IDiscordEmoji,
@@ -127,6 +128,36 @@ export function useRevokeRoleMutation() {
   return useMutation({
     mutationFn: async (id: number) => {
       const resp = await customApiClient.delete(`/discord/role/assign/${id}`);
+      return resp;
+    },
+  });
+}
+
+// ################# Message Audit Log APIs #################
+
+export function useAuditLogs(params: {
+  limit?: number;
+  offset?: number;
+  from_date?: string;
+  to_date?: string;
+  channel_id?: string;
+  author_name?: string;
+}) {
+  const queryKey = ["audit-logs", params];
+  return useQuery({
+    queryKey,
+    queryFn: async () => {
+      const resp: BackendResponseType<IAuditLogListResponse> =
+        await customApiClient.get("/discord/audit-logs", params);
+      return resp;
+    },
+  });
+}
+
+export function useClearAuditLogs() {
+  return useMutation({
+    mutationFn: async () => {
+      const resp = await customApiClient.delete("/discord/audit-logs");
       return resp;
     },
   });

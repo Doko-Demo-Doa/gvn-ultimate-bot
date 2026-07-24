@@ -21,7 +21,7 @@ var (
 	IsWorking = false
 )
 
-func Bootstrap(s *state.State, ds discordservice.DiscordService, dre discordservice.DiscordRoleReactionEmbedService, ms moduleservice.ModuleService, rs *scheduler.RoleScheduler) {
+func Bootstrap(s *state.State, ds discordservice.DiscordService, dre discordservice.DiscordRoleReactionEmbedService, ms moduleservice.ModuleService, rs *scheduler.RoleScheduler, als discordservice.DiscordAuditLogService) {
 	// Reset all commands
 	commands, err := s.GuildCommands(AppID, GuildID)
 	if err != nil {
@@ -62,6 +62,10 @@ func Bootstrap(s *state.State, ds discordservice.DiscordService, dre discordserv
 			}
 			if module.ModuleName == "grant_role_command" {
 				RegisterGrantRoleModule(s, rs)
+			}
+			if module.ModuleName == "message_audit_module" && module.IsActivated == 1 {
+				fmt.Println("Registering message audit module...")
+				RegisterAuditModule(s, als, GuildID)
 			}
 		}
 	}
