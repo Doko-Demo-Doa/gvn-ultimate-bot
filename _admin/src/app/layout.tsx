@@ -10,6 +10,7 @@ import {
 import { Notifications } from "@mantine/notifications";
 import type { Metadata } from "next";
 import type React from "react";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { customApiClient } from "~/datasource/rest/api-client";
 import Providers from "~/providers/master-provider";
 
@@ -42,10 +43,12 @@ export default function RootLayout({
       <body>
         <ClerkProvider>
           <Providers>
-            <MantineProvider defaultColorScheme="dark" theme={theme}>
-              {children}
-              <Notifications />
-            </MantineProvider>
+            <NuqsAdapter>
+              <MantineProvider defaultColorScheme="dark" theme={theme}>
+                {children}
+                <Notifications />
+              </MantineProvider>
+            </NuqsAdapter>
           </Providers>
         </ClerkProvider>
       </body>
