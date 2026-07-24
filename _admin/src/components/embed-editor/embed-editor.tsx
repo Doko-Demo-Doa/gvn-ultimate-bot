@@ -38,8 +38,7 @@ import type {
   IReactionRoleMessagePayload,
 } from "~/types/types";
 import { UploadDropzone } from "~/utils/uploadthing";
-import Picker from "@emoji-mart/react";
-import data from "@emoji-mart/data";
+import EmojiPicker from "emoji-picker-react";
 
 interface Props {
   roles: IDiscordRole[];
@@ -280,10 +279,9 @@ function EmojiSelectField({
             </Button>
           </Popover.Target>
           <Popover.Dropdown p={0}>
-            <Picker
-              data={data}
-              onEmojiSelect={(emoji: any) => {
-                handleSelect(emoji.native);
+            <EmojiPicker
+              onEmojiClick={(emojiData) => {
+                handleSelect(emojiData.emoji);
                 setPopoverOpen(false);
               }}
             />

@@ -12,8 +12,6 @@
   "dependencies": {
     "@bprogress/next": "^3.2.12",
     "@clerk/nextjs": "^7.5.22",
-    "@emoji-mart/data": "^1.2.1",
-    "@emoji-mart/react": "^1.1.1",
     "@emotion/react": "^11.14.0",
     "@emotion/server": "^11.11.0",
     "@mantine/core": "^9.4.2",
@@ -27,7 +25,7 @@
     "@uploadthing/react": "^7.3.3",
     "axios": "^1.18.1",
     "discord.js": "^14.27.0",
-    "emoji-mart": "^5.6.0",
+    "emoji-picker-react": "^4.19.1",
     "iron-session": "^8.0.4",
     "next": "^16.2.11",
     "next-nprogress-bar": "^2.4.7",
