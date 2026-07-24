@@ -579,12 +579,12 @@ const EmbedEditor: React.FC<Props> = ({
                         config={{ mode: "auto" }}
                         content={{ allowedContent: "image/png,image/jpeg" }}
                         onBeforeUploadBegin={(files) => {
-                          return files.map(
-                            (f) =>
-                              new File([f], `temp-${f.name}`, {
-                                type: f.type,
-                              }),
-                          );
+                          return files.map((f) => {
+                            const ext = f.name.split(".").pop();
+                            return new File([f], `${uuidv4()}.${ext}`, {
+                              type: f.type,
+                            });
+                          });
                         }}
                         onClientUploadComplete={(res) => {
                           setMainImageUrl(res[0].ufsUrl);
