@@ -25,7 +25,7 @@ import {
 import { schemaResolver, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { IconPlus, IconSun, IconTrashFilled } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import * as classes from "~/components/embed-editor/embed-editor.css";
@@ -38,6 +38,8 @@ import type {
   IReactionRoleMessagePayload,
 } from "~/types/types";
 import { UploadDropzone } from "~/utils/uploadthing";
+import Picker from "@emoji-mart/react";
+import data from "@emoji-mart/data";
 
 interface Props {
   roles: IDiscordRole[];
@@ -201,6 +203,93 @@ function renderEmojiOption({ option }: { option: any }) {
       )}
       <span>{option.label}</span>
     </Group>
+  );
+}
+
+function EmojiSelectField({
+  emojis,
+  formProps,
+  ...selectProps
+}: {
+  emojis: IDiscordEmoji[];
+  formProps: any;
+} & any) {
+  const [localValue, setLocalValue] = useState<string>(
+    () => formProps.value ?? formProps.defaultValue ?? "",
+  );
+
+  const [source, setSource] = useState<"custom" | "stock">(() => {
+    const val = localValue;
+    if (!val) return "custom";
+    return !emojis.some((e: IDiscordEmoji) => e.api_name === val) ? "stock" : "custom";
+  });
+
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  // Sync local value if form state changes from outside (e.g. initial load, reset)
+  useEffect(() => {
+    const val = formProps.value ?? formProps.defaultValue ?? "";
+    if (val !== localValue) {
+      setLocalValue(val);
+    }
+  }, [formProps.value, formProps.defaultValue]);
+
+  const handleSelect = (val: string) => {
+    setLocalValue(val);
+    formProps.onChange(val);
+  };
+
+  return (
+    <Stack gap={4}>
+      <SegmentedControl
+        size="xs"
+        value={source}
+        onChange={(v) => setSource(v as "custom" | "stock")}
+        data={[
+          { label: "Custom", value: "custom" },
+          { label: "Stock", value: "stock" },
+        ]}
+      />
+      {source === "custom" ? (
+        <Select
+          data={emojiSelectData(emojis)}
+          renderOption={renderEmojiOption}
+          searchable
+          allowDeselect={false}
+          {...selectProps}
+          {...formProps}
+          value={localValue}
+          onChange={(val: string | null) => handleSelect(val ?? "")}
+        />
+      ) : (
+        <Popover
+          opened={popoverOpen}
+          onChange={setPopoverOpen}
+          position="bottom"
+          withArrow
+          shadow="md"
+        >
+          <Popover.Target>
+            <Button
+              size="sm"
+              variant="light"
+              onClick={() => setPopoverOpen(true)}
+            >
+              {localValue || "Chọn emoji..."}
+            </Button>
+          </Popover.Target>
+          <Popover.Dropdown p={0}>
+            <Picker
+              data={data}
+              onEmojiSelect={(emoji: any) => {
+                handleSelect(emoji.native);
+                setPopoverOpen(false);
+              }}
+            />
+          </Popover.Dropdown>
+        </Popover>
+      )}
+    </Stack>
   );
 }
 
@@ -380,14 +469,13 @@ const EmbedEditor: React.FC<Props> = ({
                 {(it.type === "emoji" || it.type === "button") && (
                   <>
                     <Group>
-                      <Select
+                      <EmojiSelectField
                         label="Emoji"
                         placeholder="Chọn emoji..."
                         searchable
                         style={{ width: 200 }}
-                        data={emojiSelectData(emojis)}
-                        renderOption={renderEmojiOption}
-                        {...form.getInputProps(`interactions.${i}.emoji`)}
+                        emojis={emojis}
+                        formProps={form.getInputProps(`interactions.${i}.emoji`)}
                       />
                       {it.type === "button" && (
                         <TextInput
@@ -441,13 +529,12 @@ const EmbedEditor: React.FC<Props> = ({
                                 `interactions.${i}.options.${optIndex}.label`,
                               )}
                             />
-                            <Select
+                            <EmojiSelectField
                               placeholder="Emoji"
                               searchable
                               style={{ width: 160 }}
-                              data={emojiSelectData(emojis)}
-                              renderOption={renderEmojiOption}
-                              {...form.getInputProps(
+                              emojis={emojis}
+                              formProps={form.getInputProps(
                                 `interactions.${i}.options.${optIndex}.emoji`,
                               )}
                             />
