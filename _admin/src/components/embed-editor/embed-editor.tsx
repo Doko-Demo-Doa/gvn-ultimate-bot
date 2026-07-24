@@ -89,8 +89,32 @@ const schema = z.object({
       }),
     )
     .max(MAX_CUSTOM_FIELDS),
-  interactions: z.array(interactionSchema).max(MAX_INTERACTIONS),
-});
+  interactions: z
+    .array(interactionSchema)
+    .min(1, "At least one interaction is required")
+    .max(MAX_INTERACTIONS),
+})
+  .refine(
+    (data) => {
+      for (const interaction of data.interactions) {
+        if (interaction.emoji && interaction.emoji.trim() !== "") {
+          return true;
+        }
+        if (interaction.options) {
+          for (const option of interaction.options) {
+            if (option.emoji && option.emoji.trim() !== "") {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    },
+    {
+      message: "At least one emoji must be presented",
+      path: ["interactions"],
+    },
+  );
 
 type IFormData = z.infer<typeof schema>;
 
