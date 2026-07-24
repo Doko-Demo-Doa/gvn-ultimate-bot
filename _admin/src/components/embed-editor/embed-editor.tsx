@@ -29,6 +29,7 @@ import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import * as classes from "~/components/embed-editor/embed-editor.css";
+import { optimizeImage } from "~/datasource/rest/image-optimizer";
 import { vars } from "~/theme";
 import type {
   IDiscordChannel,
@@ -577,14 +578,11 @@ const EmbedEditor: React.FC<Props> = ({
                       <UploadDropzone
                         endpoint="imageUploader"
                         config={{ mode: "auto" }}
-                        content={{ allowedContent: "image/png,image/jpeg" }}
-                        onBeforeUploadBegin={(files) => {
-                          return files.map((f) => {
-                            const ext = f.name.split(".").pop();
-                            return new File([f], `${uuidv4()}.${ext}`, {
-                              type: f.type,
-                            });
-                          });
+                        content={{
+                          allowedContent: "image/png,image/jpeg,image/webp",
+                        }}
+                        onBeforeUploadBegin={async (files) => {
+                          return Promise.all(files.map(optimizeImage));
                         }}
                         onClientUploadComplete={(res) => {
                           setMainImageUrl(res[0].ufsUrl);

@@ -20,10 +20,16 @@ const rawApi = async <Req>({
   body,
   headers,
   method,
+  multipart,
   url,
 }: RequestType<Req>) => {
   return await fetch(url, {
-    body: body == null ? undefined : JSON.stringify(body),
+    body:
+      body == null
+        ? undefined
+        : multipart
+          ? (body as BodyInit)
+          : JSON.stringify(body),
     headers,
     method,
   });
@@ -49,6 +55,14 @@ export class CustomApiClient {
     this.headers = { ...this.headers, ...headers };
   };
 
+  buildUrl = (url: string, useBaseUrl = true) => {
+    if (!useBaseUrl || /^https?:\/\//.test(url)) {
+      return url;
+    }
+
+    return `${this.baseUrl}${url}`;
+  };
+
   get = async (url: string, query: Record<string, any>) => {
     return _fetch({
       headers: {
@@ -57,7 +71,7 @@ export class CustomApiClient {
         "Content-Type": "application/json",
       },
       method: "GET",
-      url: `${this.baseUrl}${url}${qs.stringify(
+      url: `${this.buildUrl(url)}${qs.stringify(
         {
           ...query,
         },
@@ -76,7 +90,23 @@ export class CustomApiClient {
         "Content-Type": "application/json",
       },
       method: "POST",
-      url: `${this.baseUrl}${url}`,
+      url: this.buildUrl(url),
+    });
+  };
+
+  postFormData = async (
+    url: string,
+    body: FormData,
+    opts?: { useBaseUrl?: boolean },
+  ) => {
+    return rawApi({
+      body,
+      headers: {
+        Accept: "*/*",
+      },
+      method: "POST",
+      multipart: true,
+      url: this.buildUrl(url, opts?.useBaseUrl),
     });
   };
 
@@ -89,7 +119,7 @@ export class CustomApiClient {
         "Content-Type": "application/merge-patch+json",
       },
       method: "PATCH",
-      url: `${this.baseUrl}${url}`,
+      url: this.buildUrl(url),
     });
   };
 
@@ -101,7 +131,7 @@ export class CustomApiClient {
         "Content-Type": "application/json",
       },
       method: "DELETE",
-      url: `${this.baseUrl}${url}`,
+      url: this.buildUrl(url),
     });
   };
 }
