@@ -54,10 +54,6 @@ export const mainImage = style({
 export const uploadBoxWrapper = style({
   aspectRatio: "16 / 9",
   zIndex: 1,
-  width: "100%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
 });
 
 export const headerFooterFlexWrapper = style({
