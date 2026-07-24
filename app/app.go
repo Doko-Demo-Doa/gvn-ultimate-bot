@@ -69,6 +69,7 @@ func Run() {
 	s.AddIntents(gateway.IntentGuildMembers)
 	s.AddIntents(gateway.IntentGuildMessages)
 	s.AddIntents(gateway.IntentGuildMessageReactions)
+	s.AddIntents(gateway.IntentMessageContent)
 
 	// Setup scheduler
 	guildID := discord.GuildID(mustSnowflakeEnv("DISCORD_GUILD_ID"))
