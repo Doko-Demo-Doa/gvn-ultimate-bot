@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
 	"doko/gvn-ultimate-bot/scheduler"
 	"doko/gvn-ultimate-bot/services/discordservice"
 	"doko/gvn-ultimate-bot/services/moduleservice"
@@ -21,7 +22,7 @@ var (
 	IsWorking = false
 )
 
-func Bootstrap(s *state.State, ds discordservice.DiscordService, dre discordservice.DiscordRoleReactionEmbedService, ms moduleservice.ModuleService, rs *scheduler.RoleScheduler, als discordservice.DiscordAuditLogService) {
+func Bootstrap(s *state.State, ds discordservice.DiscordService, dre discordservice.DiscordRoleReactionEmbedService, ms moduleservice.ModuleService, rs *scheduler.RoleScheduler, als discordservice.DiscordAuditLogService, userRepo discordrepos.DiscordUserRepo) {
 	// Reset all commands
 	commands, err := s.GuildCommands(AppID, GuildID)
 	if err != nil {
@@ -66,6 +67,10 @@ func Bootstrap(s *state.State, ds discordservice.DiscordService, dre discordserv
 			if module.ModuleName == "message_audit_module" && module.IsActivated == 1 {
 				fmt.Println("Registering message audit module...")
 				RegisterAuditModule(s, als, GuildID)
+			}
+			if module.ModuleName == "member_sync_module" && module.IsActivated == 1 {
+				fmt.Println("Registering member sync module...")
+				RegisterMemberSyncModule(s, userRepo, GuildID)
 			}
 		}
 	}

@@ -11,6 +11,10 @@ type DiscordUserRepo interface {
 	GetByNativeID(nativeId string) (*models.DiscordUser, error)
 	Upsert(user *models.DiscordUser) (*models.DiscordUser, error)
 	ListAll() ([]*models.DiscordUser, error)
+	// DeleteNotIn removes all users whose NativeId is not in nativeIds.
+	// If nativeIds is empty, all users are removed.
+	DeleteNotIn(nativeIds []string) (int64, error)
+	DeleteByNativeID(nativeId string) error
 }
 
 type discordUserRepo struct {
@@ -71,4 +75,20 @@ func (r *discordUserRepo) ListAll() ([]*models.DiscordUser, error) {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (r *discordUserRepo) DeleteByNativeID(nativeId string) error {
+	return r.db.Where("native_id = ?", nativeId).Delete(&models.DiscordUser{}).Error
+}
+
+func (r *discordUserRepo) DeleteNotIn(nativeIds []string) (int64, error) {
+	q := r.db
+	if len(nativeIds) > 0 {
+		q = q.Where("native_id NOT IN ?", nativeIds)
+	}
+	result := q.Delete(&models.DiscordUser{})
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return result.RowsAffected, nil
 }

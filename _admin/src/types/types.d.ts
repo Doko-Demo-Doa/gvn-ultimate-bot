@@ -203,6 +203,7 @@ export type IAuditLogListResponse = {
 
 export type IUserSyncResult = {
   synced_count: number;
+  removed_count: number;
 };
 
 export type ISystemEventLog = {

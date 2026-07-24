@@ -110,11 +110,11 @@ type ChannelInfo struct {
 }
 
 type EmojiInfo struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Animated  bool   `json:"animated"`
-	ImageURL  string `json:"image_url"`
-	APIName   string `json:"api_name"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Animated bool   `json:"animated"`
+	ImageURL string `json:"image_url"`
+	APIName  string `json:"api_name"`
 }
 
 type MemberInfo struct {
@@ -140,7 +140,8 @@ type DiscordRoleReactionEmbedService interface {
 }
 
 type UserSyncResult struct {
-	SyncedCount int `json:"synced_count"`
+	SyncedCount  int `json:"synced_count"`
+	RemovedCount int `json:"removed_count"`
 }
 
 type discordRoleReactionEmbedService struct {
@@ -246,17 +247,22 @@ func (d *discordRoleReactionEmbedService) SearchGuildMembers(query string) ([]Me
 	return result, nil
 }
 
-// SyncGuildMembers fetches all members of the guild and upserts them into the
-// discord_user table, logging a SystemEventLog entry (USER_SYNC) with the result.
+// SyncGuildMembers fetches the full guild roster via the REST API (the
+// gateway member cache only contains members observed through live events,
+// which is incomplete on large guilds), upserts them into the discord_user
+// table, removes users no longer in the guild, and logs a SystemEventLog
+// entry (USER_SYNC) with the result.
 func (d *discordRoleReactionEmbedService) SyncGuildMembers() (*UserSyncResult, error) {
-	members, err := d.state.Members(d.guildID)
+	members, err := d.state.AllMembers(d.guildID)
 	if err != nil {
-		d.logUserSync("failure", err.Error(), 0)
+		d.logUserSync("failure", err.Error(), 0, 0)
 		return nil, err
 	}
 
+	nativeIds := make([]string, 0, len(members))
 	synced := 0
 	for _, m := range members {
+		nativeIds = append(nativeIds, m.User.ID.String())
 		_, err := d.UserRepo.Upsert(&models.DiscordUser{
 			NativeId:      m.User.ID.String(),
 			Discriminator: m.User.Discriminator,
@@ -270,15 +276,20 @@ func (d *discordRoleReactionEmbedService) SyncGuildMembers() (*UserSyncResult, e
 		synced++
 	}
 
-	d.logUserSync("success", fmt.Sprintf("synced %d/%d members", synced, len(members)), synced)
-	return &UserSyncResult{SyncedCount: synced}, nil
+	removed, err := d.UserRepo.DeleteNotIn(nativeIds)
+	if err != nil {
+		log.Printf("[sync_guild_members] failed to remove stale users: %v", err)
+	}
+
+	d.logUserSync("success", fmt.Sprintf("synced %d/%d members, removed %d stale", synced, len(members), removed), synced, int(removed))
+	return &UserSyncResult{SyncedCount: synced, RemovedCount: int(removed)}, nil
 }
 
-func (d *discordRoleReactionEmbedService) logUserSync(status, message string, syncedCount int) {
+func (d *discordRoleReactionEmbedService) logUserSync(status, message string, syncedCount, removedCount int) {
 	if d.EventLogService == nil {
 		return
 	}
-	metadata, _ := json.Marshal(map[string]int{"synced_count": syncedCount})
+	metadata, _ := json.Marshal(map[string]int{"synced_count": syncedCount, "removed_count": removedCount})
 	if err := d.EventLogService.LogEvent(models.SystemEventTypeUserSync, status, message, string(metadata)); err != nil {
 		log.Printf("[sync_guild_members] failed to write event log: %v", err)
 	}

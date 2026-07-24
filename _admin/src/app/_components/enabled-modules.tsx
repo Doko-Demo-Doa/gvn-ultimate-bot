@@ -31,7 +31,7 @@ const EnabledModules = () => {
       notifications.show({
         color: "green",
         title: "Success",
-        message: `Synced ${resp.data.synced_count} Discord users.`,
+        message: `Synced ${resp.data.synced_count} Discord users, removed ${resp.data.removed_count} stale.`,
       });
       refetchLastSync();
     } catch (err: any) {

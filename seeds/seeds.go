@@ -22,6 +22,11 @@ func SeedModules(ms moduleservice.ModuleService) {
 			ModuleLabel: "Message Audit Module",
 			IsActivated: 0,
 		},
+		{
+			ModuleName:  "member_sync_module",
+			ModuleLabel: "Member Sync Module",
+			IsActivated: 0,
+		},
 	}
 
 	for _, model := range modules {

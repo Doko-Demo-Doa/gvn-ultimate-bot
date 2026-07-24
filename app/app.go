@@ -151,7 +151,7 @@ func Run() {
 	}()
 
 	go func() {
-		bot.Bootstrap(s, discordRoleService, discordRoleReactionEmbedService, moduleService, roleScheduler, discordAuditLogService)
+		bot.Bootstrap(s, discordRoleService, discordRoleReactionEmbedService, moduleService, roleScheduler, discordAuditLogService, discordUserRepo)
 		wg.Done()
 	}()
 
