@@ -16,6 +16,7 @@ type cachedMessage struct {
 	Content     string
 	AuthorID    string
 	AuthorName  string
+	GuildId     string
 	Attachments []string
 	Timestamp   time.Time
 }
@@ -124,6 +125,7 @@ func RegisterAuditModule(s *state.State, svc discordservice.DiscordAuditLogServi
 			Content:     e.Content,
 			AuthorID:    e.Author.ID.String(),
 			AuthorName:  authorName,
+			GuildId:     e.GuildID.String(),
 			Attachments: attachmentURLs(e),
 			Timestamp:   time.Now(),
 		})
@@ -153,15 +155,17 @@ func RegisterAuditModule(s *state.State, svc discordservice.DiscordAuditLogServi
 
 	// Log edits
 	s.AddHandler(func(e *gateway.MessageUpdateEvent) {
-		if e.GuildID != guildID {
-			return
-		}
 		old, ok := mc.get(e.ID)
 		if !ok {
 			return
 		}
-		// Skip if content hasn't changed
-		if old.Content == e.Content {
+		// Use the best available content: partial updates may leave e.Content empty
+		newContent := e.Content
+		if newContent == "" {
+			newContent = old.Content
+		}
+		// Skip if nothing meaningful changed
+		if old.Content == newContent && len(old.Attachments) == len(attachmentURLsFromMessage(e)) {
 			return
 		}
 		authorName := old.AuthorName
@@ -173,20 +177,21 @@ func RegisterAuditModule(s *state.State, svc discordservice.DiscordAuditLogServi
 		if err := svc.LogMessageEdit(
 			e.ID.String(),
 			e.ChannelID.String(),
-			e.GuildID.String(),
+			old.GuildId,
 			old.AuthorID,
 			authorName,
 			old.Content,
-			e.Content,
+			newContent,
 			attachmentURLsFromMessage(e),
 		); err != nil {
 			log.Printf("[audit_module] failed to log edit: %v", err)
 		}
 		// Update cache with new content
 		mc.set(e.ID, cachedMessage{
-			Content:     e.Content,
+			Content:     newContent,
 			AuthorID:    old.AuthorID,
 			AuthorName:  authorName,
+			GuildId:     old.GuildId,
 			Attachments: attachmentURLsFromMessage(e),
 			Timestamp:   time.Now(),
 		})
