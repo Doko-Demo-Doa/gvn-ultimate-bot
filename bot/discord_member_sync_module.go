@@ -43,6 +43,7 @@ func upsertMember(repo discordrepos.DiscordUserRepo, user discord.User, nick str
 		NativeId:      user.ID.String(),
 		Discriminator: user.Discriminator,
 		Avatar:        user.AvatarURL(),
+		Username:      user.Username,
 		Nickname:      nick,
 	})
 	if err != nil {

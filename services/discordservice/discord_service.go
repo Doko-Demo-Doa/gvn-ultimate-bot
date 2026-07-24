@@ -219,30 +219,23 @@ func (d *discordRoleReactionEmbedService) ListEmojis() ([]EmojiInfo, error) {
 	return result, nil
 }
 
+// SearchGuildMembers searches the locally-synced discord_user table (kept up
+// to date by SyncGuildMembers and the member-sync bot module), rather than
+// Discord's gateway member cache, which only contains members observed
+// through live events and is incomplete on large guilds.
 func (d *discordRoleReactionEmbedService) SearchGuildMembers(query string) ([]MemberInfo, error) {
-	members, err := d.state.Members(d.guildID)
+	users, err := d.UserRepo.Search(query, 25)
 	if err != nil {
 		return nil, err
 	}
-	queryLower := query
-	var result []MemberInfo
-	for _, m := range members {
-		name := m.User.Username
-		nick := ""
-		if m.Nick != "" {
-			nick = m.Nick
-		}
-		if query == "" || containsIgnoreCase(name, queryLower) || containsIgnoreCase(nick, queryLower) || m.User.ID.String() == query {
-			result = append(result, MemberInfo{
-				NativeId: m.User.ID.String(),
-				Username: name,
-				Nickname: nick,
-				Avatar:   m.User.AvatarURL(),
-			})
-		}
-		if len(result) >= 25 {
-			break
-		}
+	result := make([]MemberInfo, 0, len(users))
+	for _, u := range users {
+		result = append(result, MemberInfo{
+			NativeId: u.NativeId,
+			Username: u.Username,
+			Nickname: u.Nickname,
+			Avatar:   u.Avatar,
+		})
 	}
 	return result, nil
 }
@@ -267,6 +260,7 @@ func (d *discordRoleReactionEmbedService) SyncGuildMembers() (*UserSyncResult, e
 			NativeId:      m.User.ID.String(),
 			Discriminator: m.User.Discriminator,
 			Avatar:        m.User.AvatarURL(),
+			Username:      m.User.Username,
 			Nickname:      m.Nick,
 		})
 		if err != nil {
@@ -300,34 +294,6 @@ func (d *discordRoleReactionEmbedService) GetLastUserSync() (*models.SystemEvent
 		return nil, nil
 	}
 	return d.EventLogService.GetLatestByEventType(models.SystemEventTypeUserSync)
-}
-
-func containsIgnoreCase(s, substr string) bool {
-	return len(substr) == 0 || len(s) >= len(substr) &&
-		(s == substr || containsSubstrIgnoreCase(s, substr))
-}
-
-func containsSubstrIgnoreCase(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		match := true
-		for j := 0; j < len(substr); j++ {
-			if toLower(s[i+j]) != toLower(substr[j]) {
-				match = false
-				break
-			}
-		}
-		if match {
-			return true
-		}
-	}
-	return false
-}
-
-func toLower(b byte) byte {
-	if b >= 'A' && b <= 'Z' {
-		return b + ('a' - 'A')
-	}
-	return b
 }
 
 func (d *discordRoleReactionEmbedService) UpsertEmbed(m *models.DiscordRoleReactionEmbed, payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error) {
