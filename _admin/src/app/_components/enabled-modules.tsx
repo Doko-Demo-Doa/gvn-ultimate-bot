@@ -1,6 +1,16 @@
 "use client";
 
-import { Button, Group, Loader, Space, Stack, Switch, Text, Title } from "@mantine/core";
+import {
+  Button,
+  Container,
+  Group,
+  Loader,
+  Space,
+  Stack,
+  Switch,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconRefresh } from "@tabler/icons-react";
 import {
@@ -48,7 +58,7 @@ const EnabledModules = () => {
   }
 
   return (
-    <>
+    <Container>
       <Title order={3}>Enabled Modules</Title>
       <Space h="lg" />
       <Stack>
@@ -88,7 +98,7 @@ const EnabledModules = () => {
             : "Never synced"}
         </Text>
       </Group>
-    </>
+    </Container>
   );
 };
 

@@ -46,9 +46,11 @@ const MasterLayout: React.FC<Props> = ({ children }) => {
       padding="md"
     >
       <AppShell.Header>
-        <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
         <Group className={classes.header} justify="space-between">
-          <Title order={3}>DautoVN</Title>
+          <Group gap="sm">
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+            <Title order={3}>DautoVN</Title>
+          </Group>
           <Group px="md">
             <Show when="signed-out">
               <DiscordAuthButton size="xs" />
