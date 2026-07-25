@@ -1,7 +1,7 @@
 "use client";
 
 import { Show, UserButton } from "@clerk/nextjs";
-import { AppShell, Group, Loader, NavLink, Title } from "@mantine/core";
+import { AppShell, Burger, Group, Loader, NavLink, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconBrandFramerMotion,
@@ -33,7 +33,7 @@ customApiClient.init({
 });
 
 const MasterLayout: React.FC<Props> = ({ children }) => {
-  const [opened] = useDisclosure();
+  const [opened, { toggle }] = useDisclosure();
 
   return (
     <AppShell
@@ -46,6 +46,7 @@ const MasterLayout: React.FC<Props> = ({ children }) => {
       padding="md"
     >
       <AppShell.Header>
+        <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
         <Group className={classes.header} justify="space-between">
           <Title order={3}>DautoVN Bot CP</Title>
           <Group px="md">
