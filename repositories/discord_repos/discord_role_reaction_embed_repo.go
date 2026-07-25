@@ -29,7 +29,7 @@ func NewDiscordRoleReactionEmbedRepo(db *gorm.DB) DiscordRoleReactionEmbedRepo {
 
 func (dr *discordRoleReactionEmbedRepo) Create(payload *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error) {
 	var r models.DiscordRoleReactionEmbed
-	if err := dr.db.Where(&models.DiscordRoleReactionEmbed{NativeMessageId: payload.NativeMessageId}).FirstOrCreate(&r).Error; err != nil {
+	if err := dr.db.Where(&models.DiscordRoleReactionEmbed{NativeMessageID: payload.NativeMessageID}).FirstOrCreate(&r).Error; err != nil {
 		return &r, err
 	}
 
@@ -55,7 +55,7 @@ func (dr *discordRoleReactionEmbedRepo) Update(nativeMessageId string, payload *
 	}
 
 	r.Name = payload.Name
-	r.NativeMessageId = payload.NativeMessageId
+	r.NativeMessageID = payload.NativeMessageID
 	r.Payload = payload.Payload
 	r.Mode = payload.Mode
 	r.Tags = payload.Tags
@@ -69,13 +69,13 @@ func (dr *discordRoleReactionEmbedRepo) Update(nativeMessageId string, payload *
 
 func (dr *discordRoleReactionEmbedRepo) Upsert(role *models.DiscordRoleReactionEmbed) (*models.DiscordRoleReactionEmbed, error) {
 	var r models.DiscordRoleReactionEmbed
-	result := dr.db.Where(&models.DiscordRoleReactionEmbed{NativeMessageId: role.NativeMessageId}).First(&r)
+	result := dr.db.Where(&models.DiscordRoleReactionEmbed{NativeMessageID: role.NativeMessageID}).First(&r)
 	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, result.Error
 	}
 
 	r.Name = role.Name
-	r.NativeMessageId = role.NativeMessageId
+	r.NativeMessageID = role.NativeMessageID
 	r.Payload = role.Payload
 	r.Mode = role.Mode
 	r.Tags = role.Tags

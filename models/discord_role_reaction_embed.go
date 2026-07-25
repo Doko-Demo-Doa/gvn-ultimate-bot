@@ -11,9 +11,9 @@ import (
 // later, migrate the column to jsonb and change the gorm tag accordingly.
 type DiscordRoleReactionEmbed struct {
 	gorm.Model
-	NativeMessageId string `gorm:"NOT NULL;unique;size:255"`
+	NativeMessageID string `gorm:"NOT NULL;unique;size:255" json:"NativeMessageId"`
 	Name            string `gorm:"NOT NULL;size:128"`
-	Payload         string `gorm:"NOT NULL;size:8192"` // JSON document validated by ReactionRoleMessagePayload
+	Payload         string `gorm:"NOT NULL;size:8192"`        // JSON document validated by ReactionRoleMessagePayload
 	Mode            string `gorm:"size:32;DEFAULT:'default'"` // "default" | "reverse"
 	Tags            string `gorm:"size:512"`
 	Version         uint   `gorm:"NOT NULL;DEFAULT:1"`

@@ -231,7 +231,7 @@ func (d *discordRoleReactionEmbedService) SearchGuildMembers(query string) ([]Me
 	result := make([]MemberInfo, 0, len(users))
 	for _, u := range users {
 		result = append(result, MemberInfo{
-			NativeId: u.NativeId,
+			NativeId: u.NativeID,
 			Username: u.Username,
 			Nickname: u.Nickname,
 			Avatar:   u.Avatar,
@@ -257,7 +257,7 @@ func (d *discordRoleReactionEmbedService) SyncGuildMembers() (*UserSyncResult, e
 	for _, m := range members {
 		nativeIds = append(nativeIds, m.User.ID.String())
 		_, err := d.UserRepo.Upsert(&models.DiscordUser{
-			NativeId:      m.User.ID.String(),
+			NativeID:      m.User.ID.String(),
 			Discriminator: m.User.Discriminator,
 			Avatar:        m.User.AvatarURL(),
 			Username:      m.User.Username,
@@ -283,8 +283,8 @@ func (d *discordRoleReactionEmbedService) logUserSync(status, message string, sy
 	if d.EventLogService == nil {
 		return
 	}
-	metadata, _ := json.Marshal(map[string]int{"synced_count": syncedCount, "removed_count": removedCount})
-	if err := d.EventLogService.LogEvent(models.SystemEventTypeUserSync, status, message, string(metadata)); err != nil {
+	metadata := models.MarshalJSONColumn(map[string]int{"synced_count": syncedCount, "removed_count": removedCount})
+	if err := d.EventLogService.LogEvent(models.SystemEventTypeUserSync, status, message, metadata); err != nil {
 		log.Printf("[sync_guild_members] failed to write event log: %v", err)
 	}
 }
@@ -309,11 +309,11 @@ func (d *discordRoleReactionEmbedService) UpsertEmbed(m *models.DiscordRoleReact
 		m.Mode = string(payload.Mode)
 	}
 
-	data, err := d.RoleReactionRepo.GetByNativeID(m.NativeMessageId)
+	data, err := d.RoleReactionRepo.GetByNativeID(m.NativeMessageID)
 	if err != nil || data == nil {
 		return d.RoleReactionRepo.Create(m)
 	}
-	return d.RoleReactionRepo.Update(m.NativeMessageId, m)
+	return d.RoleReactionRepo.Update(m.NativeMessageID, m)
 }
 
 func (d *discordRoleReactionEmbedService) GetSingleEmbed(id uint) (*models.DiscordRoleReactionEmbed, error) {
@@ -331,13 +331,13 @@ func (d *discordRoleReactionEmbedService) DeleteEmbed(id uint) error {
 	}
 
 	payload, err := embed.ParsedPayload()
-	if err == nil && payload != nil && payload.ChannelID != "" && embed.NativeMessageId != "" {
+	if err == nil && payload != nil && payload.ChannelID != "" && embed.NativeMessageID != "" {
 		channelID, err := discord.ParseSnowflake(payload.ChannelID)
 		if err == nil {
-			msgID, parseErr := discord.ParseSnowflake(embed.NativeMessageId)
+			msgID, parseErr := discord.ParseSnowflake(embed.NativeMessageID)
 			if parseErr == nil {
 				if delErr := d.state.DeleteMessage(discord.ChannelID(channelID), discord.MessageID(msgID), api.AuditLogReason("")); delErr != nil {
-					log.Printf("[delete_embed] failed to delete Discord message %s: %v", embed.NativeMessageId, delErr)
+					log.Printf("[delete_embed] failed to delete Discord message %s: %v", embed.NativeMessageID, delErr)
 				}
 			}
 		}
@@ -390,7 +390,7 @@ func (d *discordRoleReactionEmbedService) EditEmbed(nativeMessageID string, payl
 	}
 
 	embedModel := &models.DiscordRoleReactionEmbed{
-		NativeMessageId: nativeMessageID,
+		NativeMessageID: nativeMessageID,
 		Name:            payload.Message,
 		Payload:         payloadJSON,
 		Mode:            string(payload.Mode),
@@ -464,7 +464,7 @@ func (d *discordRoleReactionEmbedService) PublishEmbed(payload *models.ReactionR
 	}
 
 	embedModel := &models.DiscordRoleReactionEmbed{
-		NativeMessageId: msg.ID.String(),
+		NativeMessageID: msg.ID.String(),
 		Name:            payload.Message,
 		Payload:         payloadJSON,
 		Mode:            string(payload.Mode),

@@ -233,7 +233,7 @@ func humanDuration(d time.Duration) string {
 func (ctl *discordController) inputToDiscordRole(input DiscordRoleInput) models.DiscordRole {
 	return models.DiscordRole{
 		Name:         input.NativeID,
-		NativeId:     input.Name,
+		NativeID:     input.Name,
 		Mentionable:  input.Mentionable,
 		Hoist:        input.Hoist,
 		Color:        input.Color,
@@ -258,7 +258,7 @@ func (ctl *discordController) inputToDiscordRoleReactionEmbed(input DiscordRoleR
 		return nil, nil, err
 	}
 	return &models.DiscordRoleReactionEmbed{
-		NativeMessageId: input.NativeMessageId,
+		NativeMessageID: input.NativeMessageId,
 		Name:            input.Name,
 		Payload:         payloadJSON,
 		Mode:            string(payload.Mode),

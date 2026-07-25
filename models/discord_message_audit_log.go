@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 // DiscordMessageAuditLog stores deleted or edited message records for audit.
 type DiscordMessageAuditLog struct {
 	gorm.Model
-	NativeMessageId string `gorm:"NOT NULL;size:255;index"`
+	NativeMessageID string `gorm:"NOT NULL;size:255;index" json:"NativeMessageId"`
 	ChannelId       string `gorm:"NOT NULL;size:255"`
 	GuildId         string `gorm:"size:255"`
 	AuthorId        string `gorm:"size:255"`

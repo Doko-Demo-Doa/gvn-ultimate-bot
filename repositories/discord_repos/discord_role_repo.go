@@ -38,7 +38,7 @@ func (*discordRoleRepo) UnassignRole(user *models.DiscordUser, fromRole models.D
 
 func (dr *discordRoleRepo) CreateRole(role *models.DiscordRole) (*models.DiscordRole, error) {
 	var r models.DiscordRole
-	if err := dr.db.Where(&models.DiscordRole{NativeId: role.NativeId}).First(&r).Error; err != nil {
+	if err := dr.db.Where(&models.DiscordRole{NativeID: role.NativeID}).First(&r).Error; err != nil {
 		dr.db.Create(&role)
 		return role, err
 	}
@@ -50,7 +50,7 @@ func (dr *discordRoleRepo) EditRole(role *models.DiscordRole) (*models.DiscordRo
 	var r models.DiscordRole
 
 	// Query it first
-	if err := dr.db.Where(&models.DiscordRole{NativeId: role.NativeId}).First(&r).Error; err != nil {
+	if err := dr.db.Where(&models.DiscordRole{NativeID: role.NativeID}).First(&r).Error; err != nil {
 		return role, err
 	}
 
@@ -68,7 +68,7 @@ func (dr *discordRoleRepo) GetByID(id uint) (*models.DiscordRole, error) {
 
 func (dr *discordRoleRepo) GetByNativeID(nativeId string) (*models.DiscordRole, error) {
 	var r models.DiscordRole
-	if err := dr.db.Where(&models.DiscordRole{NativeId: nativeId}).First(&r).Error; err != nil {
+	if err := dr.db.Where(&models.DiscordRole{NativeID: nativeId}).First(&r).Error; err != nil {
 		return nil, err
 	}
 

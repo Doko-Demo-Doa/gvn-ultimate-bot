@@ -3,7 +3,6 @@ package discordservice
 import (
 	"doko/gvn-ultimate-bot/models"
 	discordrepos "doko/gvn-ultimate-bot/repositories/discord_repos"
-	"encoding/json"
 	"log"
 )
 
@@ -33,13 +32,12 @@ func (s *discordAuditLogService) attachmentsJSON(attachments []string) string {
 	if len(attachments) == 0 {
 		return "[]"
 	}
-	b, _ := json.Marshal(attachments)
-	return string(b)
+	return models.MarshalJSONColumn(attachments)
 }
 
 func (s *discordAuditLogService) LogMessageDelete(messageID, channelID, guildID, authorID, authorName, content string, attachments []string) error {
 	logEntry := &models.DiscordMessageAuditLog{
-		NativeMessageId: messageID,
+		NativeMessageID: messageID,
 		ChannelId:       channelID,
 		GuildId:         guildID,
 		AuthorId:        authorID,
@@ -57,7 +55,7 @@ func (s *discordAuditLogService) LogMessageDelete(messageID, channelID, guildID,
 
 func (s *discordAuditLogService) LogMessageEdit(messageID, channelID, guildID, authorID, authorName, beforeContent, afterContent string, attachments []string) error {
 	logEntry := &models.DiscordMessageAuditLog{
-		NativeMessageId: messageID,
+		NativeMessageID: messageID,
 		ChannelId:       channelID,
 		GuildId:         guildID,
 		AuthorId:        authorID,

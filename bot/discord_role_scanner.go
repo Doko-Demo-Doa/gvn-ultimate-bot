@@ -36,7 +36,7 @@ func roleAdapter(r1 discord.Role) models.DiscordRole {
 	}
 
 	return models.DiscordRole{
-		NativeId:     r1.ID.String(),
+		NativeID:     r1.ID.String(),
 		Name:         r1.Name,
 		Mentionable:  mentionableNum,
 		Hoist:        isHoist,

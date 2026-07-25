@@ -40,7 +40,7 @@ func RegisterMemberSyncModule(s *state.State, repo discordrepos.DiscordUserRepo,
 
 func upsertMember(repo discordrepos.DiscordUserRepo, user discord.User, nick string) {
 	_, err := repo.Upsert(&models.DiscordUser{
-		NativeId:      user.ID.String(),
+		NativeID:      user.ID.String(),
 		Discriminator: user.Discriminator,
 		Avatar:        user.AvatarURL(),
 		Username:      user.Username,
