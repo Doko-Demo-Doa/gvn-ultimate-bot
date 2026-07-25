@@ -70,6 +70,8 @@ type DiscordController interface {
 	SearchDiscordMembers(*gin.Context)
 	SyncDiscordUsers(*gin.Context)
 	GetLastUserSync(*gin.Context)
+	SyncDiscordRoles(*gin.Context)
+	GetLastRoleSync(*gin.Context)
 }
 
 type discordController struct {
@@ -232,8 +234,8 @@ func humanDuration(d time.Duration) string {
 
 func (ctl *discordController) inputToDiscordRole(input DiscordRoleInput) models.DiscordRole {
 	return models.DiscordRole{
-		Name:         input.NativeID,
-		NativeID:     input.Name,
+		Name:         input.Name,
+		NativeID:     input.NativeID,
 		Mentionable:  input.Mentionable,
 		Hoist:        input.Hoist,
 		Color:        input.Color,
@@ -421,6 +423,24 @@ func (ctl *discordController) SyncDiscordUsers(c *gin.Context) {
 
 func (ctl *discordController) GetLastUserSync(c *gin.Context) {
 	data, err := ctl.dre.GetLastUserSync()
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	HTTPRes(c, http.StatusOK, "ok", data)
+}
+
+func (ctl *discordController) SyncDiscordRoles(c *gin.Context) {
+	data, err := ctl.dre.SyncGuildRoles()
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+	HTTPRes(c, http.StatusOK, "ok", data)
+}
+
+func (ctl *discordController) GetLastRoleSync(c *gin.Context) {
+	data, err := ctl.dre.GetLastRoleSync()
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
 		return

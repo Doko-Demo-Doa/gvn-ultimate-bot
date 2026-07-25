@@ -11,6 +11,7 @@ type DiscordMessageAuditLogFilter struct {
 	ToDate     *string
 	ChannelId  *string
 	AuthorName *string
+	AuthorId   *string
 }
 
 type DiscordMessageAuditLogRepo interface {
@@ -51,6 +52,9 @@ func (r *discordMessageAuditLogRepo) buildQuery(filter *DiscordMessageAuditLogFi
 	}
 	if filter.AuthorName != nil && *filter.AuthorName != "" {
 		q = q.Where("author_name ILIKE ?", "%"+*filter.AuthorName+"%")
+	}
+	if filter.AuthorId != nil && *filter.AuthorId != "" {
+		q = q.Where("author_id = ?", *filter.AuthorId)
 	}
 	return q
 }

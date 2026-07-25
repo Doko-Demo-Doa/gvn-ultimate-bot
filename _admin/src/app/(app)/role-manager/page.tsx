@@ -15,15 +15,22 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { IconRefresh } from "@tabler/icons-react";
 import { useState } from "react";
 import {
   useAssignRoleMutation,
   useDiscordRoles,
+  useLastRoleSync,
   useRevokeRoleMutation,
   useRoleAssignments,
   useSearchDiscordMembers,
+  useSyncDiscordRoles,
 } from "~/hooks/api-hooks";
 import MasterLayout from "~/layouts/master-layout";
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString();
+}
 
 function renderMemberOption({ option }: { option: any }) {
   return (
@@ -37,7 +44,11 @@ function renderMemberOption({ option }: { option: any }) {
 }
 
 export default function RoleManagerPage() {
-  const { data: rolesData, isLoading: rolesLoading } = useDiscordRoles();
+  const {
+    data: rolesData,
+    isLoading: rolesLoading,
+    refetch: refetchRoles,
+  } = useDiscordRoles();
   const {
     data: assignmentsData,
     isLoading: assignmentsLoading,
@@ -47,6 +58,11 @@ export default function RoleManagerPage() {
     useAssignRoleMutation();
   const { mutateAsync: revokeRole, isPending: isRevoking } =
     useRevokeRoleMutation();
+
+  const { data: lastRoleSync, refetch: refetchLastRoleSync } =
+    useLastRoleSync();
+  const { mutateAsync: syncRoles, isPending: isSyncingRoles } =
+    useSyncDiscordRoles();
 
   const [memberSearch, setMemberSearch] = useState("");
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
@@ -130,6 +146,27 @@ export default function RoleManagerPage() {
     return roles.find((r) => r.NativeId === nativeId)?.Name || nativeId;
   }
 
+  async function handleSyncRoles() {
+    try {
+      const resp = await syncRoles();
+      notifications.show({
+        color: "green",
+        title: "Thành công",
+        message: `Đã đồng bộ ${resp.data.synced_count} role, xóa ${resp.data.removed_count} role không còn tồn tại.`,
+      });
+      void refetchRoles();
+      void refetchLastRoleSync();
+    } catch (err: any) {
+      notifications.show({
+        color: "red",
+        title: "Lỗi",
+        message: err?.message || "Không thể đồng bộ role",
+      });
+    }
+  }
+
+  const lastRoleSyncLog = lastRoleSync?.data;
+
   return (
     <MasterLayout>
       <Stack>
@@ -143,6 +180,22 @@ export default function RoleManagerPage() {
           <Loader />
         ) : (
           <>
+            <Group justify="space-between">
+              <Button
+                variant="light"
+                leftSection={<IconRefresh size={14} />}
+                loading={isSyncingRoles}
+                onClick={handleSyncRoles}
+              >
+                Đồng bộ role từ Discord
+              </Button>
+              <Text size="sm" c="dimmed">
+                {lastRoleSyncLog
+                  ? `Đồng bộ lần cuối ${formatDateTime(lastRoleSyncLog.CreatedAt)} (${lastRoleSyncLog.Status})`
+                  : "Chưa đồng bộ lần nào"}
+              </Text>
+            </Group>
+
             <Stack>
               <Title order={4}>Gán role mới</Title>
               <Select

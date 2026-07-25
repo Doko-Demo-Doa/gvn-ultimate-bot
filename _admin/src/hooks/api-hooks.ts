@@ -10,6 +10,7 @@ import type {
   IDiscordMember,
   IDiscordRole,
   IDiscordUserRoleAssignment,
+  IRoleSyncResult,
   ISystemEventLog,
   IUserSyncResult,
 } from "~/types/types";
@@ -76,6 +77,27 @@ export function useDiscordRoles() {
     queryFn: async () => {
       const resp: BackendResponseType<IDiscordRole[]> =
         await customApiClient.get("/discord/role/list", {});
+      return resp;
+    },
+  });
+}
+
+export function useSyncDiscordRoles() {
+  return useMutation({
+    mutationFn: async () => {
+      const resp: BackendResponseType<IRoleSyncResult> =
+        await customApiClient.post("/discord/role/sync", {});
+      return resp;
+    },
+  });
+}
+
+export function useLastRoleSync() {
+  return useQuery({
+    queryKey: ["discord-roles-last-sync"],
+    queryFn: async () => {
+      const resp: BackendResponseType<ISystemEventLog> =
+        await customApiClient.get("/discord/role/sync/last", {});
       return resp;
     },
   });
@@ -178,6 +200,7 @@ export function useAuditLogs(params: {
   to_date?: string;
   channel_id?: string;
   author_name?: string;
+  author_id?: string;
 }) {
   const queryKey = ["audit-logs", params];
   return useQuery({

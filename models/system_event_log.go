@@ -4,6 +4,7 @@ import "gorm.io/gorm"
 
 const (
 	SystemEventTypeUserSync = "USER_SYNC"
+	SystemEventTypeRoleSync = "ROLE_SYNC"
 )
 
 // SystemEventLog is a generic log of background/system events (syncs, jobs, etc),

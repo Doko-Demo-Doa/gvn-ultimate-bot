@@ -137,6 +137,8 @@ type DiscordRoleReactionEmbedService interface {
 	SearchGuildMembers(query string) ([]MemberInfo, error)
 	SyncGuildMembers() (*UserSyncResult, error)
 	GetLastUserSync() (*models.SystemEventLog, error)
+	SyncGuildRoles() (*RoleSyncResult, error)
+	GetLastRoleSync() (*models.SystemEventLog, error)
 }
 
 type UserSyncResult struct {
@@ -144,9 +146,15 @@ type UserSyncResult struct {
 	RemovedCount int `json:"removed_count"`
 }
 
+type RoleSyncResult struct {
+	SyncedCount  int `json:"synced_count"`
+	RemovedCount int `json:"removed_count"`
+}
+
 type discordRoleReactionEmbedService struct {
 	RoleReactionRepo discordrepos.DiscordRoleReactionEmbedRepo
 	UserRepo         discordrepos.DiscordUserRepo
+	RoleRepo         discordrepos.DiscordRoleRepo
 	EventLogService  systemservice.SystemEventLogService
 	state            *state.State
 	guildID          discord.GuildID
@@ -155,6 +163,7 @@ type discordRoleReactionEmbedService struct {
 func NewDiscordRoleReactionEmbedService(
 	repo discordrepos.DiscordRoleReactionEmbedRepo,
 	userRepo discordrepos.DiscordUserRepo,
+	roleRepo discordrepos.DiscordRoleRepo,
 	eventLogService systemservice.SystemEventLogService,
 	s *state.State,
 	guildID discord.GuildID,
@@ -162,6 +171,7 @@ func NewDiscordRoleReactionEmbedService(
 	return &discordRoleReactionEmbedService{
 		RoleReactionRepo: repo,
 		UserRepo:         userRepo,
+		RoleRepo:         roleRepo,
 		EventLogService:  eventLogService,
 		state:            s,
 		guildID:          guildID,
@@ -294,6 +304,68 @@ func (d *discordRoleReactionEmbedService) GetLastUserSync() (*models.SystemEvent
 		return nil, nil
 	}
 	return d.EventLogService.GetLatestByEventType(models.SystemEventTypeUserSync)
+}
+
+// SyncGuildRoles fetches the guild's full role list (always complete in
+// arikawa's cache, unlike members) and reconciles the discord_role table
+// against it: upserting Discord-sourced fields for every existing role and
+// removing any role no longer present in the guild.
+func (d *discordRoleReactionEmbedService) SyncGuildRoles() (*RoleSyncResult, error) {
+	roles, err := d.state.Roles(d.guildID)
+	if err != nil {
+		d.logRoleSync("failure", err.Error(), 0, 0)
+		return nil, err
+	}
+
+	nativeIds := make([]string, 0, len(roles))
+	synced := 0
+	for _, r := range roles {
+		nativeIds = append(nativeIds, r.ID.String())
+		_, err := d.RoleRepo.Upsert(&models.DiscordRole{
+			NativeID:    r.ID.String(),
+			Name:        r.Name,
+			Mentionable: boolToUint(r.Mentionable),
+			Hoist:       boolToUint(r.Hoist),
+			Color:       uint(r.Color),
+		})
+		if err != nil {
+			log.Printf("[sync_guild_roles] failed to upsert role %s: %v", r.ID.String(), err)
+			continue
+		}
+		synced++
+	}
+
+	removed, err := d.RoleRepo.DeleteNotIn(nativeIds)
+	if err != nil {
+		log.Printf("[sync_guild_roles] failed to remove stale roles: %v", err)
+	}
+
+	d.logRoleSync("success", fmt.Sprintf("synced %d/%d roles, removed %d stale", synced, len(roles), removed), synced, int(removed))
+	return &RoleSyncResult{SyncedCount: synced, RemovedCount: int(removed)}, nil
+}
+
+func boolToUint(b bool) uint {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+func (d *discordRoleReactionEmbedService) logRoleSync(status, message string, syncedCount, removedCount int) {
+	if d.EventLogService == nil {
+		return
+	}
+	metadata := models.MarshalJSONColumn(map[string]int{"synced_count": syncedCount, "removed_count": removedCount})
+	if err := d.EventLogService.LogEvent(models.SystemEventTypeRoleSync, status, message, metadata); err != nil {
+		log.Printf("[sync_guild_roles] failed to write event log: %v", err)
+	}
+}
+
+func (d *discordRoleReactionEmbedService) GetLastRoleSync() (*models.SystemEventLog, error) {
+	if d.EventLogService == nil {
+		return nil, nil
+	}
+	return d.EventLogService.GetLatestByEventType(models.SystemEventTypeRoleSync)
 }
 
 func (d *discordRoleReactionEmbedService) UpsertEmbed(m *models.DiscordRoleReactionEmbed, payload *models.ReactionRoleMessagePayload) (*models.DiscordRoleReactionEmbed, error) {

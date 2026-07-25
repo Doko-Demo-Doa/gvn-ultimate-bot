@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  Avatar,
   Badge,
   Box,
   Button,
   Group,
+  Loader,
   Modal,
   Pagination,
   Paper,
@@ -12,7 +14,6 @@ import {
   Stack,
   Table,
   Text,
-  TextInput,
   Title,
   UnstyledButton,
 } from "@mantine/core";
@@ -30,8 +31,20 @@ import {
   useAuditLogs,
   useClearAuditLogs,
   useDiscordChannels,
+  useSearchDiscordMembers,
 } from "~/hooks/api-hooks";
 import MasterLayout from "~/layouts/master-layout";
+
+function renderMemberOption({ option }: { option: any }) {
+  return (
+    <Group gap="xs">
+      {option.image_url && (
+        <Avatar src={option.image_url} size={24} radius="xl" />
+      )}
+      <span>{option.label}</span>
+    </Group>
+  );
+}
 
 function formatDateTime(iso: string) {
   const d = new Date(iso);
@@ -118,12 +131,22 @@ export default function ServerLogPage() {
   const [channelId, setChannelId] = useQueryState("channel", {
     defaultValue: "",
   });
-  const [authorName, setAuthorName] = useQueryState("author", {
+  const [authorId, setAuthorId] = useQueryState("author_id", {
     defaultValue: "",
   });
   const [offsetStr, setOffsetStr] = useQueryState("offset", {
     defaultValue: "0",
   });
+
+  const [authorSearch, setAuthorSearch] = useState("");
+  const { data: authorMembersData, isLoading: authorMembersSearching } =
+    useSearchDiscordMembers(authorSearch);
+  const authorMembers = authorMembersData?.data ?? [];
+  const authorSelectData = authorMembers.map((m) => ({
+    value: m.native_id,
+    label: m.nickname ? `${m.nickname} (${m.username})` : m.username,
+    image_url: m.avatar,
+  }));
 
   const offset = Number.parseInt(offsetStr, 10) || 0;
 
@@ -179,7 +202,7 @@ export default function ServerLogPage() {
     from_date: dates.from,
     to_date: dates.to,
     channel_id: channelId || undefined,
-    author_name: authorName || undefined,
+    author_id: authorId || undefined,
   });
 
   const { mutateAsync: clearLogs, isPending: isClearing } = useClearAuditLogs();
@@ -219,7 +242,8 @@ export default function ServerLogPage() {
     setFromDate(null);
     setToDate(null);
     setChannelId(null);
-    setAuthorName(null);
+    setAuthorId(null);
+    setAuthorSearch("");
     setOffsetStr("0");
   }
 
@@ -299,12 +323,19 @@ export default function ServerLogPage() {
                 }))}
                 style={{ width: 220 }}
               />
-              <TextInput
+              <Select
                 label="Người gửi"
-                placeholder="Tên người gửi..."
-                value={authorName}
-                onChange={(e) => setAuthorName(e.currentTarget.value)}
-                style={{ width: 200 }}
+                placeholder="Tìm kiếm user..."
+                searchable
+                clearable
+                value={authorId || null}
+                onChange={(val) => setAuthorId(val)}
+                onSearchChange={setAuthorSearch}
+                searchValue={authorSearch}
+                data={authorSelectData}
+                renderOption={renderMemberOption}
+                rightSection={authorMembersSearching ? <Loader size={16} /> : null}
+                style={{ width: 220 }}
               />
               <Button
                 leftSection={<IconSearch size={14} />}

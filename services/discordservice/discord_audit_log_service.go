@@ -11,6 +11,7 @@ type AuditLogFilter struct {
 	ToDate     *string
 	ChannelId  *string
 	AuthorName *string
+	AuthorId   *string
 }
 
 type DiscordAuditLogService interface {
@@ -79,6 +80,7 @@ func (s *discordAuditLogService) ListLogs(filter *AuditLogFilter, limit, offset 
 		repoFilter.ToDate = filter.ToDate
 		repoFilter.ChannelId = filter.ChannelId
 		repoFilter.AuthorName = filter.AuthorName
+		repoFilter.AuthorId = filter.AuthorId
 	}
 	logs, err := s.Repo.List(repoFilter, limit, offset)
 	if err != nil {

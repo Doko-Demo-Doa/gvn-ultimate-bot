@@ -41,8 +41,10 @@ func Bootstrap(s *state.State, ds discordservice.DiscordService, dre discordserv
 	}
 	log.Println("App ID", app.ID)
 
-	// Sync the roles into database
-	StartRoleSync(s, ds)
+	// Sync the roles into database, removing any that no longer exist on Discord
+	if _, err := dre.SyncGuildRoles(); err != nil {
+		log.Printf("Failed to sync guild roles: %v", err)
+	}
 
 	// Start background scheduler to remove expired timed roles
 	rs.Start()

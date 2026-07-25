@@ -34,6 +34,7 @@ func (ctl *discordAuditLogController) ListAuditLogs(c *gin.Context) {
 	toDate := c.Query("to_date")
 	channelId := c.Query("channel_id")
 	authorName := c.Query("author_name")
+	authorId := c.Query("author_id")
 
 	filter := &discordservice.AuditLogFilter{}
 	if fromDate != "" {
@@ -47,6 +48,9 @@ func (ctl *discordAuditLogController) ListAuditLogs(c *gin.Context) {
 	}
 	if authorName != "" {
 		filter.AuthorName = &authorName
+	}
+	if authorId != "" {
+		filter.AuthorId = &authorId
 	}
 
 	logs, total, err := ctl.svc.ListLogs(filter, limit, offset)

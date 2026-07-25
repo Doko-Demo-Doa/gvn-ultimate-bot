@@ -206,6 +206,11 @@ export type IUserSyncResult = {
   removed_count: number;
 };
 
+export type IRoleSyncResult = {
+  synced_count: number;
+  removed_count: number;
+};
+
 export type ISystemEventLog = {
   ID: number;
   EventType: string;
