@@ -217,12 +217,15 @@ function renderEmojiOption({ option }: { option: any }) {
   );
 }
 
+type EmojiSource = "custom" | "stock";
+
 function EmojiSelectField({
   emojis,
   formProps,
   excludedEmojis,
   label,
   style,
+  source,
   ...selectProps
 }: {
   emojis: IDiscordEmoji[];
@@ -232,18 +235,15 @@ function EmojiSelectField({
   excludedEmojis?: string[];
   label?: string;
   style?: React.CSSProperties;
+  // Whether to show the custom-guild-emoji dropdown or the stock Unicode
+  // picker. Controlled by the parent (InteractionFieldset), which shares a
+  // single toggle across every emoji field in one interaction — a dropdown
+  // can have several (one per option), so each field can't own this itself.
+  source: EmojiSource;
 } & any) {
   const [localValue, setLocalValue] = useState<string>(
     () => formProps.value ?? formProps.defaultValue ?? "",
   );
-
-  const [source, setSource] = useState<"custom" | "stock">(() => {
-    const val = localValue;
-    if (!val) return "custom";
-    return !emojis.some((e: IDiscordEmoji) => e.api_name === val)
-      ? "stock"
-      : "custom";
-  });
 
   const [popoverOpen, setPopoverOpen] = useState(false);
 
@@ -280,8 +280,8 @@ function EmojiSelectField({
   // the underlying Select render its own label, so this field's label row
   // matches a plain TextInput/Select's label row exactly, and the value row
   // right below it (the Select/Popover) lines up with sibling fields placed
-  // in the same Group. The Custom/Stock toggle goes on its own row below
-  // that, since it doesn't need to align with anything.
+  // in the same Group. The Custom/Stock toggle is rendered by the parent
+  // (InteractionFieldset), shared across every emoji field in one interaction.
   return (
     <Stack gap={4} style={style}>
       {label && (
@@ -289,6 +289,7 @@ function EmojiSelectField({
           {label}
         </Text>
       )}
+
       {source === "custom" ? (
         <Select
           data={availableEmojiData}
@@ -343,17 +344,196 @@ function EmojiSelectField({
           )}
         </Group>
       )}
-      <SegmentedControl
-        size="xs"
-        value={source}
-        onChange={(v) => setSource(v as "custom" | "stock")}
-        data={[
-          { label: "Custom", value: "custom" },
-          { label: "Stock", value: "stock" },
-        ]}
-        style={{ alignSelf: "flex-start" }}
-      />
     </Stack>
+  );
+}
+
+function InteractionFieldset({
+  it,
+  index,
+  form,
+  emojis,
+  interactions,
+  roleSelectData,
+  onRemove,
+}: {
+  it: any;
+  index: number;
+  form: any;
+  emojis: IDiscordEmoji[];
+  interactions: any[];
+  roleSelectData: { value: string; label: string; disabled?: boolean }[];
+  onRemove: () => void;
+}) {
+  const initialEmoji =
+    it.type === "dropdown" ? it.options?.[0]?.emoji : it.emoji;
+  const [emojiSource, setEmojiSource] = useState<EmojiSource>(() =>
+    initialEmoji && !emojis.some((e) => e.api_name === initialEmoji)
+      ? "stock"
+      : "custom",
+  );
+
+  return (
+    <Fieldset legend={`${it.type.toUpperCase()} ${index + 1}`}>
+      <Stack>
+        <SegmentedControl
+          value={emojiSource}
+          onChange={(v) => setEmojiSource(v as EmojiSource)}
+          data={[
+            { label: "Custom", value: "custom" },
+            { label: "Stock", value: "stock" },
+          ]}
+          style={{ alignSelf: "flex-start" }}
+        />
+
+        {(it.type === "emoji" || it.type === "button") && (
+          <>
+            <Group>
+              <EmojiSelectField
+                label="Emoji"
+                placeholder="Chọn emoji..."
+                searchable
+                style={{ width: 200 }}
+                emojis={emojis}
+                source={emojiSource}
+                excludedEmojis={
+                  it.type === "emoji"
+                    ? interactions
+                        .filter(
+                          (other, otherIndex) =>
+                            otherIndex !== index &&
+                            other.type === "emoji" &&
+                            other.emoji,
+                        )
+                        .map((other) => other.emoji as string)
+                    : []
+                }
+                formProps={form.getInputProps(`interactions.${index}.emoji`)}
+              />
+              {it.type === "button" && (
+                <TextInput
+                  label="Label"
+                  placeholder="Nút bấm"
+                  style={{ flexGrow: 1 }}
+                  {...form.getInputProps(`interactions.${index}.label`)}
+                />
+              )}
+            </Group>
+            <Group grow>
+              {it.type === "button" && (
+                <NativeSelect
+                  label="Style"
+                  data={[
+                    { value: "primary", label: "Primary (blurple)" },
+                    { value: "secondary", label: "Secondary (grey)" },
+                    { value: "success", label: "Success (green)" },
+                    { value: "danger", label: "Danger (red)" },
+                  ]}
+                  {...form.getInputProps(`interactions.${index}.style`)}
+                />
+              )}
+              <NativeSelect
+                label="Role"
+                data={roleSelectData}
+                {...form.getInputProps(`interactions.${index}.role_native_id`)}
+              />
+            </Group>
+          </>
+        )}
+
+        {it.type === "dropdown" && (
+          <>
+            <TextInput
+              label="Placeholder"
+              placeholder="Chọn một role..."
+              {...form.getInputProps(`interactions.${index}.placeholder`)}
+            />
+            <Text size="sm" fw={500}>
+              Options
+            </Text>
+            {it.options?.map((opt: any, optIndex: number) => (
+              <Group key={opt.id} align="flex-start">
+                <Stack gap={4} style={{ flexGrow: 1 }}>
+                  <Group>
+                    <TextInput
+                      placeholder="Label"
+                      style={{ flexGrow: 1 }}
+                      {...form.getInputProps(
+                        `interactions.${index}.options.${optIndex}.label`,
+                      )}
+                    />
+                    <EmojiSelectField
+                      placeholder="Emoji"
+                      searchable
+                      style={{ width: 160 }}
+                      emojis={emojis}
+                      source={emojiSource}
+                      formProps={form.getInputProps(
+                        `interactions.${index}.options.${optIndex}.emoji`,
+                      )}
+                    />
+                  </Group>
+                  <TextInput
+                    placeholder="Description"
+                    {...form.getInputProps(
+                      `interactions.${index}.options.${optIndex}.description`,
+                    )}
+                  />
+                  <NativeSelect
+                    data={roleSelectData}
+                    {...form.getInputProps(
+                      `interactions.${index}.options.${optIndex}.role_native_id`,
+                    )}
+                  />
+                </Stack>
+                <Button
+                  type="button"
+                  size="xs"
+                  color="red"
+                  variant="subtle"
+                  onClick={() => {
+                    const current =
+                      form.getValues().interactions[index].options || [];
+                    const next = current.filter(
+                      (_: any, idx: number) => idx !== optIndex,
+                    );
+                    form.setFieldValue(`interactions.${index}.options`, next);
+                  }}
+                >
+                  <IconTrashFilled size={14} />
+                </Button>
+              </Group>
+            ))}
+            <Button
+              type="button"
+              size="xs"
+              variant="default"
+              leftSection={<IconPlus size={14} />}
+              onClick={() => {
+                const current =
+                  form.getValues().interactions[index].options || [];
+                form.setFieldValue(`interactions.${index}.options`, [
+                  ...current,
+                  { id: uuidv4(), label: "", role_native_id: "" },
+                ]);
+              }}
+            >
+              Thêm option
+            </Button>
+          </>
+        )}
+
+        <Button
+          type="button"
+          size="xs"
+          color="red"
+          leftSection={<IconTrashFilled size={14} />}
+          onClick={onRemove}
+        >
+          Xóa interaction
+        </Button>
+      </Stack>
+    </Fieldset>
   );
 }
 
@@ -529,161 +709,16 @@ const EmbedEditor: React.FC<Props> = ({
           </Group>
 
           {interactions.map((it, i) => (
-            <Fieldset key={it.id} legend={`${it.type.toUpperCase()} ${i + 1}`}>
-              <Stack>
-                {(it.type === "emoji" || it.type === "button") && (
-                  <>
-                    <Group>
-                      <EmojiSelectField
-                        label="Emoji"
-                        placeholder="Chọn emoji..."
-                        searchable
-                        style={{ width: 200 }}
-                        emojis={emojis}
-                        excludedEmojis={
-                          it.type === "emoji"
-                            ? interactions
-                                .filter(
-                                  (other, otherIndex) =>
-                                    otherIndex !== i &&
-                                    other.type === "emoji" &&
-                                    other.emoji,
-                                )
-                                .map((other) => other.emoji as string)
-                            : []
-                        }
-                        formProps={form.getInputProps(
-                          `interactions.${i}.emoji`,
-                        )}
-                      />
-                      {it.type === "button" && (
-                        <TextInput
-                          label="Label"
-                          placeholder="Nút bấm"
-                          style={{ flexGrow: 1 }}
-                          {...form.getInputProps(`interactions.${i}.label`)}
-                        />
-                      )}
-                    </Group>
-                    <Group grow>
-                      {it.type === "button" && (
-                        <NativeSelect
-                          label="Style"
-                          data={[
-                            { value: "primary", label: "Primary (blurple)" },
-                            { value: "secondary", label: "Secondary (grey)" },
-                            { value: "success", label: "Success (green)" },
-                            { value: "danger", label: "Danger (red)" },
-                          ]}
-                          {...form.getInputProps(`interactions.${i}.style`)}
-                        />
-                      )}
-                      <NativeSelect
-                        label="Role"
-                        data={roleSelectData}
-                        {...form.getInputProps(
-                          `interactions.${i}.role_native_id`,
-                        )}
-                      />
-                    </Group>
-                  </>
-                )}
-
-                {it.type === "dropdown" && (
-                  <>
-                    <TextInput
-                      label="Placeholder"
-                      placeholder="Chọn một role..."
-                      {...form.getInputProps(`interactions.${i}.placeholder`)}
-                    />
-                    <Text size="sm" fw={500}>
-                      Options
-                    </Text>
-                    {it.options?.map((opt, optIndex) => (
-                      <Group key={opt.id} align="flex-start">
-                        <Stack gap={4} style={{ flexGrow: 1 }}>
-                          <Group>
-                            <TextInput
-                              placeholder="Label"
-                              style={{ flexGrow: 1 }}
-                              {...form.getInputProps(
-                                `interactions.${i}.options.${optIndex}.label`,
-                              )}
-                            />
-                            <EmojiSelectField
-                              placeholder="Emoji"
-                              searchable
-                              style={{ width: 160 }}
-                              emojis={emojis}
-                              formProps={form.getInputProps(
-                                `interactions.${i}.options.${optIndex}.emoji`,
-                              )}
-                            />
-                          </Group>
-                          <TextInput
-                            placeholder="Description"
-                            {...form.getInputProps(
-                              `interactions.${i}.options.${optIndex}.description`,
-                            )}
-                          />
-                          <NativeSelect
-                            data={roleSelectData}
-                            {...form.getInputProps(
-                              `interactions.${i}.options.${optIndex}.role_native_id`,
-                            )}
-                          />
-                        </Stack>
-                        <Button
-                          type="button"
-                          size="xs"
-                          color="red"
-                          variant="subtle"
-                          onClick={() => {
-                            const current =
-                              form.getValues().interactions[i].options || [];
-                            const next = current.filter(
-                              (_, idx) => idx !== optIndex,
-                            );
-                            form.setFieldValue(
-                              `interactions.${i}.options`,
-                              next,
-                            );
-                          }}
-                        >
-                          <IconTrashFilled size={14} />
-                        </Button>
-                      </Group>
-                    ))}
-                    <Button
-                      type="button"
-                      size="xs"
-                      variant="default"
-                      leftSection={<IconPlus size={14} />}
-                      onClick={() => {
-                        const current =
-                          form.getValues().interactions[i].options || [];
-                        form.setFieldValue(`interactions.${i}.options`, [
-                          ...current,
-                          { id: uuidv4(), label: "", role_native_id: "" },
-                        ]);
-                      }}
-                    >
-                      Thêm option
-                    </Button>
-                  </>
-                )}
-
-                <Button
-                  type="button"
-                  size="xs"
-                  color="red"
-                  leftSection={<IconTrashFilled size={14} />}
-                  onClick={() => removeInteraction(i)}
-                >
-                  Xóa interaction
-                </Button>
-              </Stack>
-            </Fieldset>
+            <InteractionFieldset
+              key={it.id}
+              it={it}
+              index={i}
+              form={form}
+              emojis={emojis}
+              interactions={interactions}
+              roleSelectData={roleSelectData}
+              onRemove={() => removeInteraction(i)}
+            />
           ))}
         </Stack>
 
