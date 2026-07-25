@@ -438,6 +438,27 @@ func (d *discordRoleReactionEmbedService) EditEmbed(nativeMessageID string, payl
 		return nil, fmt.Errorf("invalid native_message_id: %w", err)
 	}
 
+	// Snapshot which emojis were reactable before this edit, so afterwards we
+	// only touch the ones that actually changed rather than wiping every
+	// reaction on the message.
+	oldEmojis := map[string]bool{}
+	if existing, err := d.RoleReactionRepo.GetByNativeID(nativeMessageID); err == nil && existing != nil {
+		if oldPayload, err := existing.ParsedPayload(); err == nil {
+			for _, it := range oldPayload.Interactions {
+				if it.Type == models.InteractionTypeEmoji && it.Emoji != "" {
+					oldEmojis[it.Emoji] = true
+				}
+			}
+		}
+	}
+
+	newEmojis := map[string]bool{}
+	for _, it := range payload.Interactions {
+		if it.Type == models.InteractionTypeEmoji && it.Emoji != "" {
+			newEmojis[it.Emoji] = true
+		}
+	}
+
 	embed, components, err := buildDiscordMessage(payload)
 	if err != nil {
 		return nil, err
@@ -481,15 +502,28 @@ func (d *discordRoleReactionEmbedService) EditEmbed(nativeMessageID string, payl
 		return nil, err
 	}
 
-	// Clear old emoji reactions and re-add current ones.
-	if err := d.state.DeleteAllReactions(discord.ChannelID(channelID), discord.MessageID(msgID)); err != nil {
-		log.Printf("[edit_embed] failed to clear reactions on message %s: %v", nativeMessageID, err)
+	// Remove reactions only for emojis dropped from the payload. This fires a
+	// "reaction remove emoji" event, which the role-react listener doesn't
+	// subscribe to, so it does NOT revoke roles from users who'd already
+	// reacted — it only cleans up the stale reaction icon on Discord.
+	for emoji := range oldEmojis {
+		if newEmojis[emoji] {
+			continue
+		}
+		if err := d.state.DeleteReactions(discord.ChannelID(channelID), discord.MessageID(msgID), discord.APIEmoji(emoji)); err != nil {
+			log.Printf("[edit_embed] failed to remove stale reaction %s: %v", emoji, err)
+		}
 	}
-	for _, it := range payload.Interactions {
-		if it.Type == models.InteractionTypeEmoji && it.Emoji != "" {
-			if err := d.state.React(discord.ChannelID(channelID), discord.MessageID(msgID), discord.APIEmoji(it.Emoji)); err != nil {
-				log.Printf("[edit_embed] failed to add reaction %s: %v", it.Emoji, err)
-			}
+
+	// Add the bot's own reaction for newly introduced emojis. Emojis present
+	// both before and after are left completely untouched, preserving
+	// existing user reactions.
+	for emoji := range newEmojis {
+		if oldEmojis[emoji] {
+			continue
+		}
+		if err := d.state.React(discord.ChannelID(channelID), discord.MessageID(msgID), discord.APIEmoji(emoji)); err != nil {
+			log.Printf("[edit_embed] failed to add reaction %s: %v", emoji, err)
 		}
 	}
 
