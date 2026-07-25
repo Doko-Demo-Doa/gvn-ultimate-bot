@@ -98,21 +98,15 @@ const schema = z.object({
   .refine(
     (data) => {
       for (const interaction of data.interactions) {
-        if (interaction.emoji && interaction.emoji.trim() !== "") {
-          return true;
-        }
-        if (interaction.options) {
-          for (const option of interaction.options) {
-            if (option.emoji && option.emoji.trim() !== "") {
-              return true;
-            }
-          }
+        if (interaction.type !== "emoji") continue;
+        if (!interaction.emoji || interaction.emoji.trim() === "") {
+          return false;
         }
       }
-      return false;
+      return true;
     },
     {
-      message: "At least one emoji must be presented",
+      message: "Emoji-type interactions require an emoji to be picked",
       path: ["interactions"],
     },
   );

@@ -144,6 +144,17 @@ export default function ReactionRolesPage() {
     }
   }
 
+  function getChannelName(embed: IDiscordRoleReactionEmbed) {
+    if (!embed.Payload) return "—";
+    try {
+      const payload: IReactionRoleMessagePayload = JSON.parse(embed.Payload);
+      const channel = channels.find((c) => c.id === payload.channel_id);
+      return channel?.name || payload.channel_id || "—";
+    } catch {
+      return "—";
+    }
+  }
+
   return (
     <MasterLayout>
       <Stack>
@@ -167,6 +178,7 @@ export default function ReactionRolesPage() {
                   <Table.Th>ID</Table.Th>
                   <Table.Th>Message ID</Table.Th>
                   <Table.Th>Tên</Table.Th>
+                  <Table.Th>Kênh</Table.Th>
                   <Table.Th>Chế độ</Table.Th>
                   <Table.Th>Phiên bản</Table.Th>
                   <Table.Th>Hành động</Table.Th>
@@ -178,6 +190,7 @@ export default function ReactionRolesPage() {
                     <Table.Td>{e.ID}</Table.Td>
                     <Table.Td>{e.NativeMessageId}</Table.Td>
                     <Table.Td>{e.Name || "—"}</Table.Td>
+                    <Table.Td>{getChannelName(e)}</Table.Td>
                     <Table.Td>{e.Mode || "default"}</Table.Td>
                     <Table.Td>{e.Version}</Table.Td>
                     <Table.Td>

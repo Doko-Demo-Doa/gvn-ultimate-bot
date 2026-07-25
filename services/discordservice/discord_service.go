@@ -384,18 +384,6 @@ func (d *discordRoleReactionEmbedService) EditEmbed(nativeMessageID string, payl
 		return nil, fmt.Errorf("failed to edit message: %w", err)
 	}
 
-	// Clear old emoji reactions and re-add current ones.
-	if err := d.state.DeleteAllReactions(discord.ChannelID(channelID), discord.MessageID(msgID)); err != nil {
-		log.Printf("[edit_embed] failed to clear reactions on message %s: %v", nativeMessageID, err)
-	}
-	for _, it := range payload.Interactions {
-		if it.Type == models.InteractionTypeEmoji && it.Emoji != "" {
-			if err := d.state.React(discord.ChannelID(channelID), discord.MessageID(msgID), discord.APIEmoji(it.Emoji)); err != nil {
-				log.Printf("[edit_embed] failed to add reaction %s: %v", it.Emoji, err)
-			}
-		}
-	}
-
 	payloadJSON, err := payload.ToJSON()
 	if err != nil {
 		return nil, err
@@ -408,11 +396,32 @@ func (d *discordRoleReactionEmbedService) EditEmbed(nativeMessageID string, payl
 		Mode:            string(payload.Mode),
 	}
 
+	// Persist before touching Discord reactions so the reaction listener can
+	// always find the row once the message becomes reactable again.
 	data, err := d.RoleReactionRepo.GetByNativeID(nativeMessageID)
+	var saved *models.DiscordRoleReactionEmbed
 	if err != nil || data == nil {
-		return d.RoleReactionRepo.Create(embedModel)
+		saved, err = d.RoleReactionRepo.Create(embedModel)
+	} else {
+		saved, err = d.RoleReactionRepo.Update(nativeMessageID, embedModel)
 	}
-	return d.RoleReactionRepo.Update(nativeMessageID, embedModel)
+	if err != nil {
+		return nil, err
+	}
+
+	// Clear old emoji reactions and re-add current ones.
+	if err := d.state.DeleteAllReactions(discord.ChannelID(channelID), discord.MessageID(msgID)); err != nil {
+		log.Printf("[edit_embed] failed to clear reactions on message %s: %v", nativeMessageID, err)
+	}
+	for _, it := range payload.Interactions {
+		if it.Type == models.InteractionTypeEmoji && it.Emoji != "" {
+			if err := d.state.React(discord.ChannelID(channelID), discord.MessageID(msgID), discord.APIEmoji(it.Emoji)); err != nil {
+				log.Printf("[edit_embed] failed to add reaction %s: %v", it.Emoji, err)
+			}
+		}
+	}
+
+	return saved, nil
 }
 
 // PublishEmbed sends the composed message to Discord, stores the configuration
@@ -449,15 +458,6 @@ func (d *discordRoleReactionEmbedService) PublishEmbed(payload *models.ReactionR
 		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
 
-	// Add emoji reactions for emoji interactions.
-	for _, it := range payload.Interactions {
-		if it.Type == models.InteractionTypeEmoji && it.Emoji != "" {
-			if err := d.state.React(discord.ChannelID(channelID), msg.ID, discord.APIEmoji(it.Emoji)); err != nil {
-				log.Printf("[publish_embed] failed to add reaction %s: %v", it.Emoji, err)
-			}
-		}
-	}
-
 	payloadJSON, err := payload.ToJSON()
 	if err != nil {
 		return nil, err
@@ -471,7 +471,23 @@ func (d *discordRoleReactionEmbedService) PublishEmbed(payload *models.ReactionR
 		Version:         1,
 	}
 
-	return d.UpsertEmbed(embedModel, nil)
+	// Persist before touching Discord reactions so the reaction listener can
+	// always find the row once the message becomes reactable.
+	saved, err := d.UpsertEmbed(embedModel, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add emoji reactions for emoji interactions.
+	for _, it := range payload.Interactions {
+		if it.Type == models.InteractionTypeEmoji && it.Emoji != "" {
+			if err := d.state.React(discord.ChannelID(channelID), msg.ID, discord.APIEmoji(it.Emoji)); err != nil {
+				log.Printf("[publish_embed] failed to add reaction %s: %v", it.Emoji, err)
+			}
+		}
+	}
+
+	return saved, nil
 }
 
 func buildDiscordMessage(payload *models.ReactionRoleMessagePayload) (*[]discord.Embed, *discord.ContainerComponents, error) {
