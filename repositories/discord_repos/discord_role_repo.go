@@ -47,8 +47,13 @@ func (*discordRoleRepo) UnassignRole(user *models.DiscordUser, fromRole models.D
 func (dr *discordRoleRepo) CreateRole(role *models.DiscordRole) (*models.DiscordRole, error) {
 	var r models.DiscordRole
 	if err := dr.db.Where(&models.DiscordRole{NativeID: role.NativeID}).First(&r).Error; err != nil {
-		dr.db.Create(&role)
-		return role, err
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+		if err := dr.db.Create(role).Error; err != nil {
+			return nil, err
+		}
+		return role, nil
 	}
 
 	return &r, nil
@@ -103,7 +108,7 @@ func (dr *discordRoleRepo) Upsert(role *models.DiscordRole) (*models.DiscordRole
 }
 
 func (dr *discordRoleRepo) DeleteNotIn(nativeIds []string) (int64, error) {
-	q := dr.db
+	q := dr.db.Where("1 = 1")
 	if len(nativeIds) > 0 {
 		q = q.Where("native_id NOT IN ?", nativeIds)
 	}

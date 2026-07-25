@@ -109,6 +109,23 @@ const schema = z.object({
       message: "Emoji-type interactions require an emoji to be picked",
       path: ["interactions"],
     },
+  )
+  .refine(
+    (data) => {
+      // Emoji-type interactions become real Discord message reactions, so the
+      // same emoji can't map to two different roles on one message.
+      const seen = new Set<string>();
+      for (const interaction of data.interactions) {
+        if (interaction.type !== "emoji" || !interaction.emoji) continue;
+        if (seen.has(interaction.emoji)) return false;
+        seen.add(interaction.emoji);
+      }
+      return true;
+    },
+    {
+      message: "Each emoji can only be used once per message",
+      path: ["interactions"],
+    },
   );
 
 type IFormData = z.infer<typeof schema>;
@@ -202,10 +219,14 @@ function renderEmojiOption({ option }: { option: any }) {
 function EmojiSelectField({
   emojis,
   formProps,
+  excludedEmojis,
   ...selectProps
 }: {
   emojis: IDiscordEmoji[];
   formProps: any;
+  // Emojis already used by other emoji-type interactions on this message —
+  // picking one of these would create a duplicate Discord reaction.
+  excludedEmojis?: string[];
 } & any) {
   const [localValue, setLocalValue] = useState<string>(
     () => formProps.value ?? formProps.defaultValue ?? "",
@@ -228,9 +249,23 @@ function EmojiSelectField({
   }, [formProps.value, formProps.defaultValue]);
 
   const handleSelect = (val: string) => {
+    if (val && excludedEmojis?.includes(val)) {
+      notifications.show({
+        color: "red",
+        title: "Lỗi",
+        message: "Emoji này đã được dùng cho một interaction khác trong message này.",
+      });
+      return;
+    }
     setLocalValue(val);
     formProps.onChange(val);
   };
+
+  const availableEmojiData = excludedEmojis?.length
+    ? emojiSelectData(emojis).filter(
+        (opt) => !excludedEmojis.includes(opt.value) || opt.value === localValue,
+      )
+    : emojiSelectData(emojis);
 
   return (
     <Stack gap={4}>
@@ -245,7 +280,7 @@ function EmojiSelectField({
       />
       {source === "custom" ? (
         <Select
-          data={emojiSelectData(emojis)}
+          data={availableEmojiData}
           renderOption={renderEmojiOption}
           searchable
           allowDeselect={false}
@@ -469,6 +504,18 @@ const EmbedEditor: React.FC<Props> = ({
                         searchable
                         style={{ width: 200 }}
                         emojis={emojis}
+                        excludedEmojis={
+                          it.type === "emoji"
+                            ? interactions
+                                .filter(
+                                  (other, otherIndex) =>
+                                    otherIndex !== i &&
+                                    other.type === "emoji" &&
+                                    other.emoji,
+                                )
+                                .map((other) => other.emoji as string)
+                            : []
+                        }
                         formProps={form.getInputProps(`interactions.${i}.emoji`)}
                       />
                       {it.type === "button" && (

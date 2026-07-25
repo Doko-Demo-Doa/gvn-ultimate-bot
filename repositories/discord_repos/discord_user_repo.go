@@ -101,7 +101,7 @@ func (r *discordUserRepo) DeleteByNativeID(nativeId string) error {
 }
 
 func (r *discordUserRepo) DeleteNotIn(nativeIds []string) (int64, error) {
-	q := r.db
+	q := r.db.Where("1 = 1")
 	if len(nativeIds) > 0 {
 		q = q.Where("native_id NOT IN ?", nativeIds)
 	}

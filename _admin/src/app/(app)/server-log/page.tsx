@@ -1,118 +1,17 @@
 "use client";
 
-import {
-  Avatar,
-  Badge,
-  Box,
-  Button,
-  Group,
-  Loader,
-  Modal,
-  Pagination,
-  Paper,
-  Select,
-  Stack,
-  Table,
-  Text,
-  Title,
-  UnstyledButton,
-} from "@mantine/core";
-import { DatePickerInput } from "@mantine/dates";
+import { Button, Group, Modal, Pagination, Stack, Text, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import {
-  IconCalendar,
-  IconClearAll,
-  IconSearch,
-  IconTrash,
-} from "@tabler/icons-react";
-import { useState } from "react";
+import { IconTrash } from "@tabler/icons-react";
 import { useQueryState } from "nuqs";
-import {
-  useAuditLogs,
-  useClearAuditLogs,
-  useDiscordChannels,
-  useSearchDiscordMembers,
-} from "~/hooks/api-hooks";
+import { useState } from "react";
+import { useAuditLogs, useClearAuditLogs, useDiscordChannels } from "~/hooks/api-hooks";
 import MasterLayout from "~/layouts/master-layout";
-
-function renderMemberOption({ option }: { option: any }) {
-  return (
-    <Group gap="xs">
-      {option.image_url && (
-        <Avatar src={option.image_url} size={24} radius="xl" />
-      )}
-      <span>{option.label}</span>
-    </Group>
-  );
-}
-
-function formatDateTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleString("vi-VN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function parseAttachments(jsonStr: string): string[] {
-  try {
-    const arr = JSON.parse(jsonStr);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
+import AuditLogFilters from "./_components/audit-log-filters";
+import AuditLogTable from "./_components/audit-log-table";
+import type { ContentModalState } from "./_components/message-content-cell";
 
 const PAGE_SIZE = 50;
-const CONTENT_PREVIEW_LENGTH = 120;
-
-type ContentModalState = {
-  title: string;
-  content: string;
-} | null;
-
-function MessageContentCell({
-  title,
-  content,
-  onExpand,
-}: {
-  title: string;
-  content: string;
-  onExpand: (state: ContentModalState) => void;
-}) {
-  if (!content) {
-    return <Text size="sm">—</Text>;
-  }
-
-  const isLong = content.length > CONTENT_PREVIEW_LENGTH;
-  const preview = isLong
-    ? `${content.slice(0, CONTENT_PREVIEW_LENGTH)}...`
-    : content;
-
-  return (
-    <Box
-      style={{
-        maxWidth: 300,
-        whiteSpace: "pre-wrap",
-        wordBreak: "break-word",
-      }}
-    >
-      <Text size="sm">{preview}</Text>
-      {isLong && (
-        <UnstyledButton
-          onClick={() => onExpand({ title, content })}
-          c="blue"
-          style={{ fontSize: 12 }}
-        >
-          Xem thêm
-        </UnstyledButton>
-      )}
-    </Box>
-  );
-}
 
 export default function ServerLogPage() {
   const { data: channelsData } = useDiscordChannels();
@@ -137,16 +36,6 @@ export default function ServerLogPage() {
   const [offsetStr, setOffsetStr] = useQueryState("offset", {
     defaultValue: "0",
   });
-
-  const [authorSearch, setAuthorSearch] = useState("");
-  const { data: authorMembersData, isLoading: authorMembersSearching } =
-    useSearchDiscordMembers(authorSearch);
-  const authorMembers = authorMembersData?.data ?? [];
-  const authorSelectData = authorMembers.map((m) => ({
-    value: m.native_id,
-    label: m.nickname ? `${m.nickname} (${m.username})` : m.username,
-    image_url: m.avatar,
-  }));
 
   const offset = Number.parseInt(offsetStr, 10) || 0;
 
@@ -243,7 +132,6 @@ export default function ServerLogPage() {
     setToDate(null);
     setChannelId(null);
     setAuthorId(null);
-    setAuthorSearch("");
     setOffsetStr("0");
   }
 
@@ -267,172 +155,32 @@ export default function ServerLogPage() {
           </Button>
         </Group>
 
-        <Paper p="md" withBorder>
-          <Stack gap="md">
-            <Group align="flex-end">
-              <Select
-                label="Ngày"
-                placeholder="Chọn khoảng thời gian"
-                value={datePreset || ""}
-                onChange={(val) => {
-                  setDatePreset(val);
-                  if (val !== "custom") {
-                    setFromDate(null);
-                    setToDate(null);
-                  }
-                }}
-                data={[
-                  { value: "today", label: "Hôm nay" },
-                  { value: "yesterday", label: "Hôm qua" },
-                  { value: "week", label: "7 ngày qua" },
-                  { value: "custom", label: "Tùy chọn" },
-                ]}
-                style={{ width: 200 }}
-                allowDeselect
-              />
-              {datePreset === "custom" && (
-                <>
-                  <DatePickerInput
-                    label="Từ ngày"
-                    placeholder="Chọn ngày"
-                    value={fromDate || null}
-                    onChange={(val) => setFromDate(val ?? null)}
-                    leftSection={<IconCalendar size={16} />}
-                    style={{ width: 160 }}
-                  />
-                  <DatePickerInput
-                    label="Đến ngày"
-                    placeholder="Chọn ngày"
-                    value={toDate || null}
-                    onChange={(val) => setToDate(val ?? null)}
-                    leftSection={<IconCalendar size={16} />}
-                    style={{ width: 160 }}
-                  />
-                </>
-              )}
-              <Select
-                label="Channel"
-                placeholder="Tất cả channel"
-                searchable
-                clearable
-                value={channelId || ""}
-                onChange={(val) => setChannelId(val)}
-                data={channels.map((ch) => ({
-                  value: ch.id,
-                  label: `#${ch.name}`,
-                }))}
-                style={{ width: 220 }}
-              />
-              <Select
-                label="Người gửi"
-                placeholder="Tìm kiếm user..."
-                searchable
-                clearable
-                value={authorId || null}
-                onChange={(val) => setAuthorId(val)}
-                onSearchChange={setAuthorSearch}
-                searchValue={authorSearch}
-                data={authorSelectData}
-                renderOption={renderMemberOption}
-                rightSection={authorMembersSearching ? <Loader size={16} /> : null}
-                style={{ width: 220 }}
-              />
-              <Button
-                leftSection={<IconSearch size={14} />}
-                onClick={handleSearch}
-              >
-                Tìm kiếm
-              </Button>
-              <Button
-                variant="light"
-                color="gray"
-                leftSection={<IconClearAll size={14} />}
-                onClick={handleReset}
-              >
-                Đặt lại
-              </Button>
-            </Group>
-          </Stack>
-        </Paper>
+        <AuditLogFilters
+          channels={channels}
+          datePreset={datePreset}
+          onDatePresetChange={setDatePreset}
+          fromDate={fromDate}
+          onFromDateChange={setFromDate}
+          toDate={toDate}
+          onToDateChange={setToDate}
+          channelId={channelId}
+          onChannelIdChange={setChannelId}
+          authorId={authorId}
+          onAuthorIdChange={setAuthorId}
+          onSearch={handleSearch}
+          onReset={handleReset}
+        />
 
         {isLoading ? (
           <Text>Đang tải...</Text>
         ) : logs.length === 0 ? (
           <Text c="dimmed">Không có log nào.</Text>
         ) : (
-          <Paper withBorder>
-            <Table striped>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Thời gian</Table.Th>
-                  <Table.Th>Hành động</Table.Th>
-                  <Table.Th>Channel</Table.Th>
-                  <Table.Th>Người gửi</Table.Th>
-                  <Table.Th>Nội dung trước</Table.Th>
-                  <Table.Th>Nội dung sau</Table.Th>
-                  <Table.Th>Attachments</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {logs.map((log) => {
-                  const attachments = parseAttachments(log.Attachments);
-                  return (
-                    <Table.Tr key={log.ID}>
-                      <Table.Td>{formatDateTime(log.CreatedAt)}</Table.Td>
-                      <Table.Td>
-                        <Badge
-                          color={log.Action === "delete" ? "red" : "blue"}
-                        >
-                          {log.Action === "delete" ? "Xóa" : "Sửa"}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm" c="dimmed">
-                          #{channels.find((c) => c.id === log.ChannelId)?.name || log.ChannelId}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm" fw={500}>
-                          {log.AuthorName || "—"}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <MessageContentCell
-                          title="Nội dung trước"
-                          content={log.BeforeContent}
-                          onExpand={setContentModal}
-                        />
-                      </Table.Td>
-                      <Table.Td>
-                        <MessageContentCell
-                          title="Nội dung sau"
-                          content={log.AfterContent}
-                          onExpand={setContentModal}
-                        />
-                      </Table.Td>
-                      <Table.Td>
-                        {attachments.length > 0 && (
-                          <Stack gap={4}>
-                            {attachments.map((url, i) => (
-                              <a
-                                key={i}
-                                href={url}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{ fontSize: 12 }}
-                              >
-                                Attachment {i + 1}
-                              </a>
-                            ))}
-                          </Stack>
-                        )}
-                      </Table.Td>
-                    </Table.Tr>
-                  );
-                })}
-              </Table.Tbody>
-            </Table>
-          </Paper>
+          <AuditLogTable
+            logs={logs}
+            channels={channels}
+            onExpandContent={setContentModal}
+          />
         )}
 
         {total > PAGE_SIZE && (
