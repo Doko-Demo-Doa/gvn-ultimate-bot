@@ -24,7 +24,7 @@ import {
 } from "@mantine/core";
 import { schemaResolver, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
-import { IconPlus, IconSun, IconTrashFilled } from "@tabler/icons-react";
+import { IconPlus, IconSun, IconTrashFilled, IconX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
@@ -71,30 +71,31 @@ const interactionSchema = z.object({
   options: z.array(dropdownOptionSchema).optional(),
 });
 
-const schema = z.object({
-  channel_id: z.string().min(1, "Channel ID is required"),
-  mode: z.enum(["default", "reverse"]).default("default"),
-  color: z.string().optional(),
-  mainMessage: z.string().optional(),
-  headerMessage: z.string().optional(),
-  footerMessage: z.string().optional(),
-  titleMessage: z.string().optional(),
-  embedMainMessage: z.string().optional(),
-  featuredImage: z.string().optional(),
-  customFields: z
-    .array(
-      z.object({
-        id: z.string(),
-        fieldName: z.string(),
-        fieldValue: z.string(),
-      }),
-    )
-    .max(MAX_CUSTOM_FIELDS),
-  interactions: z
-    .array(interactionSchema)
-    .min(1, "At least one interaction is required")
-    .max(MAX_INTERACTIONS),
-})
+const schema = z
+  .object({
+    channel_id: z.string().min(1, "Channel ID is required"),
+    mode: z.enum(["default", "reverse"]).default("default"),
+    color: z.string().optional(),
+    mainMessage: z.string().optional(),
+    headerMessage: z.string().optional(),
+    footerMessage: z.string().optional(),
+    titleMessage: z.string().optional(),
+    embedMainMessage: z.string().optional(),
+    featuredImage: z.string().optional(),
+    customFields: z
+      .array(
+        z.object({
+          id: z.string(),
+          fieldName: z.string(),
+          fieldValue: z.string(),
+        }),
+      )
+      .max(MAX_CUSTOM_FIELDS),
+    interactions: z
+      .array(interactionSchema)
+      .min(1, "At least one interaction is required")
+      .max(MAX_INTERACTIONS),
+  })
   .refine(
     (data) => {
       for (const interaction of data.interactions) {
@@ -220,6 +221,8 @@ function EmojiSelectField({
   emojis,
   formProps,
   excludedEmojis,
+  label,
+  style,
   ...selectProps
 }: {
   emojis: IDiscordEmoji[];
@@ -227,6 +230,8 @@ function EmojiSelectField({
   // Emojis already used by other emoji-type interactions on this message —
   // picking one of these would create a duplicate Discord reaction.
   excludedEmojis?: string[];
+  label?: string;
+  style?: React.CSSProperties;
 } & any) {
   const [localValue, setLocalValue] = useState<string>(
     () => formProps.value ?? formProps.defaultValue ?? "",
@@ -235,7 +240,9 @@ function EmojiSelectField({
   const [source, setSource] = useState<"custom" | "stock">(() => {
     const val = localValue;
     if (!val) return "custom";
-    return !emojis.some((e: IDiscordEmoji) => e.api_name === val) ? "stock" : "custom";
+    return !emojis.some((e: IDiscordEmoji) => e.api_name === val)
+      ? "stock"
+      : "custom";
   });
 
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -253,7 +260,8 @@ function EmojiSelectField({
       notifications.show({
         color: "red",
         title: "Lỗi",
-        message: "Emoji này đã được dùng cho một interaction khác trong message này.",
+        message:
+          "Emoji này đã được dùng cho một interaction khác trong message này.",
       });
       return;
     }
@@ -263,12 +271,78 @@ function EmojiSelectField({
 
   const availableEmojiData = excludedEmojis?.length
     ? emojiSelectData(emojis).filter(
-        (opt) => !excludedEmojis.includes(opt.value) || opt.value === localValue,
+        (opt) =>
+          !excludedEmojis.includes(opt.value) || opt.value === localValue,
       )
     : emojiSelectData(emojis);
 
+  // Render our own label row (just text, nothing else) instead of letting
+  // the underlying Select render its own label, so this field's label row
+  // matches a plain TextInput/Select's label row exactly, and the value row
+  // right below it (the Select/Popover) lines up with sibling fields placed
+  // in the same Group. The Custom/Stock toggle goes on its own row below
+  // that, since it doesn't need to align with anything.
   return (
-    <Stack gap={4}>
+    <Stack gap={4} style={style}>
+      {label && (
+        <Text size="sm" fw={500}>
+          {label}
+        </Text>
+      )}
+      {source === "custom" ? (
+        <Select
+          data={availableEmojiData}
+          renderOption={renderEmojiOption}
+          searchable
+          allowDeselect={false}
+          clearable
+          {...selectProps}
+          {...formProps}
+          value={localValue}
+          onChange={(val: string | null) => handleSelect(val ?? "")}
+        />
+      ) : (
+        <Group gap={4} wrap="nowrap">
+          <Popover
+            opened={popoverOpen}
+            onChange={setPopoverOpen}
+            position="bottom"
+            withArrow
+            shadow="md"
+          >
+            <Popover.Target>
+              <Button
+                type="button"
+                size="sm"
+                variant="light"
+                style={{ flexGrow: 1 }}
+                onClick={() => setPopoverOpen(true)}
+              >
+                {localValue || "Chọn emoji..."}
+              </Button>
+            </Popover.Target>
+            <Popover.Dropdown p={0}>
+              <EmojiPicker
+                onEmojiClick={(emojiData) => {
+                  handleSelect(emojiData.emoji);
+                  setPopoverOpen(false);
+                }}
+              />
+            </Popover.Dropdown>
+          </Popover>
+          {localValue && (
+            <ActionIcon
+              type="button"
+              variant="subtle"
+              color="gray"
+              onClick={() => handleSelect("")}
+              aria-label="Xóa emoji"
+            >
+              <IconX size={14} />
+            </ActionIcon>
+          )}
+        </Group>
+      )}
       <SegmentedControl
         size="xs"
         value={source}
@@ -277,46 +351,8 @@ function EmojiSelectField({
           { label: "Custom", value: "custom" },
           { label: "Stock", value: "stock" },
         ]}
+        style={{ alignSelf: "flex-start" }}
       />
-      {source === "custom" ? (
-        <Select
-          data={availableEmojiData}
-          renderOption={renderEmojiOption}
-          searchable
-          allowDeselect={false}
-          {...selectProps}
-          {...formProps}
-          value={localValue}
-          onChange={(val: string | null) => handleSelect(val ?? "")}
-        />
-      ) : (
-        <Popover
-          opened={popoverOpen}
-          onChange={setPopoverOpen}
-          position="bottom"
-          withArrow
-          shadow="md"
-        >
-          <Popover.Target>
-            <Button
-              type="button"
-              size="sm"
-              variant="light"
-              onClick={() => setPopoverOpen(true)}
-            >
-              {localValue || "Chọn emoji..."}
-            </Button>
-          </Popover.Target>
-          <Popover.Dropdown p={0}>
-            <EmojiPicker
-              onEmojiClick={(emojiData) => {
-                handleSelect(emojiData.emoji);
-                setPopoverOpen(false);
-              }}
-            />
-          </Popover.Dropdown>
-        </Popover>
-      )}
     </Stack>
   );
 }
@@ -516,7 +552,9 @@ const EmbedEditor: React.FC<Props> = ({
                                 .map((other) => other.emoji as string)
                             : []
                         }
-                        formProps={form.getInputProps(`interactions.${i}.emoji`)}
+                        formProps={form.getInputProps(
+                          `interactions.${i}.emoji`,
+                        )}
                       />
                       {it.type === "button" && (
                         <TextInput
@@ -527,25 +565,27 @@ const EmbedEditor: React.FC<Props> = ({
                         />
                       )}
                     </Group>
-                    {it.type === "button" && (
-                      <NativeSelect
-                        label="Style"
-                        data={[
-                          { value: "primary", label: "Primary (blurple)" },
-                          { value: "secondary", label: "Secondary (grey)" },
-                          { value: "success", label: "Success (green)" },
-                          { value: "danger", label: "Danger (red)" },
-                        ]}
-                        {...form.getInputProps(`interactions.${i}.style`)}
-                      />
-                    )}
-                    <NativeSelect
-                      label="Role"
-                      data={roleSelectData}
-                      {...form.getInputProps(
-                        `interactions.${i}.role_native_id`,
+                    <Group grow>
+                      {it.type === "button" && (
+                        <NativeSelect
+                          label="Style"
+                          data={[
+                            { value: "primary", label: "Primary (blurple)" },
+                            { value: "secondary", label: "Secondary (grey)" },
+                            { value: "success", label: "Success (green)" },
+                            { value: "danger", label: "Danger (red)" },
+                          ]}
+                          {...form.getInputProps(`interactions.${i}.style`)}
+                        />
                       )}
-                    />
+                      <NativeSelect
+                        label="Role"
+                        data={roleSelectData}
+                        {...form.getInputProps(
+                          `interactions.${i}.role_native_id`,
+                        )}
+                      />
+                    </Group>
                   </>
                 )}
 
