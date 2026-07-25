@@ -5,6 +5,8 @@ import {
   Box,
   Button,
   Group,
+  Modal,
+  Pagination,
   Paper,
   Select,
   Stack,
@@ -12,6 +14,7 @@ import {
   Text,
   TextInput,
   Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
@@ -21,6 +24,7 @@ import {
   IconSearch,
   IconTrash,
 } from "@tabler/icons-react";
+import { useState } from "react";
 import { useQueryState } from "nuqs";
 import {
   useAuditLogs,
@@ -50,6 +54,52 @@ function parseAttachments(jsonStr: string): string[] {
 }
 
 const PAGE_SIZE = 50;
+const CONTENT_PREVIEW_LENGTH = 120;
+
+type ContentModalState = {
+  title: string;
+  content: string;
+} | null;
+
+function MessageContentCell({
+  title,
+  content,
+  onExpand,
+}: {
+  title: string;
+  content: string;
+  onExpand: (state: ContentModalState) => void;
+}) {
+  if (!content) {
+    return <Text size="sm">—</Text>;
+  }
+
+  const isLong = content.length > CONTENT_PREVIEW_LENGTH;
+  const preview = isLong
+    ? `${content.slice(0, CONTENT_PREVIEW_LENGTH)}...`
+    : content;
+
+  return (
+    <Box
+      style={{
+        maxWidth: 300,
+        whiteSpace: "pre-wrap",
+        wordBreak: "break-word",
+      }}
+    >
+      <Text size="sm">{preview}</Text>
+      {isLong && (
+        <UnstyledButton
+          onClick={() => onExpand({ title, content })}
+          c="blue"
+          style={{ fontSize: 12 }}
+        >
+          Xem thêm
+        </UnstyledButton>
+      )}
+    </Box>
+  );
+}
 
 export default function ServerLogPage() {
   const { data: channelsData } = useDiscordChannels();
@@ -134,8 +184,12 @@ export default function ServerLogPage() {
 
   const { mutateAsync: clearLogs, isPending: isClearing } = useClearAuditLogs();
 
+  const [contentModal, setContentModal] = useState<ContentModalState>(null);
+
   const logs = data?.data?.items ?? [];
   const total = data?.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   async function handleClear() {
     if (!confirm("Bạn có chắc muốn xóa toàn bộ audit log?")) return;
@@ -312,26 +366,18 @@ export default function ServerLogPage() {
                         </Text>
                       </Table.Td>
                       <Table.Td>
-                        <Box
-                          style={{
-                            maxWidth: 300,
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          <Text size="sm">{log.BeforeContent || "—"}</Text>
-                        </Box>
+                        <MessageContentCell
+                          title="Nội dung trước"
+                          content={log.BeforeContent}
+                          onExpand={setContentModal}
+                        />
                       </Table.Td>
                       <Table.Td>
-                        <Box
-                          style={{
-                            maxWidth: 300,
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          <Text size="sm">{log.AfterContent || "—"}</Text>
-                        </Box>
+                        <MessageContentCell
+                          title="Nội dung sau"
+                          content={log.AfterContent}
+                          onExpand={setContentModal}
+                        />
                       </Table.Td>
                       <Table.Td>
                         {attachments.length > 0 && (
@@ -360,27 +406,29 @@ export default function ServerLogPage() {
 
         {total > PAGE_SIZE && (
           <Group justify="center" mt="md">
-            <Button
-              variant="light"
-              disabled={offset === 0}
-              onClick={() => setPage(Math.max(0, offset - PAGE_SIZE))}
-            >
-              Trang trước
-            </Button>
-            <Text size="sm">
+            <Pagination
+              value={currentPage}
+              onChange={(page) => setPage((page - 1) * PAGE_SIZE)}
+              total={totalPages}
+            />
+            <Text size="sm" c="dimmed">
               Hiển thị {offset + 1} – {Math.min(offset + PAGE_SIZE, total)} /{" "}
               {total}
             </Text>
-            <Button
-              variant="light"
-              disabled={offset + PAGE_SIZE >= total}
-              onClick={() => setPage(offset + PAGE_SIZE)}
-            >
-              Trang sau
-            </Button>
           </Group>
         )}
       </Stack>
+
+      <Modal
+        opened={!!contentModal}
+        onClose={() => setContentModal(null)}
+        title={contentModal?.title}
+        size="lg"
+      >
+        <Text size="sm" style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {contentModal?.content}
+        </Text>
+      </Modal>
     </MasterLayout>
   );
 }
